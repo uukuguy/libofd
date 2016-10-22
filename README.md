@@ -21,12 +21,12 @@ $ mkdir build && cd build && cmake .. && make
 
 $ cd build
 
-# For production.
+### For production.
 $ ./bin/ofdtest ../data/sample0.ofd 
 
-# For debug in production.
+### For debug in production.
 $ ./bin/ofdtest ../data/sample0.ofd --v=1
 
-# for debug in development.
+### for debug in development.
 $ ./bin/ofdtest ../data/sample0.ofd --v=3
 
