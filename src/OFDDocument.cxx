@@ -1,7 +1,7 @@
 #include <iostream>
 #include <sstream>
 #include <iterator>
-#include "OFDFile.h"
+#include "OFDPackage.h"
 #include "OFDDocument.h"
 #include "OFDPage.h"
 #include "utils.h"
@@ -12,8 +12,8 @@ using namespace tinyxml2;
 
 using namespace ofd;
 
-OFDDocument::OFDDocument(OFDFile *ofdFile, const std::string &filename)
-    : m_ofdFile(ofdFile), m_filename(filename), m_opened(false), 
+OFDDocument::OFDDocument(OFDPackage *ofdPackage, const std::string &filename)
+    : m_ofdPackage(ofdPackage), m_filename(filename), m_opened(false), 
     m_rootDir(filename.substr(0, filename.rfind('/'))) {
         m_attributes.clear();
 }
@@ -25,11 +25,11 @@ OFDDocument:: ~OFDDocument() {
 
 bool OFDDocument::Open() {
     if ( IsOpened() ) return true;
-    if ( m_ofdFile == NULL ) return false;
+    if ( m_ofdPackage == NULL ) return false;
 
     bool ok = false;
     std::string content;
-    std::tie(content, ok) = m_ofdFile->GetFileContent(m_filename);
+    std::tie(content, ok) = m_ofdPackage->GetFileContent(m_filename);
     if ( !ok ) return false;
 
     m_opened = parseXML(content);

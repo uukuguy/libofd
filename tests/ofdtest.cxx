@@ -1,5 +1,5 @@
 #include <iostream>
-#include "OFDFile.h"
+#include "OFDPackage.h"
 #include "OFDDocument.h"
 #include "OFDPage.h"
 #include "logger.h"
@@ -18,9 +18,9 @@ int main(int argc, char *argv[]){
 
     LOG(INFO) << "Start " << argv[0];
 
-    OFDFile ofdFile;
-    if ( ofdFile.Open(argv[1]) ){
-        OFDDocument *ofdDocument = ofdFile.GetOFDDocument(); 
+    OFDPackage ofdPackage;
+    if ( ofdPackage.Open(argv[1]) ){
+        OFDDocument *ofdDocument = ofdPackage.GetOFDDocument(); 
         LOG(DEBUG) << ofdDocument->String();
 
         size_t n_pages = ofdDocument->GetPagesCount();
@@ -38,7 +38,7 @@ int main(int argc, char *argv[]){
             ofdPage->Close();
         }
 
-        ofdFile.Close();
+        ofdPackage.Close();
     }
 
     LOG(INFO) << "Done.";

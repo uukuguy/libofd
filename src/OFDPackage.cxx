@@ -1,5 +1,5 @@
 #include <iostream>
-#include "OFDFile.h"
+#include "OFDPackage.h"
 #include "OFDDocument.h"
 #include "utils.h"
 #include "logger.h"
@@ -9,17 +9,17 @@ using namespace tinyxml2;
 
 using namespace ofd;
 
-OFDFile::OFDFile() : m_ofdDocument(NULL), m_zip(NULL){
+OFDPackage::OFDPackage() : m_ofdDocument(NULL), m_zip(NULL){
 
 }
 
-OFDFile::~OFDFile(){
+OFDPackage::~OFDPackage(){
     if ( opened ){
         Close();
     }
 }
 
-bool OFDFile::Open(const std::string& filename){
+bool OFDPackage::Open(const std::string& filename){
     if ( opened )return true;
 
     this->m_filename = filename;
@@ -35,7 +35,7 @@ bool OFDFile::Open(const std::string& filename){
     return opened;
 }
 
-bool OFDFile::init() {
+bool OFDPackage::init() {
     if ( !checkFilesInZIP() ) return false;
 
     if ( !initAttributes() ) return false;
@@ -45,7 +45,7 @@ bool OFDFile::init() {
     return true;
 }
 
-void OFDFile::Close(){
+void OFDPackage::Close(){
     if (!opened) return;
 
     if ( m_ofdDocument != NULL ){
@@ -59,14 +59,14 @@ void OFDFile::Close(){
     opened = false;
 }
 
-size_t OFDFile::getZipFileSize(zip* handle, const char *filename){
+size_t OFDPackage::getZipFileSize(zip* handle, const char *filename){
     struct zip_stat st;
     zip_stat_init(&st);
     zip_stat(m_zip, filename, ZIP_FL_NOCASE, &st);
     return st.size;
 }
 
-std::tuple<std::string, bool> OFDFile::GetFileContent(const std::string &filename) const {
+std::tuple<std::string, bool> OFDPackage::GetFileContent(const std::string &filename) const {
     bool ok = false;
     std::string fileContent;
 
@@ -105,7 +105,7 @@ std::tuple<std::string, bool> OFDFile::GetFileContent(const std::string &filenam
     return std::make_tuple(fileContent, ok);
 }
 
-bool OFDFile::checkFilesInZIP(){
+bool OFDPackage::checkFilesInZIP(){
     m_files.clear();
     zip_int64_t n_entries = zip_get_num_entries(m_zip, ZIP_FL_UNCHANGED);
     LOG(DEBUG) << n_entries << " entries in ofd file " << m_filename;
@@ -127,11 +127,11 @@ bool OFDFile::checkFilesInZIP(){
     return true;
 }
 
-std::string OFDFile::String() const {
+std::string OFDPackage::String() const {
     std::stringstream ss;
     ss << std::endl 
         << "------------------------------" << std::endl
-        << "OFDFile" << std::endl;
+        << "OFDPackage" << std::endl;
 
         ss << "Title: " << m_attributes.Title << std::endl;
         ss << "Author: " << m_attributes.Author << std::endl;
@@ -150,7 +150,7 @@ std::string OFDFile::String() const {
     return ss.str();
 }
 
-bool OFDFile::initAttributes(){
+bool OFDPackage::initAttributes(){
     bool ok = false;
     std::string content;
     std::tie(content, ok) = GetFileContent("OFD.xml");
@@ -163,7 +163,7 @@ bool OFDFile::initAttributes(){
     return ok;
 }
 
-bool OFDFile::parseAttributesXML(const std::string &content){
+bool OFDPackage::parseAttributesXML(const std::string &content){
     XMLDocument *xmldoc = new XMLDocument();
     XMLError rc = xmldoc->Parse(content.c_str());
     if ( rc != XML_SUCCESS ){
@@ -210,7 +210,7 @@ bool OFDFile::parseAttributesXML(const std::string &content){
     return true;
 }
 
-bool OFDFile::initRootDocument() {
+bool OFDPackage::initRootDocument() {
     bool ok = false;
     this->m_ofdDocument = new OFDDocument(this, GetDocRoot());
     ok = this->m_ofdDocument->Open();

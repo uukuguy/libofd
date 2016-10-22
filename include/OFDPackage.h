@@ -1,5 +1,5 @@
-#ifndef __OFDFILE_H__
-#define __OFDFILE_H__
+#ifndef __OFDPACKAGE_H__
+#define __OFDPACKAGE_H__
 
 // ================ C++ API ================
 #ifdef __cplusplus
@@ -13,10 +13,10 @@ namespace ofd {
 
 class OFDDocument;
 
-class OFDFile {
+class OFDPackage {
 public:
-    OFDFile();
-    ~OFDFile();
+    OFDPackage();
+    ~OFDPackage();
 
     bool Open(const std::string& filename);
     void Close();
@@ -70,7 +70,7 @@ private:
 
     bool initRootDocument();
 
-}; // class OFDFile
+}; // class OFDPackage
 
 } // namespace ofd
 
@@ -86,4 +86,4 @@ extern "C"{
 } // extern "C"
 #endif
 
-#endif // __OFDFILE_H__
+#endif // __OFDPACKAGE_H__

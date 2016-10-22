@@ -1,6 +1,6 @@
 #include <iostream>
 #include <sstream>
-#include "OFDFile.h"
+#include "OFDPackage.h"
 #include "OFDDocument.h"
 #include "OFDPage.h"
 #include "utils.h"
@@ -23,12 +23,12 @@ bool OFDPage::Open() {
     if ( IsOpened() ) return true;
     if ( m_ofdDocument == NULL ) return false;
 
-    OFDFile *ofdFile = m_ofdDocument->GetOFDFile();
-    if ( ofdFile == NULL ) return false;
+    OFDPackage *ofdPackage = m_ofdDocument->GetOFDPackage();
+    if ( ofdPackage == NULL ) return false;
 
     bool ok = false;
     std::string content;
-    std::tie(content, ok) = ofdFile->GetFileContent(m_filename);
+    std::tie(content, ok) = ofdPackage->GetFileContent(m_filename);
     if ( !ok ) return false;
 
     m_opened = parseXML(content);

@@ -11,20 +11,20 @@
 
 namespace ofd {
 
-class OFDFile;
+class OFDPackage;
 class OFDPage;
 
 
 class OFDDocument {
 public:
-    OFDDocument(OFDFile *ofdFile, const std::string &filename);
+    OFDDocument(OFDPackage *ofdPackage, const std::string &filename);
     ~OFDDocument();
 
     bool Open();
     void Close();
 
-    OFDFile *GetOFDFile(){return m_ofdFile;};
-    const OFDFile *GetOFDFile() const {return m_ofdFile;};
+    OFDPackage *GetOFDPackage(){return m_ofdPackage;};
+    const OFDPackage *GetOFDPackage() const {return m_ofdPackage;};
 
     bool IsOpened() const {return m_opened;};
 
@@ -59,7 +59,7 @@ public:
     std::string String() const;
 
 private:
-    OFDFile *m_ofdFile;
+    OFDPackage *m_ofdPackage;
     std::string m_filename;
 
     Attributes m_attributes;
