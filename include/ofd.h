@@ -16,6 +16,26 @@ namespace ofd {
         OFDPhysicalBox physicalBox;
     }; // class OFDPageArea
 
+
+    struct OFDColor {
+        int ColorSpace;
+        double Value;
+    };
+
+    struct OFDBoundary {
+        double x0, y0, w, h;
+    };
+
+    // CTM (Context Translate Matrix)
+    //
+    // a  b  0
+    // c  d  0
+    // p  q  1
+    //
+    struct OFDCTM {
+        double a, b, c, d, p, q;
+    };
+
 }; // namespace ofd
 
 //#include "OFDPage.h"

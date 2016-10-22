@@ -11,6 +11,7 @@
 namespace ofd {
 
 class OFDDocument;
+class OFDObject;
 
 class OFDPage {
 public:
@@ -24,8 +25,15 @@ public:
     OFDDocument *GetOFDDocument() {return m_ofdDocument;};
 
     bool IsOpened() const {return m_opened;};
+
+    size_t GetOFDObjectsCount() const {return m_ofdObjects.size();};
+    const OFDObject *GetOFDObject(size_t idx) const {return m_ofdObjects[idx];};
+    OFDObject *GetOFDObject(size_t idx) {return m_ofdObjects[idx];};
+
+    uint64_t GetID() const {return m_id;};
     std::string GetText() const {return m_text;};
 
+    bool RenderToPNGFile(const std::string& filename);
 
 public:
     struct Attributes{
@@ -49,8 +57,10 @@ private:
     Attributes m_attributes;
 
     bool m_opened;
+    std::vector<OFDObject*> m_ofdObjects;
     std::string m_text;
 
+    void clear();
     bool parseXML(const std::string &content); 
 
 

@@ -32,8 +32,12 @@ int main(int argc, char *argv[]){
             ofdPage->Open();
 
             VLOG(3) << ofdPage->String(); 
-
             LOG(INFO) << ofdPage->GetText();
+
+            std::stringstream ss;
+            ss << "Page" << (i + 1) << ".png";
+            std::string png_filename = ss.str();
+            ofdPage->RenderToPNGFile(png_filename);
 
             ofdPage->Close();
         }
