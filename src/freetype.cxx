@@ -3,8 +3,8 @@
 #include FT_GLYPH_H
 
 void test_freetype(){
-    FT_LIBRARY library;
-    Error error = FT_Init_FreeType(&library);
+    FT_Library library;
+    FT_Error error = FT_Init_FreeType(&library);
     if ( error ){
         return;
     }
@@ -13,7 +13,7 @@ void test_freetype(){
     //error = FT_New_Face(library "arial.ttf", 0, &face);
     char buffer[1024];
     size_t buffer_size = 1024;
-    error = FT_New_Memory_Face(library, buffer, buffer_size, 0, &face);
+    error = FT_New_Memory_Face(library, (const FT_Byte*)buffer, buffer_size, 0, &face);
     if ( error == FT_Err_Unknown_File_Format ){
         return;
     } else if ( error ){
@@ -35,14 +35,15 @@ void test_freetype(){
             16 // pixel_height
             );
 
-    const char *charcode = "";
+    FT_ULong charcode = 0;
     int glyph_index = FT_Get_Char_Index(face, charcode);
 
     FT_Glyph glyph;
-    int load_flags = FT_LOAD_NORMAL;
+    int load_flags = FT_LOAD_DEFAULT;
     error = FT_Load_Glyph(face, glyph_index, load_flags);
     error = FT_Get_Glyph(face->glyph, &glyph);
 
+    FT_Render_Mode render_mode;
     error = FT_Render_Glyph( face->glyph, render_mode);
 
     FT_Matrix matrix;
@@ -56,7 +57,7 @@ void test_freetype(){
     delta.x = -100 * 64;
     delta.y = 50 * 64;
 
-    error = FT_Set_Transform(face, &matrix, &delta);
+    FT_Set_Transform(face, &matrix, &delta);
 
     FT_BBox bbox;
     int bbox_mode = FT_GLYPH_BBOX_UNSCALED; // FT_GLYPH_BBOX_TRUNCATE
@@ -68,6 +69,6 @@ void test_freetype(){
     origin.x = 32;
     origin.y = 0;
 
-    draw_bitmap(&slot->bitmap, pen_x + slot->bitmap_left, pen_y + slot->bitmap_top);
+    //draw_bitmap(&slot->bitmap, pen_x + slot->bitmap_left, pen_y + slot->bitmap_top);
 
 }
