@@ -43,7 +43,7 @@ void test_freetype(){
     error = FT_Load_Glyph(face, glyph_index, load_flags);
     error = FT_Get_Glyph(face->glyph, &glyph);
 
-    FT_Render_Mode render_mode;
+    FT_Render_Mode render_mode = FT_RENDER_MODE_NORMAL;
     error = FT_Render_Glyph( face->glyph, render_mode);
 
     FT_Matrix matrix;
@@ -62,8 +62,8 @@ void test_freetype(){
     FT_BBox bbox;
     int bbox_mode = FT_GLYPH_BBOX_UNSCALED; // FT_GLYPH_BBOX_TRUNCATE
     FT_Glyph_Get_CBox(glyph, bbox_mode, &bbox);
-    int width = bbox.xMax - bbox.xMin;
-    int height = bbox.yMax - bbox.yMin;
+    //int width = bbox.xMax - bbox.xMin;
+    //int height = bbox.yMax - bbox.yMin;
 
     FT_Vector origin;
     origin.x = 32;

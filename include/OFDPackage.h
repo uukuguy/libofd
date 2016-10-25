@@ -52,12 +52,12 @@ private:
     std::string m_filename;
     Attributes m_attributes;
 
-    bool opened;
+    OFDDocument *m_ofdDocument;
+
+    bool m_opened;
     zip *m_zip;
 
     std::map<std::string, size_t> m_files;
-
-    OFDDocument *m_ofdDocument;
 
     size_t getZipFileSize(zip* handle, const char *filename);
 

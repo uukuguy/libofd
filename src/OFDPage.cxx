@@ -7,12 +7,23 @@
 #include "utils.h"
 #include "logger.h"
 
+
+/***
+ *
+    A4纸的尺寸是210mm×297mm， 
+    当设定的分辨率是72像素/英寸时，A4纸的尺寸的图像的像素是595×842， 
+    当设定的分辨率是150像素/英寸时，A4纸的尺寸的图像的像素是1240×1754， 
+    当设定的分辨率是300像素/英寸时，A4纸的尺寸的图像的像素是2479×3508，
+    1英寸=25.4毫米。
+ *
+ * ***/
+
 #include <tinyxml2.h>
 using namespace tinyxml2;
 using namespace ofd;
 
 OFDPage::OFDPage(OFDDocument *ofdDocument, uint64_t id, const std::string &filename)
-    : m_ofdDocument(ofdDocument), m_id(id), m_filename(filename) {
+    : m_ofdDocument(ofdDocument), m_id(id), m_filename(filename), m_opened(false){
     m_attributes.clear();
 }
 
@@ -21,16 +32,28 @@ OFDPage::~OFDPage() {
 }
 
 bool OFDPage::Open() {
-    if ( IsOpened() ) return true;
-    if ( m_ofdDocument == NULL ) return false;
+    if ( IsOpened() ) {
+        LOG(DEBUG) << "Page is already opened!";
+        return true;
+    }
+    if ( m_ofdDocument == NULL ) {
+        LOG(WARNING) << "m_ofdDocument == NULL";
+        return false;
+    }
 
-    OFDPackage *ofdPackage = m_ofdDocument->GetOFDPackage();
-    if ( ofdPackage == NULL ) return false;
+    OFDPackage *package = m_ofdDocument->GetPackage();
+    if ( package == NULL ) {
+        LOG(WARNING) << "package == NULL";
+        return false;
+    }
 
     bool ok = false;
     std::string content;
-    std::tie(content, ok) = ofdPackage->GetFileContent(m_filename);
-    if ( !ok ) return false;
+    std::tie(content, ok) = package->GetFileContent(m_filename);
+    if ( !ok ) {
+        LOG(WARNING) << "package->GetFileContent() failed. filename: " << m_filename;
+        return false;
+    }
 
     m_opened = parseXML(content);
 
@@ -60,10 +83,10 @@ std::string OFDPage::String() const {
     ss << std::endl 
         << "------------------------------" << std::endl
         << "OFDPage" << std::endl 
-        << "PhysicalBox: " << m_attributes.PageArea.physicalBox.x0 << ", " 
-        << m_attributes.PageArea.physicalBox.y0 << ", "
-        << m_attributes.PageArea.physicalBox.x1 << ", "
-        << m_attributes.PageArea.physicalBox.y1 
+        << "PhysicalBox: " << m_attributes.PageArea.PhysicalBox.x0 << ", " 
+        << m_attributes.PageArea.PhysicalBox.y0 << ", "
+        << m_attributes.PageArea.PhysicalBox.x1 << ", "
+        << m_attributes.PageArea.PhysicalBox.y1 
         << std::endl
         << "------------------------------" << std::endl
         ;
@@ -97,10 +120,10 @@ bool OFDPage::parseXML(const std::string &content) {
         bool ok;
         std::tie(x0, y0, x1, y1, ok) = parsePhysicalBoxElement(physicalBoxElement);
         if ( ok ) {
-            this->m_attributes.PageArea.physicalBox.x0 = x0;
-            this->m_attributes.PageArea.physicalBox.y0 = y0;
-            this->m_attributes.PageArea.physicalBox.x1 = x1;
-            this->m_attributes.PageArea.physicalBox.y1 = y1;  
+            this->m_attributes.PageArea.PhysicalBox.x0 = x0;
+            this->m_attributes.PageArea.PhysicalBox.y0 = y0;
+            this->m_attributes.PageArea.PhysicalBox.x1 = x1;
+            this->m_attributes.PageArea.PhysicalBox.y1 = y1;  
         }
 
         // <ofd:Content>
@@ -205,6 +228,29 @@ bool OFDPage::parseXML(const std::string &content) {
     return false;
 }
 
+void OFDPage::drawText(const OFDTextObject *textObject) const {
+    std::string Text = textObject->Text;
+    OFDDocument *document = m_ofdDocument;
+    const OFDFont &font = document->GetFontByID(textObject->Font);
+
+    std::string documentRootDir = document->GetRootDir();
+    std::string publicResBaseLoc = document->GetPublicResBaseLoc();
+    std::string fontFileName = documentRootDir + "/" + publicResBaseLoc + "/" + font.FontFile;
+    //VLOG(3) << "Font filename: " << fontFileName;
+
+    OFDPackage *package = document->GetPackage();
+
+    bool ok = false;
+    std::string content;
+    std::tie(content, ok) = package->GetFileContent(fontFileName);
+    if ( !ok ) {
+        LOG(WARNING) << "Error: Font file " << fontFileName << " can't be loaded.";
+        return;
+    };
+
+
+}
+
 #include <cairo/cairo.h>
 bool OFDPage::RenderToPNGFile(const std::string& filename){
 
@@ -222,10 +268,13 @@ bool OFDPage::RenderToPNGFile(const std::string& filename){
     for ( size_t i = 0 ; i < GetOFDObjectsCount() ; i++ ){
         OFDObject *ofdObject = GetOFDObject(i);
         OFDTextObject *textObject = static_cast<OFDTextObject*>(ofdObject);
+
         double X = textObject->X;
         double Y = textObject->Y + 800;
         std::string Text = textObject->Text;
 
+        //drawText(textObject);
+        
         cairo_text_extents(cr, Text.c_str(), &te);
         cairo_move_to(cr, X + 0.5 - te.width / 2 - te.x_bearing, Y + 0.5 - te.height / 2 - te.y_bearing);
         cairo_show_text(cr, Text.c_str());

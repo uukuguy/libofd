@@ -12,6 +12,7 @@ namespace ofd {
 
 class OFDDocument;
 class OFDObject;
+class OFDTextObject;
 
 class OFDPage {
 public:
@@ -63,6 +64,7 @@ private:
     void clear();
     bool parseXML(const std::string &content); 
 
+    void drawText(const OFDTextObject *textObject) const;
 
 }; // class OFDPage
 

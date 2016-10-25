@@ -9,18 +9,21 @@ using namespace tinyxml2;
 
 using namespace ofd;
 
-OFDPackage::OFDPackage() : m_ofdDocument(NULL), m_zip(NULL){
+OFDPackage::OFDPackage() : m_ofdDocument(NULL), m_opened(false), m_zip(NULL){
 
 }
 
 OFDPackage::~OFDPackage(){
-    if ( opened ){
+    if ( m_opened ){
         Close();
     }
 }
 
 bool OFDPackage::Open(const std::string& filename){
-    if ( opened )return true;
+    if ( m_opened ) {
+        LOG(DEBUG) << "Package is already opened.";
+        return true;
+    }
 
     this->m_filename = filename;
     int error = 0;
@@ -30,23 +33,32 @@ bool OFDPackage::Open(const std::string& filename){
         return false;
     }
 
-    opened = init();
+    m_opened = init();
 
-    return opened;
+    return m_opened;
 }
 
 bool OFDPackage::init() {
-    if ( !checkFilesInZIP() ) return false;
+    if ( !checkFilesInZIP() ) {
+        LOG(WARNING) << "checkFilesINZIP() failed";
+        return false;
+    }
 
-    if ( !initAttributes() ) return false;
+    if ( !initAttributes() ) {
+        LOG(WARNING) << "initAttributes() failed.";
+        return false;
+    }
 
-    if ( !initRootDocument() ) return false;
+    if ( !initRootDocument() ) {
+        LOG(WARNING) << "initRootDocument() failed.";
+        return false;
+    }
 
     return true;
 }
 
 void OFDPackage::Close(){
-    if (!opened) return;
+    if (!m_opened) return;
 
     if ( m_ofdDocument != NULL ){
         delete m_ofdDocument;
@@ -56,7 +68,7 @@ void OFDPackage::Close(){
     zip_close(m_zip);
     m_zip = NULL;
 
-    opened = false;
+    m_opened = false;
 }
 
 size_t OFDPackage::getZipFileSize(zip* handle, const char *filename){
@@ -79,23 +91,32 @@ std::tuple<std::string, bool> OFDPackage::GetFileContent(const std::string &file
         zip_file *file = zip_fopen(m_zip, filename.c_str(), ZIP_FL_NOCASE);
         char *content = new char[filesize];
         const zip_int64_t did_read = zip_fread(file, content, filesize);
-        if ( did_read > 0 ){
-            if ( strlen(content) < filesize ){
-                LOG(WARNING) << "File " << filename << " is truncated. from " << filesize << " to " << strlen(content);
-            }
-            if ( strlen(content) > filesize ){
-                LOG(WARNING) << "File readed " << strlen(content) << " more then " << filesize;
-                content[filesize] = '\0';
-            }
-
-            if ( VLOG_IS_ON(5) ){
-                VLOG(5) << "\n[ " << filename << " ]\n\n" << content << "\n\n--------\n\n";
-            }
-
+        if (did_read != filesize ) {
+            LOG(WARNING) << "File " << filename << " readed " << did_read << " bytes, but is not equal to excepted filesize " << filesize << " bytes.";
+            delete[] content;
+        } else {
+            content[filesize] = '\0';
             fileContent = std::string(content);
             ok = true;
             delete[] content;
         }
+        //if ( did_read > 0 ){
+            //if ( strlen(content) < filesize ){
+                //LOG(WARNING) << "File " << filename << " is truncated. from " << filesize << " to " << strlen(content) << " did_read: " << did_read;
+            //}
+            //if ( strlen(content) > filesize ){
+                //LOG(WARNING) << "File readed " << strlen(content) << " more then " << filesize << ". did_read: " << did_read;
+                //content[filesize] = '\0';
+            //}
+
+            //if ( VLOG_IS_ON(5) ){
+                //VLOG(5) << "\n[ " << filename << " ]\n\n" << content << "\n\n--------\n\n";
+            //}
+
+            //fileContent = std::string(content);
+            //ok = true;
+            //delete[] content;
+        //}
         zip_fclose(file);
     } else {
         LOG(ERROR) << filename << " is not exist in zipfile.";
