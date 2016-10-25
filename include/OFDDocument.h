@@ -18,23 +18,30 @@ class OFDPage;
 
 class OFDDocument {
 public:
-    OFDDocument(OFDPackage *ofdPackage, const std::string &filename);
+    OFDDocument(OFDPackage *package, const std::string &filename);
+    //OFDDocument(OFDPackagePtr package, const std::string &filename);
     ~OFDDocument();
 
     bool Open();
     void Close();
 
-    OFDPackage *GetPackage(){return m_ofdPackage;};
-    const OFDPackage *GetPackage() const {return m_ofdPackage;};
+    OFDPackage *GetPackage(){return m_package;};
+    const OFDPackage *GetPackage() const {return m_package;};
+    //OFDPackagePtr GetPackage(){return m_package.lock();};
+    //const OFDPackagePtr GetPackage() const {return m_package.lock();};
 
     bool IsOpened() const {return m_opened;};
 
     size_t GetPagesCount() const {return m_attributes.Pages.size();};
-    OFDPage *GetOFDPage(size_t idx) {return m_attributes.Pages[idx];};
-    const OFDPage *GetOFDPage(size_t idx) const {return m_attributes.Pages[idx];};
+    //OFDPage *GetOFDPage(size_t idx) {return m_attributes.Pages[idx];};
+    //const OFDPage *GetOFDPage(size_t idx) const {return m_attributes.Pages[idx];};
+    OFDPagePtr GetOFDPage(size_t idx) {return m_attributes.Pages[idx];};
+    const OFDPagePtr GetOFDPage(size_t idx) const {return m_attributes.Pages[idx];};
 
     bool HasFont(int fontID) const {return m_attributes.PublicRes.HasFont(fontID);};
     const OFDFont &GetFontByID(int fontID) const {return m_attributes.PublicRes.GetFontByID(fontID);};
+    size_t GetFontsCount() const {return m_attributes.PublicRes.GetFontsCount();};
+    const OFDFont &GetFont(size_t idx) const {return m_attributes.PublicRes.GetFont(idx);};
 
     std::string GetRootDir() const {return m_rootDir;};
     std::string GetPublicResBaseLoc() const {return m_attributes.PublicRes.BaseLoc;};
@@ -119,7 +126,8 @@ public:
         OFDPublicRes PublicRes;
         OFDDocumentRes DocumentRes;
         OFDCommonData CommonData;
-        std::vector<OFDPage*> Pages;
+        //std::vector<OFDPage*> Pages;
+        std::vector<OFDPagePtr> Pages;
 
         void clear();
     };
@@ -130,7 +138,8 @@ public:
     std::string String() const;
 
 private:
-    OFDPackage *m_ofdPackage;
+    OFDPackage *m_package;
+    //std::weak_ptr<OFDPackage> m_package;
     std::string m_filename;
 
     Attributes m_attributes;
@@ -141,6 +150,7 @@ private:
     bool parseXML();
     bool parsePublicResXML();
     bool parseDocumentResXML();
+    bool loadFonts();
 
 }; // class OFDDocument
 

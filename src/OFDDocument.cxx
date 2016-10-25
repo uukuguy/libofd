@@ -12,8 +12,8 @@ using namespace tinyxml2;
 
 using namespace ofd;
 
-OFDDocument::OFDDocument(OFDPackage *ofdPackage, const std::string &filename)
-    : m_ofdPackage(ofdPackage), m_filename(filename), m_opened(false), 
+OFDDocument::OFDDocument(OFDPackage *package, const std::string &filename)
+    : m_package(package), m_filename(filename), m_opened(false), 
     m_rootDir(filename.substr(0, filename.rfind('/'))) {
         m_attributes.clear();
 }
@@ -31,19 +31,17 @@ bool OFDDocument::Open() {
 
     m_opened = false;
 
-    if ( m_ofdPackage == NULL ) {
-        LOG(WARNING) << "m_ofdPackage == NULL.";
+    if ( m_package == nullptr ) {
+        LOG(WARNING) << "m_package == nullptr.";
         return false;
     }
-
-    //bool ok = false;
-    //std::string content;
-    //std::tie(content, ok) = m_ofdPackage->GetFileContent(m_filename);
-    //if ( !ok ) return false;
 
     if ( parseXML() ){
         if ( parsePublicResXML() ){
             if ( parseDocumentResXML() ){
+                if ( !loadFonts() ){
+                    LOG(WARNING) << "loadFonts() failed.";
+                }
                 m_opened = true;
             } else {
                 LOG(WARNING) << "parseDocumentResXML() failed.";
@@ -60,12 +58,12 @@ bool OFDDocument::Open() {
 
 void OFDDocument::Attributes::clear() {
     CommonData.clear();
-    for ( size_t i = 0 ; i < Pages.size() ; i++ ) {
-        OFDPage *ofdPage = Pages[i];
-        if ( ofdPage != NULL ){
-            delete ofdPage;
-        }
-    }
+    //for ( size_t i = 0 ; i < Pages.size() ; i++ ) {
+        //OFDPage *page = Pages[i];
+        //if ( page != nullptr ){
+            //delete page;
+        //}
+    //}
     Pages.clear();
 }
 
@@ -93,11 +91,14 @@ std::string OFDDocument::String() const {
     return ss.str();
 }
 
+        //OFDPackagePtr p = m_package.lock(); 
+        //if ( p == nullptr ) return false; 
+
 #define OFDPACKAGE_GET_FILE_CONTENT(filename, content) \
     std::string content; \
     { \
         bool ok = false; \
-        std::tie(content, ok) = m_ofdPackage->GetFileContent(filename); \
+        std::tie(content, ok) = m_package->GetFileContent(filename); \
         if ( !ok ) { \
             LOG(WARNING) << "package->GetFileContent() failed. filename: " << filename; \
             return false; \
@@ -143,7 +144,7 @@ bool OFDDocument::parsePublicResXML(){
     
     // <ofd:Res>
     XMLElement *rootElement = xmldoc->RootElement();
-    if ( rootElement != NULL ){
+    if ( rootElement != nullptr ){
         std::string BaseLoc = rootElement->Attribute("BaseLoc");
         m_attributes.PublicRes.BaseLoc = BaseLoc;
         VLOG(3) << "PublicRes Root Element Name: " << rootElement->Name() << " BaseLoc: " << BaseLoc;
@@ -152,11 +153,11 @@ bool OFDDocument::parsePublicResXML(){
 
         // <ofd:Fonts>
         const XMLElement *fontsElement = rootElement->FirstChildElement("ofd:Fonts");
-        if ( fontsElement != NULL ){
+        if ( fontsElement != nullptr ){
             //VLOG(3) << GetChildElements(fontsElement);
             //// <ofd:Font>
             const XMLElement *fontElement = fontsElement->FirstChildElement("ofd:Font");
-            while ( fontElement != NULL ){
+            while ( fontElement != nullptr ){
                 OFDFont font;
                 font.ID = fontElement->IntAttribute("ID");
                 font.FontName = fontElement->Attribute("FontName");
@@ -165,7 +166,7 @@ bool OFDDocument::parsePublicResXML(){
 
                 // <ofd:FontFile>
                 const XMLElement *fontFileElement = fontElement->FirstChildElement("ofd:FontFile");
-                if ( fontFileElement != NULL ){
+                if ( fontFileElement != nullptr ){
                     font.FontFile = fontFileElement->GetText();
                 }
                 
@@ -179,19 +180,19 @@ bool OFDDocument::parsePublicResXML(){
 
         // <ofd:ColorSpaces>
         const XMLElement *colorSpacesElement = rootElement->FirstChildElement("ofd:ColorSpaces");
-        if ( colorSpacesElement != NULL ){
+        if ( colorSpacesElement != nullptr ){
             // <ofd:ColorSpace>
             const XMLElement *colorSpaceElement = colorSpacesElement->FirstChildElement("ofd:ColorSpace");
-            while ( colorSpaceElement != NULL ){
+            while ( colorSpaceElement != nullptr ){
                 OFDColorSpace colorSpace;
                 colorSpace.ID = colorSpaceElement->IntAttribute("ID");
                 std::string colorSpaceType = colorSpaceElement->Attribute("Type");
                 if ( colorSpaceType == "CMYK" ){
-                    colorSpace.Type = OFDCOLORSPACE_CMYK;
+                    colorSpace.Type = OFDColorSpaceType::CMYK;
                 } else if ( colorSpaceType == "Gray" ) {
-                    colorSpace.Type = OFDCOLORSPACE_GRAY;
+                    colorSpace.Type = OFDColorSpaceType::GRAY;
                 } else {
-                    colorSpace.Type = OFDCOLORSPACE_UNKNOWN;
+                    colorSpace.Type = OFDColorSpaceType::UNKNOWN;
                 }
 
                 m_attributes.PublicRes.AppendColorSpace(colorSpace);
@@ -225,7 +226,7 @@ bool OFDDocument::parseDocumentResXML(){
 
     // <ofd:Res>
     XMLElement *rootElement = xmldoc->RootElement();
-    if ( rootElement != NULL ){
+    if ( rootElement != nullptr ){
         std::string BaseLoc = rootElement->Attribute("BaseLoc");
         m_attributes.DocumentRes.BaseLoc = BaseLoc;
         VLOG(3) << "DocumentRes Root Element Name: " << rootElement->Name() << " BaseLoc: " << BaseLoc;
@@ -234,22 +235,22 @@ bool OFDDocument::parseDocumentResXML(){
 
         // <ofd:MultiMedias>
         const XMLElement *multiMediasElement = rootElement->FirstChildElement("ofd:MultiMedias");
-        if ( multiMediasElement != NULL ){
+        if ( multiMediasElement != nullptr ){
             //VLOG(3) << GetChildElements(multiMediasElement);
             //// <ofd:MultiMedia>
             const XMLElement *multiMediaElement = multiMediasElement->FirstChildElement("ofd:MultiMedia");
-            while ( multiMediaElement != NULL ){
+            while ( multiMediaElement != nullptr ){
                 OFDMultiMedia multiMedia;
                 multiMedia.ID = multiMediaElement->IntAttribute("ID");
                 std::string strType = multiMediaElement->Attribute("Type");
-                multiMedia.Type = OFDMULTIMEDIA_UNKNOWN;
+                multiMedia.Type = OFDMultiMediaType::UNKNOWN;
                 if ( strType == "Image" ){
-                    multiMedia.Type = OFDMULTIMEDIA_IMAGE;
+                    multiMedia.Type = OFDMultiMediaType::IMAGE;
                 }
 
                 // <ofd:MediaFile>
                 const XMLElement *mediaFileElement = multiMediaElement->FirstChildElement("ofd:MediaFile");
-                if ( mediaFileElement != NULL ){
+                if ( mediaFileElement != nullptr ){
                     multiMedia.MediaFile = mediaFileElement->GetText();
                 }
 
@@ -272,19 +273,19 @@ bool OFDDocument::parseXML(){
     TEXT_TO_XML(content, xmldoc);
 
     XMLElement *rootElement = xmldoc->RootElement();
-    if ( rootElement != NULL ){
+    if ( rootElement != nullptr ){
         VLOG(3) << "Root Element Name: " << rootElement->Name();
         VLOG(3) << GetChildElements(rootElement);
 
         const XMLElement *commonDataElement = rootElement->FirstChildElement("ofd:CommonData");
         const XMLElement *pagesElement = rootElement->FirstChildElement("ofd:Pages");
-        if ( commonDataElement != NULL ){
+        if ( commonDataElement != nullptr ){
             VLOG(3) << GetChildElements(commonDataElement);
 
             const XMLElement *pageAreaElement = commonDataElement->FirstChildElement("ofd:PageArea");
 
             const XMLElement *physicalBoxElement = pageAreaElement->FirstChildElement("ofd:PhysicalBox");
-            if ( physicalBoxElement != NULL ){
+            if ( physicalBoxElement != nullptr ){
                 double x0, y0, x1, y1;
                 bool ok;
                 std::tie(x0, y0, x1, y1, ok) = parsePhysicalBoxElement(physicalBoxElement);
@@ -306,17 +307,18 @@ bool OFDDocument::parseXML(){
 
         }
 
-        if ( pagesElement != NULL ) {
+        if ( pagesElement != nullptr ) {
             VLOG(3) << GetChildElements(pagesElement);
             
             const XMLElement *pageElement = pagesElement->FirstChildElement("ofd:Page");
-            while ( pageElement != NULL ) {
+            while ( pageElement != nullptr ) {
                 uint64_t pageid = pageElement->UnsignedAttribute("ID");
                 std::string baseLoc = pageElement->Attribute("BaseLoc");
                 VLOG(3) << "Page ID: "  << pageid << " BaseLoc: " << baseLoc; 
 
-                OFDPage *ofdPage = new OFDPage(this, pageid, m_rootDir + "/" + baseLoc);
-                m_attributes.Pages.push_back(ofdPage);
+                //OFDPage *page = new OFDPage(this, pageid, m_rootDir + "/" + baseLoc);
+                OFDPagePtr page = OFDPagePtr(new OFDPage(this, pageid, m_rootDir + "/" + baseLoc));
+                m_attributes.Pages.push_back(page);
 
                 pageElement = pageElement->NextSiblingElement("ofd:Page");
             }
@@ -324,11 +326,20 @@ bool OFDDocument::parseXML(){
         }
 
     } else {
-        LOG(ERROR) << "rootElement == NULL";
+        LOG(ERROR) << "rootElement == nullptr";
     }
 
     delete xmldoc;
-    xmldoc = NULL;
+    xmldoc = nullptr;
 
     return true;
 }
+
+bool OFDDocument::loadFonts() {
+    for ( size_t i = 0 ; i < GetFontsCount() ; i++ ){
+        const OFDFont &font = GetFont(i);
+        LOG(DEBUG) << font.ID;
+    }
+    return true;
+}
+

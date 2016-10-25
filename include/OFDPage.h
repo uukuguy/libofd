@@ -16,14 +16,22 @@ class OFDTextObject;
 
 class OFDPage {
 public:
-    OFDPage(OFDDocument *ofdDocument, uint64_t id, const std::string &filename);
+    OFDPage(OFDDocument *document, uint64_t id, const std::string &filename);
+    //OFDPage(OFDDocumentPtr document, uint64_t id, const std::string &filename);
     ~OFDPage();
 
     bool Open();
     void Close();
 
-    const OFDDocument *GetOFDDocument() const {return m_ofdDocument;};
-    OFDDocument *GetOFDDocument() {return m_ofdDocument;};
+    OFDPackage *GetPackage(); 
+    const OFDPackage *GetPackage() const; 
+    //OFDPackagePtr GetPackage(); 
+    //const OFDPackagePtr GetPackage() const; 
+
+    const OFDDocument *GetOFDDocument() const {return m_document;};
+    OFDDocument *GetOFDDocument() {return m_document;};
+    //const OFDDocumentPtr GetOFDDocument() const {return m_document.lock();};
+    //OFDDocumentPtr GetOFDDocument() {return m_document.lock();};
 
     bool IsOpened() const {return m_opened;};
 
@@ -51,7 +59,9 @@ public:
     std::string String() const;
 
 private:
-    OFDDocument *m_ofdDocument;
+    OFDDocument *m_document;
+    //std::weak_ptr<OFDDocument> m_document;
+
     uint64_t m_id;
     std::string m_filename;
 

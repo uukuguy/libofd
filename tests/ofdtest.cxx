@@ -21,6 +21,8 @@ int main(int argc, char *argv[]){
     OFDPackage package;
     if ( package.Open(argv[1]) ){
         OFDDocument *document = package.GetOFDDocument(); 
+        //OFDDocumentPtr document = package.GetOFDDocument(); 
+
         LOG(DEBUG) << document->String();
 
         size_t n_pages = document->GetPagesCount();
@@ -29,7 +31,8 @@ int main(int argc, char *argv[]){
         for ( size_t i = 0 ; i < n_pages ; i++ ){
             TIMED_SCOPE(timerDrawPage, "Draw Page");
 
-            OFDPage *page = document->GetOFDPage(i);
+            //OFDPage *page = document->GetOFDPage(i);
+            OFDPagePtr page = document->GetOFDPage(i);
             page->Open();
 
             VLOG(3) << page->String(); 

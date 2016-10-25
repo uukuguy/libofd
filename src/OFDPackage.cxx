@@ -9,7 +9,7 @@ using namespace tinyxml2;
 
 using namespace ofd;
 
-OFDPackage::OFDPackage() : m_ofdDocument(NULL), m_opened(false), m_zip(NULL){
+OFDPackage::OFDPackage() : m_document(nullptr), m_opened(false), m_zip(nullptr){
 
 }
 
@@ -28,7 +28,7 @@ bool OFDPackage::Open(const std::string& filename){
     this->m_filename = filename;
     int error = 0;
     m_zip = zip_open(filename.c_str(), 0, &error);
-    if ( m_zip == NULL ){
+    if ( m_zip == nullptr ){
         LOG(ERROR) << "Error: Open " << filename << " failed. error=" << error;
         return false;
     }
@@ -60,13 +60,13 @@ bool OFDPackage::init() {
 void OFDPackage::Close(){
     if (!m_opened) return;
 
-    if ( m_ofdDocument != NULL ){
-        delete m_ofdDocument;
-        m_ofdDocument = NULL;
+    if ( m_document != nullptr ){
+        delete m_document;
+        m_document = nullptr;
     }
 
     zip_close(m_zip);
-    m_zip = NULL;
+    m_zip = nullptr;
 
     m_opened = false;
 }
@@ -82,7 +82,7 @@ std::tuple<std::string, bool> OFDPackage::GetFileContent(const std::string &file
     bool ok = false;
     std::string fileContent;
 
-    std::map<std::string, size_t>::const_iterator it = m_files.find(filename);
+    auto it = m_files.find(filename);
     if ( it != m_files.end() ){
         std::string filename = it->first;
         size_t filesize = it->second;
@@ -193,16 +193,16 @@ bool OFDPackage::parseAttributesXML(const std::string &content){
     }
 
     XMLElement *rootElement = xmldoc->RootElement();
-    if ( rootElement != NULL ){
+    if ( rootElement != nullptr ){
         LOG(DEBUG) << "Root Element Name: " << rootElement->Name();
         VLOG(3) << GetChildElements(rootElement);
 
         const XMLElement *bodyElement = rootElement->FirstChildElement("ofd:DocBody");
-        if ( bodyElement != NULL ){
+        if ( bodyElement != nullptr ){
             VLOG(3) << GetChildElements(bodyElement);
 
             const XMLElement *docInfoElement = bodyElement->FirstChildElement("ofd:DocInfo");
-            if ( docInfoElement != NULL ){
+            if ( docInfoElement != nullptr ){
                 VLOG(3) << GetChildElements(docInfoElement);
 
                 GetChildElementText(docInfoElement, ofd:Title, m_attributes.Title); 
@@ -216,25 +216,27 @@ bool OFDPackage::parseAttributesXML(const std::string &content){
 
             GetChildElementText(bodyElement, ofd:DocRoot, m_attributes.DocRoot);
             //const XMLElement *docRootElement = bodyElement->FirstChildElement("ofd:DocRoot");
-            //if ( docRootElement != NULL ){
+            //if ( docRootElement != nulptr ){
                 //m_attributes.DocRoot = docRootElement->GetText();
             //}
 
             LOG(INFO) << String();
         }
     } else {
-        LOG(ERROR) << "rootElement == NULL";
+        LOG(ERROR) << "rootElement == nullptr";
     }
     delete xmldoc;
-    xmldoc = NULL;
+    xmldoc = nullptr;
 
     return true;
 }
 
 bool OFDPackage::initRootDocument() {
     bool ok = false;
-    this->m_ofdDocument = new OFDDocument(this, GetDocRoot());
-    ok = this->m_ofdDocument->Open();
+
+    m_document = new OFDDocument(this, GetDocRoot());
+    //m_document = OFDDocumentPtr(new OFDDocument(OFDPackagePtr(this), GetDocRoot()));
+    ok = m_document->Open();
 
     return ok;
 }

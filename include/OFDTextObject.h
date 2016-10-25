@@ -21,7 +21,7 @@ public:
     OFDTextObject();
     virtual ~OFDTextObject();
 
-    virtual std::string ToString() const;
+    virtual std::string ToString() const override;
 
 public:
     double X;

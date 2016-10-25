@@ -5,6 +5,14 @@
 
 namespace ofd {
 
+    class OFDPackage;
+    class OFDDocument;
+    class OFDPage;
+
+    typedef std::shared_ptr<OFDPackage> OFDPackagePtr;
+    typedef std::shared_ptr<OFDDocument> OFDDocumentPtr;
+    typedef std::shared_ptr<OFDPage> OFDPagePtr;
+
     class OFDPhysicalBox {
     public:
         double x0;
@@ -28,10 +36,10 @@ namespace ofd {
         double x0, y0, w, h;
     };
 
-    enum OFDColorSpaceType {
-        OFDCOLORSPACE_UNKNOWN = -1,
-        OFDCOLORSPACE_CMYK,
-        OFDCOLORSPACE_GRAY,
+    enum class OFDColorSpaceType {
+        UNKNOWN = -1,
+        CMYK,
+        GRAY,
     };
 
     struct OFDColorSpace {
@@ -46,9 +54,9 @@ namespace ofd {
 
                 ss << "ID: " << ID << std::endl;
                 std::string strType = "Unknown";
-                if ( Type == OFDCOLORSPACE_CMYK ){
+                if ( Type == OFDColorSpaceType::CMYK ){
                     strType = "CMYK";
-                } else if ( Type == OFDCOLORSPACE_GRAY ){
+                } else if ( Type == OFDColorSpaceType::GRAY ){
                     strType = "Gray";
                 }
                 ss << "Type: " << strType << std::endl;
@@ -86,9 +94,9 @@ namespace ofd {
         }
     };
 
-    enum OFDMultiMediaType {
-        OFDMULTIMEDIA_UNKNOWN = -1,
-        OFDMULTIMEDIA_IMAGE,
+    enum class OFDMultiMediaType {
+        UNKNOWN = -1,
+        IMAGE,
     };
 
     struct OFDMultiMedia {
@@ -104,7 +112,7 @@ namespace ofd {
 
                 ss << "ID: " << ID << std::endl;
                 std::string strType = "Unknown";
-                if ( Type == OFDMULTIMEDIA_IMAGE ){
+                if ( Type == OFDMultiMediaType::IMAGE ){
                     strType = "Image";
                 }
                 ss << "Type: " << strType << std::endl;

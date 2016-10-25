@@ -22,8 +22,8 @@
 using namespace tinyxml2;
 using namespace ofd;
 
-OFDPage::OFDPage(OFDDocument *ofdDocument, uint64_t id, const std::string &filename)
-    : m_ofdDocument(ofdDocument), m_id(id), m_filename(filename), m_opened(false){
+OFDPage::OFDPage(OFDDocument *document, uint64_t id, const std::string &filename)
+    : m_document(document), m_id(id), m_filename(filename), m_opened(false){
     m_attributes.clear();
 }
 
@@ -31,19 +31,44 @@ OFDPage::~OFDPage() {
     Close();
 }
 
+//OFDPackagePtr OFDPage::GetPackage() {
+OFDPackage *OFDPage::GetPackage() {
+    return m_document->GetPackage();
+    //OFDDocumentPtr document = m_document.lock();
+    //if ( document != nullptr ){
+        //return document->GetPackage();
+    //} else {
+        //return nullptr;
+    //}
+}
+
+//const OFDPackagePtr OFDPage::GetPackage() const {
+const OFDPackage *OFDPage::GetPackage() const {
+    return m_document->GetPackage();
+    //OFDDocumentPtr document = m_document.lock();
+    //if ( document != nullptr ){
+        //return document->GetPackage();
+    //} else {
+        //return nullptr;
+    //}
+}
+
 bool OFDPage::Open() {
     if ( IsOpened() ) {
         LOG(DEBUG) << "Page is already opened!";
         return true;
     }
-    if ( m_ofdDocument == NULL ) {
-        LOG(WARNING) << "m_ofdDocument == NULL";
+
+    if ( m_document == nullptr ) {
+    //if ( m_document.lock() == nullptr ) {
+        LOG(WARNING) << "m_document == nullptr";
         return false;
     }
 
-    OFDPackage *package = m_ofdDocument->GetPackage();
-    if ( package == NULL ) {
-        LOG(WARNING) << "package == NULL";
+    OFDPackage *package = m_document->GetPackage();
+    //OFDPackagePtr package = GetPackage();
+    if ( package == nullptr ) {
+        LOG(WARNING) << "package == nullptr";
         return false;
     }
 
@@ -73,7 +98,7 @@ void OFDPage::clear() {
 
     for (size_t i = 0 ; i < m_ofdObjects.size() ; i++ ) {
         OFDObject *ofdObject = m_ofdObjects[i];
-        if ( ofdObject != NULL ) delete ofdObject;
+        if ( ofdObject != nullptr ) delete ofdObject;
     }
     m_ofdObjects.clear();
 }
@@ -102,7 +127,7 @@ bool OFDPage::parseXML(const std::string &content) {
 
 
     XMLElement *rootElement = xmldoc.RootElement();
-    if ( rootElement != NULL ){
+    if ( rootElement != nullptr ){
         clear();
 
         VLOG(3) << "Root Element Name: " << rootElement->Name();
@@ -110,12 +135,12 @@ bool OFDPage::parseXML(const std::string &content) {
 
         // <ofd:Area>
         const XMLElement *areaElement = rootElement->FirstChildElement("ofd:Area");
-        if ( areaElement == NULL ) return false;
+        if ( areaElement == nullptr ) return false;
         VLOG(3) << GetChildElements(areaElement);
 
         //     <ofd:PhysicalBox>
         const XMLElement *physicalBoxElement = areaElement->FirstChildElement("ofd:PhysicalBox");
-        if ( physicalBoxElement == NULL ) return false;
+        if ( physicalBoxElement == nullptr ) return false;
         double x0, y0, x1, y1;
         bool ok;
         std::tie(x0, y0, x1, y1, ok) = parsePhysicalBoxElement(physicalBoxElement);
@@ -128,16 +153,16 @@ bool OFDPage::parseXML(const std::string &content) {
 
         // <ofd:Content>
         const XMLElement *contentElement = rootElement->FirstChildElement("ofd:Content");
-        if ( contentElement == NULL ) return false;
+        if ( contentElement == nullptr ) return false;
         VLOG(3) << GetChildElements(contentElement);
 
         //     <ofd:Layer>
         const XMLElement *layerElement = contentElement->FirstChildElement("ofd:Layer");
-        if ( layerElement == NULL ) return false;
+        if ( layerElement == nullptr ) return false;
         //VLOG(3) << GetChildElements(layerElement);
 
         const XMLElement *textObjectElement = layerElement->FirstChildElement("ofd:TextObject");
-        while ( textObjectElement != NULL ) {
+        while ( textObjectElement != nullptr ) {
             VLOG_N_TIMES(1, 3) << GetChildElements(textObjectElement);
 
             //<ofd:TextObject ID="121" CTM="0.3527 0 0 0.3527 -114.807533 111.352325" 
@@ -230,7 +255,9 @@ bool OFDPage::parseXML(const std::string &content) {
 
 void OFDPage::drawText(const OFDTextObject *textObject) const {
     std::string Text = textObject->Text;
-    OFDDocument *document = m_ofdDocument;
+    OFDDocument *document = m_document;
+    //OFDDocumentPtr document = m_document.lock();
+    if ( document == nullptr ) return;
     const OFDFont &font = document->GetFontByID(textObject->Font);
 
     std::string documentRootDir = document->GetRootDir();
@@ -239,6 +266,7 @@ void OFDPage::drawText(const OFDTextObject *textObject) const {
     //VLOG(3) << "Font filename: " << fontFileName;
 
     OFDPackage *package = document->GetPackage();
+    //OFDPackagePtr package = GetPackage();
 
     bool ok = false;
     std::string content;
