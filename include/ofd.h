@@ -13,12 +13,26 @@ namespace ofd {
     typedef std::shared_ptr<OFDDocument> OFDDocumentPtr;
     typedef std::shared_ptr<OFDPage> OFDPagePtr;
 
+    const double mm_per_inch = 25.4;
+    const double default_dpi = 300.0;
+
+    #define length_to_pixel(length, dpi) dpi * length / mm_per_inch 
+
     class OFDPhysicalBox {
     public:
         double x0;
         double y0;
         double x1;
         double y1;
+
+        double Width() const {
+            return x1 - x0;
+        }
+
+        double Height() const {
+            return y1 - y0;
+        }
+
     }; // class OFDPhysicalBox
 
     class OFDPageArea {
@@ -135,11 +149,29 @@ namespace ofd {
         double a, b, c, d, p, q;
     };
 
-}; // namespace ofd
+#define OFDPACKAGE_GET_FILE_CONTENT(package, filename, content) \
+    std::string content; \
+    { \
+        bool ok = false; \
+        std::tie(content, ok) = package->GetFileContent(filename); \
+        if ( !ok ) { \
+            LOG(WARNING) << "package->GetFileContent() failed. filename: " << filename; \
+            return false; \
+        } \
+    }
 
-//#include "OFDPage.h"
-//#include "OFDDocument.h"
-//#include "OFDFile.h"
-//#include "utils.h"
+#define TEXT_TO_XML(content, xmldoc) \
+    XMLDocument *xmldoc = new XMLDocument(); \
+    { \
+        XMLError rc = xmldoc->Parse(content.c_str()); \
+        if ( rc != XML_SUCCESS ){ \
+            LOG(WARNING) << content; \
+            LOG(WARNING) << "xmldoc->Parse() failed."; \
+            delete xmldoc; \
+            return false; \
+        } \
+    } \
+
+}; // namespace ofd
 
 #endif // __LIBOFD_H__

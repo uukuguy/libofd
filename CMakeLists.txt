@@ -10,7 +10,7 @@ LINK_DIRECTORIES(
     /usr/local/lib
 )
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror -Wno-c++11-extensions")
 SET(LIBOFD_DEPENDICES freetype cairo tinyxml2 zip stdc++)
 
 # cmake policy CMP0042

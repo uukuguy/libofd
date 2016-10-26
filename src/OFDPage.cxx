@@ -281,15 +281,19 @@ void OFDPage::drawText(const OFDTextObject *textObject) const {
 
 #include <cairo/cairo.h>
 bool OFDPage::RenderToPNGFile(const std::string& filename){
+    double dpi = default_dpi;
+    double w = length_to_pixel(m_attributes.PageArea.PhysicalBox.Width(), dpi);
+    double h = length_to_pixel(m_attributes.PageArea.PhysicalBox.Height(), dpi);
+    LOG(DEBUG) << "w: " << w << " h: " << h;
 
-    cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 1000, 1000);
+    cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
     cairo_t *cr = cairo_create(surface);
 
     cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
     cairo_paint(cr);
+    cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
 
     cairo_text_extents_t te;
-    cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
     cairo_select_font_face(cr, "Simsun", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
     cairo_set_font_size(cr, 12);
 
@@ -298,7 +302,27 @@ bool OFDPage::RenderToPNGFile(const std::string& filename){
         OFDTextObject *textObject = static_cast<OFDTextObject*>(ofdObject);
 
         double X = textObject->X;
-        double Y = textObject->Y + 800;
+        double Y = textObject->Y;
+        //double X = length_to_pixel(textObject->X, dpi);
+        //double Y = h - length_to_pixel(textObject->Y, dpi);
+        Y = Y + h;
+        //LOG(DEBUG) << "X: " << X << " Y: " << Y;
+
+        double fontSize = textObject->FontSize;
+        cairo_set_font_size(cr, fontSize);
+
+        //double a = textObject->CTM.a;
+        //double b = textObject->CTM.b;
+        //double c = textObject->CTM.c;
+        //double d = textObject->CTM.d;
+        //double p = textObject->CTM.p;
+        //double q = textObject->CTM.q;
+
+        //cairo_matrix_t font_matrix{a, b, c, d, p, q};
+        //LOG(DEBUG) << "a:" << a << " b:" << b << " c:" << c
+            //<< " d:" << d << " p:" << p << " q:" << q;
+        //cairo_set_matrix(cr, &font_matrix);
+
         std::string Text = textObject->Text;
 
         //drawText(textObject);

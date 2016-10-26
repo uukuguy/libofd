@@ -4,6 +4,7 @@
 #include "OFDPackage.h"
 #include "OFDDocument.h"
 #include "OFDPage.h"
+#include "OFDCanvas.h"
 #include "utils.h"
 #include "logger.h"
 
@@ -14,7 +15,8 @@ using namespace ofd;
 
 OFDDocument::OFDDocument(OFDPackage *package, const std::string &filename)
     : m_package(package), m_filename(filename), m_opened(false), 
-    m_rootDir(filename.substr(0, filename.rfind('/'))) {
+    m_rootDir(filename.substr(0, filename.rfind('/'))),
+    m_canvas(std::shared_ptr<OFDCanvas>(new OFDCanvas())){
         m_attributes.clear();
 }
 
@@ -91,32 +93,6 @@ std::string OFDDocument::String() const {
     return ss.str();
 }
 
-        //OFDPackagePtr p = m_package.lock(); 
-        //if ( p == nullptr ) return false; 
-
-#define OFDPACKAGE_GET_FILE_CONTENT(filename, content) \
-    std::string content; \
-    { \
-        bool ok = false; \
-        std::tie(content, ok) = m_package->GetFileContent(filename); \
-        if ( !ok ) { \
-            LOG(WARNING) << "package->GetFileContent() failed. filename: " << filename; \
-            return false; \
-        } \
-    }
-
-#define TEXT_TO_XML(content, xmldoc) \
-    XMLDocument *xmldoc = new XMLDocument(); \
-    { \
-        XMLError rc = xmldoc->Parse(content.c_str()); \
-        if ( rc != XML_SUCCESS ){ \
-            LOG(WARNING) << content; \
-            LOG(WARNING) << "xmldoc->Parse() failed."; \
-            delete xmldoc; \
-            return false; \
-        } \
-    } \
-
 
 /*
 <?xml version="1.0" encoding="UTF-8"?>
@@ -137,7 +113,7 @@ std::string OFDDocument::String() const {
 bool OFDDocument::parsePublicResXML(){
     std::string publicResFileName = m_rootDir + "/" + m_attributes.CommonData.PublicRes;
 
-    OFDPACKAGE_GET_FILE_CONTENT(publicResFileName, content);
+    OFDPACKAGE_GET_FILE_CONTENT(m_package, publicResFileName, content);
 
     TEXT_TO_XML(content, xmldoc);
 
@@ -220,7 +196,7 @@ bool OFDDocument::parsePublicResXML(){
 bool OFDDocument::parseDocumentResXML(){
     std::string documentResFileName = m_rootDir + "/" + m_attributes.CommonData.DocumentRes;
 
-    OFDPACKAGE_GET_FILE_CONTENT(documentResFileName, content);
+    OFDPACKAGE_GET_FILE_CONTENT(m_package, documentResFileName, content);
 
     TEXT_TO_XML(content, xmldoc);
 
@@ -268,7 +244,7 @@ bool OFDDocument::parseDocumentResXML(){
 
 bool OFDDocument::parseXML(){
 
-    OFDPACKAGE_GET_FILE_CONTENT(m_filename, content);
+    OFDPACKAGE_GET_FILE_CONTENT(m_package, m_filename, content);
 
     TEXT_TO_XML(content, xmldoc);
 
@@ -339,6 +315,24 @@ bool OFDDocument::loadFonts() {
     for ( size_t i = 0 ; i < GetFontsCount() ; i++ ){
         const OFDFont &font = GetFont(i);
         LOG(DEBUG) << font.ID;
+
+        for ( size_t i = 0 ; i < GetFontsCount() ; i++ ){
+            const OFDFont &font = GetFont(i);
+
+            std::string fontFileName = m_rootDir + "/" + m_attributes.PublicRes.BaseLoc + "/" + font.FontFile; 
+            bool ok;
+            std::string fontContent;
+            std::tie(fontContent, ok) = m_package->GetFileContent(fontFileName);
+            if ( !ok ) {
+                LOG(WARNING) << "Get font file content failed. fontFileName:" << fontFileName;
+                continue;
+            }
+
+            int fontIndex = 0;
+            size_t bufSize = fontContent.length();
+            m_canvas->AddFontFace(font.ID, fontIndex, fontContent.c_str(), bufSize);
+        }
+
     }
     return true;
 }

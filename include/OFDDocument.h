@@ -14,6 +14,7 @@ namespace ofd {
 
 class OFDPackage;
 class OFDPage;
+class OFDCanvas;
 
 
 class OFDDocument {
@@ -137,6 +138,9 @@ public:
 
     std::string String() const;
 
+    std::shared_ptr<OFDCanvas> GetCanvas() {return m_canvas;};
+    const std::shared_ptr<OFDCanvas> GetCanvas() const {return m_canvas;};
+
 private:
     OFDPackage *m_package;
     //std::weak_ptr<OFDPackage> m_package;
@@ -151,6 +155,8 @@ private:
     bool parsePublicResXML();
     bool parseDocumentResXML();
     bool loadFonts();
+
+    std::shared_ptr<OFDCanvas> m_canvas;
 
 }; // class OFDDocument
 
