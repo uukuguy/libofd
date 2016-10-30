@@ -12,7 +12,7 @@ using namespace tinyxml2;
 using namespace ofd;
 
 OFDPage::OFDPage(OFDDocument *ofdDocument, uint64_t id, const std::string &filename)
-    : m_ofdDocument(ofdDocument), m_id(id), m_filename(filename) {
+    : m_ofdDocument(ofdDocument), m_id(id), m_filename(filename), m_opened(false) {
     m_attributes.clear();
 }
 
