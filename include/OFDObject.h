@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 #include <string>
+#include <tinyxml2.h>
+using namespace tinyxml2;
 #include "ofd.h"
 
 
@@ -19,24 +21,36 @@
             //</ofd:TextObject>
 namespace ofd {
 
+enum class OFDObjectType {
+    UNKNOWN = -1,
+    TEXT,
+    PATH,
+    IMAGE
+}; // enum class OFDObjectType
+
 class OFDObject {
 public:
-    OFDObject();
+    OFDObject(OFDObjectType objectType);
     virtual ~OFDObject();
 
+    OFDObjectType GetObjectType() const {return m_objectType;};
+
+    static OFDObject *CreateObject(const std::string &elementName);
+
     virtual std::string ToString() const;
+    virtual bool ParseFromXML(const XMLElement* xmlElement);
 
 public:
+    OFDObjectType m_objectType;
     uint64_t ID;
     OFDCTM CTM;
     OFDBoundary Boundary;
 
     double LineWidth;
     double MiterLimit;
-    int Font;
-    double FontSize;
     bool Stroke;
     bool Fill;
+
     OFDColor StrokeColor;
     OFDColor FillColor;
 

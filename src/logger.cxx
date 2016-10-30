@@ -23,7 +23,7 @@ void Logger::Initialize(int argc, char *argv[]) {
                 "%datetime %logger %level [%fbase:%line %func]: %msg");
     } else if ( VLOG_IS_ON(1) ) {
         defaultConf.set(el::Level::Global, el::ConfigurationType::Format, 
-                "%datetime %logger %level [%fbase:%line]: %msg");
+                "%datetime %logger %level [%fbase:%line %func]: %msg");
     } else {
         defaultConf.set(el::Level::Global, el::ConfigurationType::Format, 
                 "%datetime %logger %level [%fbase:%line]: %msg");

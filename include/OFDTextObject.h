@@ -22,11 +22,15 @@ public:
     virtual ~OFDTextObject();
 
     virtual std::string ToString() const override;
+    virtual bool ParseFromXML(const XMLElement* xmlElement) override;
 
 public:
     double X;
     double Y;
     std::string Text;
+    int Font;
+    double FontSize;
+
 
 }; // class OFDTextObject
 

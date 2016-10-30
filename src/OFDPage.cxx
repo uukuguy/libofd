@@ -161,91 +161,117 @@ bool OFDPage::parseXML(const std::string &content) {
         if ( layerElement == nullptr ) return false;
         //VLOG(3) << GetChildElements(layerElement);
 
-        const XMLElement *textObjectElement = layerElement->FirstChildElement("ofd:TextObject");
-        while ( textObjectElement != nullptr ) {
-            VLOG_N_TIMES(1, 3) << GetChildElements(textObjectElement);
+        const XMLElement *objectElement = layerElement->FirstChildElement();
+        if ( objectElement == nullptr ) {
+            LOG(WARNING) << "No children node under <ofd:Layer>.";
+        } else {
+            while ( objectElement != nullptr ){
+                std::string elementName = objectElement->Name();
+                OFDObject *object = OFDObject::CreateObject(elementName);
+                if ( object != nullptr ){
+                    if ( !object->ParseFromXML(objectElement) ){
+                        LOG(WARNING) << "object->ParseFromXML() failed.";
+                        delete object;
+                    } else {
+                        m_ofdObjects.push_back(object);
+                        std::string elementName = objectElement->Name();
+                        if ( elementName == "ofd:TextObject" ){
+                            OFDTextObject *textObject = static_cast<OFDTextObject*>(object);
+                            m_text += textObject->Text;
+                        }
+                    }
+                }
 
-            //<ofd:TextObject ID="121" CTM="0.3527 0 0 0.3527 -114.807533 111.352325" 
-            //                Boundary="114.807533 185.229584 4.083549 4.733795" 
-            //                LineWidth="1" MiterLimit="3.527" Font="16" Size="14.749" 
-            //                Stroke="false" Fill="true">
-                //<ofd:FillColor ColorSpace="15" Value="0"/>
-                //<ofd:StrokeColor ColorSpace="15" Value="0"/>
-                //<ofd:CGTransform CodePosition="0" CodeCount="1" GlyphCount="1">
-                    //<ofd:Glyphs>4460</ofd:Glyphs> 
-                //</ofd:CGTransform>
-                //<ofd:TextCode X="324.419" Y="-303.723">局</ofd:TextCode>
-            //</ofd:TextObject>
-
-            OFDTextObject* textObject = new OFDTextObject();
-
-            textObject->ID = textObjectElement->IntAttribute("ID");
-
-            // CTM attribute.
-            std::string c = textObjectElement->Attribute("CTM"); 
-            std::vector<std::string> ctmTokens = SpliteString(c);
-            if ( ctmTokens.size() == 6 ){
-                textObject->CTM.a = atof(ctmTokens[0].c_str());
-                textObject->CTM.b = atof(ctmTokens[1].c_str());
-                textObject->CTM.c = atof(ctmTokens[2].c_str());
-                textObject->CTM.d = atof(ctmTokens[3].c_str());
-                textObject->CTM.p = atof(ctmTokens[4].c_str());
-                textObject->CTM.q = atof(ctmTokens[5].c_str());
-            }
-
-            // Boundary attribute.
-            std::string b = textObjectElement->Attribute("Boundary");
-            std::vector<std::string> boundaryTokens = SpliteString(b);
-            if ( boundaryTokens.size() == 4 ){
-                textObject->Boundary.x0 = atof(boundaryTokens[0].c_str());
-                textObject->Boundary.y0 = atof(boundaryTokens[1].c_str());
-                textObject->Boundary.w = atof(boundaryTokens[2].c_str());
-                textObject->Boundary.h = atof(boundaryTokens[3].c_str());
-            }
-
-            // LineWidth attribute.
-            textObject->LineWidth = textObjectElement->DoubleAttribute("LineWidth");
-
-            // MiterLimit attribute.
-            textObject->MiterLimit = textObjectElement->DoubleAttribute("MiterLimit");
-
-            // Font attribute.
-            textObject->Font = textObjectElement->DoubleAttribute("Font");
-
-            // FontSize attribute.
-            textObject->FontSize = textObjectElement->DoubleAttribute("Size");
-
-            // Stroke attribute.
-            textObject->Stroke = textObjectElement->BoolAttribute("Stroke");
-
-            // Fill attribute.
-            textObject->Fill = textObjectElement->BoolAttribute("Fill");
-
-            // <ofd:FillColor>
-            const XMLElement *fillColorElement = textObjectElement->FirstChildElement("ofd:FillColor");
-            textObject->FillColor.ColorSpace = fillColorElement->IntAttribute("ColorSpace");
-            textObject->FillColor.Value = fillColorElement->DoubleAttribute("Value");
-
-            // <ofd:StrokeColor>
-            const XMLElement *strokeColorElement = textObjectElement->FirstChildElement("ofd:StrokeColor");
-            textObject->StrokeColor.ColorSpace = strokeColorElement->IntAttribute("ColorSpace");
-            textObject->StrokeColor.Value = strokeColorElement->DoubleAttribute("Value");
-
-            // <ofd:TextCode>
-            const XMLElement *textCodeElement = textObjectElement->FirstChildElement("ofd:TextCode");
-            textObject->X = textCodeElement->DoubleAttribute("X");
-            textObject->Y = textCodeElement->DoubleAttribute("Y");
-            textObject->Text = textCodeElement->GetText();
-
-            m_ofdObjects.push_back(textObject);
-            m_text += textObject->Text;
-
-            if ( VLOG_IS_ON(5) ){
-                VLOG(5) << textObject->ToString();
-            }
-
-            textObjectElement = textObjectElement->NextSiblingElement("ofd:TextObject");
+                objectElement = objectElement->NextSiblingElement();
+            } 
         }
+
+        //const XMLElement *textObjectElement = layerElement->FirstChildElement("ofd:TextObject");
+        //while( false){
+        ////while ( textObjectElement != nullptr ) {
+            //VLOG_N_TIMES(3, 1) << GetChildElements(textObjectElement);
+
+            ////<ofd:TextObject ID="121" CTM="0.3527 0 0 0.3527 -114.807533 111.352325" 
+            ////                Boundary="114.807533 185.229584 4.083549 4.733795" 
+            ////                LineWidth="1" MiterLimit="3.527" Font="16" Size="14.749" 
+            ////                Stroke="false" Fill="true">
+                ////<ofd:FillColor ColorSpace="15" Value="0"/>
+                ////<ofd:StrokeColor ColorSpace="15" Value="0"/>
+                ////<ofd:CGTransform CodePosition="0" CodeCount="1" GlyphCount="1">
+                    ////<ofd:Glyphs>4460</ofd:Glyphs> 
+                ////</ofd:CGTransform>
+                ////<ofd:TextCode X="324.419" Y="-303.723">局</ofd:TextCode>
+            ////</ofd:TextObject>
+
+            //OFDTextObject* textObject = new OFDTextObject();
+
+            //textObject->ID = textObjectElement->IntAttribute("ID");
+
+            //// CTM attribute.
+            //std::string c = textObjectElement->Attribute("CTM"); 
+            //std::vector<std::string> ctmTokens = SpliteString(c);
+            //if ( ctmTokens.size() == 6 ){
+                //textObject->CTM.xx = atof(ctmTokens[0].c_str());
+                //textObject->CTM.xy = atof(ctmTokens[1].c_str());
+                //textObject->CTM.yx = atof(ctmTokens[2].c_str());
+                //textObject->CTM.yy = atof(ctmTokens[3].c_str());
+                //textObject->CTM.x0 = atof(ctmTokens[4].c_str());
+                //textObject->CTM.y0 = atof(ctmTokens[5].c_str());
+            //}
+
+            //// Boundary attribute.
+            //std::string b = textObjectElement->Attribute("Boundary");
+            //std::vector<std::string> boundaryTokens = SpliteString(b);
+            //if ( boundaryTokens.size() == 4 ){
+                //textObject->Boundary.x0 = atof(boundaryTokens[0].c_str());
+                //textObject->Boundary.y0 = atof(boundaryTokens[1].c_str());
+                //textObject->Boundary.w = atof(boundaryTokens[2].c_str());
+                //textObject->Boundary.h = atof(boundaryTokens[3].c_str());
+            //}
+
+            //// LineWidth attribute.
+            //textObject->LineWidth = textObjectElement->DoubleAttribute("LineWidth");
+
+            //// MiterLimit attribute.
+            //textObject->MiterLimit = textObjectElement->DoubleAttribute("MiterLimit");
+
+            //// Font attribute.
+            //textObject->Font = textObjectElement->DoubleAttribute("Font");
+
+            //// FontSize attribute.
+            //textObject->FontSize = textObjectElement->DoubleAttribute("Size");
+
+            //// Stroke attribute.
+            //textObject->Stroke = textObjectElement->BoolAttribute("Stroke");
+
+            //// Fill attribute.
+            //textObject->Fill = textObjectElement->BoolAttribute("Fill");
+
+            //// <ofd:FillColor>
+            //const XMLElement *fillColorElement = textObjectElement->FirstChildElement("ofd:FillColor");
+            //textObject->FillColor.ColorSpace = fillColorElement->IntAttribute("ColorSpace");
+            //textObject->FillColor.Value = fillColorElement->DoubleAttribute("Value");
+
+            //// <ofd:StrokeColor>
+            //const XMLElement *strokeColorElement = textObjectElement->FirstChildElement("ofd:StrokeColor");
+            //textObject->StrokeColor.ColorSpace = strokeColorElement->IntAttribute("ColorSpace");
+            //textObject->StrokeColor.Value = strokeColorElement->DoubleAttribute("Value");
+
+            //// <ofd:TextCode>
+            //const XMLElement *textCodeElement = textObjectElement->FirstChildElement("ofd:TextCode");
+            //textObject->X = textCodeElement->DoubleAttribute("X");
+            //textObject->Y = textCodeElement->DoubleAttribute("Y");
+            //textObject->Text = textCodeElement->GetText();
+
+            //m_ofdObjects.push_back(textObject);
+            //m_text += textObject->Text;
+
+            //if ( VLOG_IS_ON(5) ){
+                //VLOG(5) << textObject->ToString();
+            //}
+
+            //textObjectElement = textObjectElement->NextSiblingElement("ofd:TextObject");
+        //}
 
         return true;
     }
@@ -281,55 +307,169 @@ void OFDPage::drawText(const OFDTextObject *textObject) const {
 
 #include <cairo/cairo.h>
 bool OFDPage::RenderToPNGFile(const std::string& filename){
-    double dpi = default_dpi;
-    double w = length_to_pixel(m_attributes.PageArea.PhysicalBox.Width(), dpi);
-    double h = length_to_pixel(m_attributes.PageArea.PhysicalBox.Height(), dpi);
-    LOG(DEBUG) << "w: " << w << " h: " << h;
+    //double dpi = default_dpi;
+    double dpi = 96;
+    double pixels_per_mm = dpi / mm_per_inch;
+    double mmWidth = m_attributes.PageArea.PhysicalBox.Width();
+    double mmHeight = m_attributes.PageArea.PhysicalBox.Height();
+    double pixelWidth = length_to_pixel(mmWidth, dpi);
+    double pixelHeight = length_to_pixel(mmHeight, dpi);
+    LOG(DEBUG) << "mmWidth: " << mmWidth << " mmHeight: " << mmHeight;
+    LOG(DEBUG) << "pixelWidth: " << pixelWidth << " pixelHeight: " << pixelHeight;
 
-    cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
+    cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, pixelWidth, pixelHeight);
     cairo_t *cr = cairo_create(surface);
 
     cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
     cairo_paint(cr);
     cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
 
+    //cairo_set_source_rgb(cr, 0.8, 0, 0);
+    //cairo_rectangle(cr, 0, 0, 50, 40);
+    //cairo_stroke(cr);
+    
+    //cairo_set_source_rgb(cr, 0.0, 0, 0.8);
+    //cairo_rectangle(cr, 200, 200, 100, 80);
+    //cairo_stroke(cr);
+
+    cairo_rectangle(cr, 0, 0 + 0.5, 18.1944, 18.1944 + 0.5);
+    cairo_stroke(cr);
+
+
     cairo_text_extents_t te;
     cairo_select_font_face(cr, "Simsun", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-    cairo_set_font_size(cr, 12);
+    //cairo_set_font_size(cr, 12);
+
+    cairo_scale(cr, pixels_per_mm, pixels_per_mm);
+
+    size_t totalObjects = GetOFDObjectsCount(); 
+    if ( totalObjects > 0 ) {
+        //LOG(DEBUG) << "Total " << GetOFDObjectsCount() << " OFD objects to be drawn.";
+    } else{
+        LOG(WARNING) << "There are 0 OFD objects in the page. Page ID=" << this->GetID();
+    }
+
+#define MAX_LOG_ITEMS 5
 
     for ( size_t i = 0 ; i < GetOFDObjectsCount() ; i++ ){
+        //cairo_save(cr);
+
         OFDObject *ofdObject = GetOFDObject(i);
+        if ( ofdObject->GetObjectType() != OFDObjectType::TEXT ) continue;
+
         OFDTextObject *textObject = static_cast<OFDTextObject*>(ofdObject);
 
-        double X = textObject->X;
-        double Y = textObject->Y;
-        //double X = length_to_pixel(textObject->X, dpi);
-        //double Y = h - length_to_pixel(textObject->Y, dpi);
-        Y = Y + h;
-        //LOG(DEBUG) << "X: " << X << " Y: " << Y;
+        // -------- textObject->CTM --------
+        double xx = textObject->CTM.xx;
+        double xy = textObject->CTM.xy;
+        double yx = textObject->CTM.yx;
+        double yy = textObject->CTM.yy;
+        double x0 = textObject->CTM.x0;
+        double y0 = textObject->CTM.y0;
 
+        //cairo_matrix_t cairo_matrix{xx, xy, yx, yy, x0, y0};
+        VLOG_N_TIMES(MAX_LOG_ITEMS, 1) << "\n------------------------------------------";
+        VLOG_N_TIMES(MAX_LOG_ITEMS, 1) << std::endl  
+               <<  "xx:" << xx << " xy:" << xy << std::endl
+               << " yx:" << yx << " yy:" << yy << std::endl
+               << " x0:" << x0 << " y0:" << y0 << std::endl;
+
+        //cairo_set_matrix(cr, &cairo_matrix);
+
+        // -------- font_matrix --------
+        cairo_matrix_t font_matrix;
+        cairo_get_font_matrix(cr, &font_matrix);
+        VLOG_N_TIMES(MAX_LOG_ITEMS, 1) << "Before font_matrix: {"<< 
+            font_matrix.xx << ", " <<
+            font_matrix.xy << ", " <<
+            font_matrix.yx << ", " <<
+            font_matrix.yy << ", " <<
+            font_matrix.x0 << "，" <<
+            font_matrix.y0 << "}";
+
+        //double ratio = mmWidth / textObject->Boundary.w;
         double fontSize = textObject->FontSize;
-        cairo_set_font_size(cr, fontSize);
+        double ratio = dpi / 72;
+        //double realFontSize = fontSize / pixels_per_mm;
+        //double realFontSize = fontSize * pixels_per_mm;
 
-        //double a = textObject->CTM.a;
-        //double b = textObject->CTM.b;
-        //double c = textObject->CTM.c;
-        //double d = textObject->CTM.d;
-        //double p = textObject->CTM.p;
-        //double q = textObject->CTM.q;
+        double fontPixels = dpi * fontSize / 72;
+        //cairo_set_font_size(cr, fontPixels);
+        VLOG_N_TIMES(MAX_LOG_ITEMS, 1) << "fontSize:" << fontSize << " fontPixels:" << fontPixels << " ratio:" << ratio;
+        font_matrix.xx = fontPixels * xx;
+        font_matrix.yy = fontPixels * yy;
+        font_matrix.x0 = x0;
+        font_matrix.y0 = y0;
+        cairo_set_font_matrix(cr, &font_matrix);
+        
+        cairo_get_font_matrix(cr, &font_matrix);
+        VLOG_N_TIMES(MAX_LOG_ITEMS, 1) << "After font_matrix: {"<< 
+            font_matrix.xx << ", " <<
+            font_matrix.xy << ", " <<
+            font_matrix.yx << ", " <<
+            font_matrix.yy << ", " <<
+            font_matrix.x0 << "，" <<
+            font_matrix.y0 << "}";
 
-        //cairo_matrix_t font_matrix{a, b, c, d, p, q};
-        //LOG(DEBUG) << "a:" << a << " b:" << b << " c:" << c
-            //<< " d:" << d << " p:" << p << " q:" << q;
-        //cairo_set_matrix(cr, &font_matrix);
 
         std::string Text = textObject->Text;
+        double X = textObject->Boundary.x0;
+        double Y = textObject->Boundary.y0;
+        double X1 = X;
+        double Y1 = Y;
+        //double X1 = length_to_pixel(X, dpi);
+        //double Y1 = length_to_pixel(Y, dpi);
 
+        // -----------------------------------------------
+        //double X = textObject->X;
+        //double Y = textObject->Y;
+        //LOG(DEBUG) << "X: " << X << " Y: " << Y;
+
+        //cairo_matrix_t ctm{1, 0, 0, 1, 0, 0};
+        //cairo_get_matrix(cr, &ctm);
+        ////cairo_set_matrix(cr, &ctm);
+        //LOG(DEBUG) << "CTM{" << ctm.xx << ", " << ctm.xy << ", " 
+                            //<< ctm.yx << ", " << ctm.yy << ", "
+                            //<< ctm.x0 << ", " << ctm.y0 << "}";
+
+
+        //double X1 = X;
+        //double Y1 = Y;
+
+        //double X1 = X * xx + x0;
+        //double Y1 = Y * yy + y0;
+        
+        //cairo_user_to_device(cr, &X1, &Y1);
+        //LOG(DEBUG) << "user_to_device() X1:" << X1 << " Y1:" << Y1;
+
+        //X1 = length_to_pixel(X1, dpi);
+        //Y1 = length_to_pixel(Y1, dpi);
+        //Y1 = pixelHeight + Y1 + length_to_pixel(y0, dpi);
+        //Y1 = pixelHeight + Y1;
+
+        ////double X1 = (X - x0) / xx;
+        ////double Y1 = (Y - y0) / yy;
+
+        //double X1 = X * xx + x0;
+        //double Y1 = Y * yy + y0;
+        ////Y1 = (pixelHeight + Y1);
+
+        //X1 = length_to_pixel(X, dpi);
+        //Y1 = length_to_pixel(Y, dpi);
+        //Y1 = (pixelHeight + Y1);
+        
+        //LOG(DEBUG) << X << " * " << xx << " + " << x0 << " = " << X1;
+        //LOG(DEBUG) << Y << " * " << yy << " + " << y0 << " = " << Y1;
+        VLOG_N_TIMES(MAX_LOG_ITEMS, 1) << "X: " << X << " Y:" << Y << " => " << "X1: " << X1 << " Y1: " << Y1;
+        
         //drawText(textObject);
         
+
         cairo_text_extents(cr, Text.c_str(), &te);
-        cairo_move_to(cr, X + 0.5 - te.width / 2 - te.x_bearing, Y + 0.5 - te.height / 2 - te.y_bearing);
+        cairo_move_to(cr, X1 + 0.5 - te.width / 2 - te.x_bearing, Y1 + 0.5 - te.height / 2 - te.y_bearing);
         cairo_show_text(cr, Text.c_str());
+
+        //cairo_restore(cr);
     }
 
 

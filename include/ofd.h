@@ -141,12 +141,14 @@ namespace ofd {
 
     // CTM (Context Translate Matrix)
     //
-    // a  b  0
-    // c  d  0
-    // p  q  1
+    // xx  xy  0
+    // yx  yy  0
+    // x0  y0  1
     //
     struct OFDCTM {
-        double a, b, c, d, p, q;
+        double xx; double xy;
+        double yx; double yy;
+        double x0; double y0;
     };
 
 #define OFDPACKAGE_GET_FILE_CONTENT(package, filename, content) \
