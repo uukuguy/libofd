@@ -69,34 +69,54 @@ size_t OFDPackage::getZipFileSize(zip* handle, const char *filename){
 std::tuple<std::string, bool> OFDPackage::GetFileContent(const std::string &filename) const {
     bool ok = false;
     std::string fileContent;
+    zip_int64_t len = 0;
+    size_t sum = 0;
+    char buf[100] = {0};
 
     std::map<std::string, size_t>::const_iterator it = m_files.find(filename);
     if ( it != m_files.end() ){
         std::string filename = it->first;
         size_t filesize = it->second;
 
-
-        zip_file *file = zip_fopen(m_zip, filename.c_str(), ZIP_FL_NOCASE);
-        char *content = new char[filesize];
-        const zip_int64_t did_read = zip_fread(file, content, filesize);
-        if ( did_read > 0 ){
-            if ( strlen(content) < filesize ){
-                LOG(WARNING) << "File " << filename << " is truncated. from " << filesize << " to " << strlen(content);
+        zip_file *file = zip_fopen(m_zip,filename.c_str(), ZIP_FL_NOCASE);
+        if(file){
+            while( sum != filesize ){
+                len = zip_fread(file,buf,100);
+                if( len < 0 ){
+                    LOG(ERROR) << "zip_fread error\n";
+                    zip_fclose(file);
+                    return std::make_tuple("",ok);
+                }
+                fileContent.append(buf,len);
+                sum += len;
             }
-            if ( strlen(content) > filesize ){
-                LOG(WARNING) << "File readed " << strlen(content) << " more then " << filesize;
-                content[filesize] = '\0';
-            }
-
-            if ( VLOG_IS_ON(5) ){
-                VLOG(5) << "\n[ " << filename << " ]\n\n" << content << "\n\n--------\n\n";
-            }
-
-            fileContent = std::string(content);
+            zip_fclose(file);
+            LOG(INFO) << "filesize:" << filesize << " fileContent size:" << fileContent.size();
             ok = true;
-            delete[] content;
         }
-        zip_fclose(file);
+
+
+        //zip_file *file = zip_fopen(m_zip, filename.c_str(), ZIP_FL_NOCASE);
+        //char *content = new char[filesize];
+        //const zip_int64_t did_read = zip_fread(file, content, filesize);
+        //if ( did_read > 0 ){
+        //    if ( strlen(content) < filesize ){
+        //        LOG(WARNING) << "File " << filename << " is truncated. from " << filesize << " to " << strlen(content);
+        //    }
+        //    if ( strlen(content) > filesize ){
+        //        LOG(WARNING) << "File readed " << strlen(content) << " more then " << filesize;
+        //        content[filesize] = '\0';
+        //    }
+
+        //    if ( VLOG_IS_ON(5) ){
+        //        VLOG(5) << "\n[ " << filename << " ]\n\n" << content << "\n\n--------\n\n";
+        //    }
+
+        //    fileContent = std::string(content);
+        //    ok = true;
+        //    delete[] content;
+        //}
+        //zip_fclose(file);
     } else {
         LOG(ERROR) << filename << " is not exist in zipfile.";
     }
