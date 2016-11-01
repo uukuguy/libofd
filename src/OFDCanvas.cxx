@@ -7,47 +7,19 @@
 #include <cairo/cairo.h>
 #include <cairo/cairo-ft.h>
 
+#include "ofd.h"
 #include "logger.h"
 #include "OFDCanvas.h"
 
 using namespace ofd;
-
-
-FT_Face freetype_create_memory_face(FT_Library library, int faceIndex, const char *faceBuf, size_t bufSize){
-    FT_Face face;
-    FT_Error error = FT_New_Memory_Face(library, (const FT_Byte*)faceBuf, bufSize, faceIndex, &face);
-    if ( error == FT_Err_Unknown_File_Format ){
-        return nullptr;
-    } else if ( error ){
-        return nullptr;
-    }
-
-    if ( face != nullptr ){
-        std::stringstream ss;
-        ss << std::endl 
-            << "------------------------------" << std::endl
-            << "FontFace" << std::endl;
-        ss << "num_glyphs: " << face->num_glyphs << std::endl;
-        ss << "face_flags: " << face->face_flags << std::endl;
-        ss << "units_per_EM: " << face->units_per_EM << std::endl;
-        ss << "num_fixed_sizes: " << face->num_fixed_sizes << std::endl;
-        ss << "available_sizes: " << face->available_sizes << std::endl;
-        ss << std::endl
-           << "------------------------------" << std::endl;
-
-        LOG(DEBUG) << ss.str();
-    }
-    return face;
-}
 
 // ********************************************************
 // ********       class OFDCanvas::DrawDevice      ********
 // ********************************************************
 class OFDCanvas::DrawDevice {
 public:
-    DrawDevice();
+    DrawDevice(double mmWidth, double mmHeight);
     virtual ~DrawDevice();
-    virtual bool AddFontFace(int fontID, int faceIndex, const char *fontFaceBuf, size_t bufSize) = 0;
     virtual bool SetCharSize(int fontID, int ptSize, int dpiX, int dpiY) = 0;
     virtual bool SetPixelSize(int fontID, int pixelWidth, int pixelHeight) = 0;
     virtual void WriteGlyph(int fontID, double fontSize, uint64_t charcode) = 0;
@@ -58,27 +30,37 @@ protected:
     cairo_t *m_cr;
 
 private:
-    void initCairo();
+    void initCairo(double mmWidth, double mmHeight);
 
     std::map<int, cairo_font_face_t*> m_faces;
 
 }; // class OFDCanvas::DrawDevice
 
 // ======== OFDCanvas::DrawDevice::OFDCanvas() ========
-OFDCanvas::DrawDevice::DrawDevice(){
-    initCairo();
+OFDCanvas::DrawDevice::DrawDevice(double mmWidth, double mmHeight){
+    initCairo(mmWidth, mmHeight);
 }
 
 // -------- OFDCanvas::DrawDevice::initCairo() --------
-void OFDCanvas::DrawDevice::initCairo(){
-    m_surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 1000, 1000);
-    m_cr = cairo_create(m_surface);
-    cairo_set_source_rgb(m_cr, 1.0, 1.0, 1.0);
-    cairo_paint(m_cr);
+void OFDCanvas::DrawDevice::initCairo(double mmWidth, double mmHeight){
 
-    cairo_set_source_rgb(m_cr, 0.0, 0.0, 0.0);
-    cairo_select_font_face(m_cr, "Simsun", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-    cairo_set_font_size(m_cr, 12);
+    //double dpi = default_dpi;
+    double dpi = 96;
+    //double pixels_per_mm = dpi / mm_per_inch;
+    double pixelWidth = length_to_pixel(mmWidth, dpi);
+    double pixelHeight = length_to_pixel(mmHeight, dpi);
+    LOG(DEBUG) << "mmWidth: " << mmWidth << " mmHeight: " << mmHeight;
+    LOG(DEBUG) << "pixelWidth: " << pixelWidth << " pixelHeight: " << pixelHeight;
+
+    cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, pixelWidth, pixelHeight);
+    cairo_t *cr = cairo_create(surface);
+
+    cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
+    cairo_paint(cr);
+    cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+
+    m_surface = surface;
+    m_cr = cr;
 }
 
 // ======== OFDCanvas::DrawDevice::~OFDCanvas() ========
@@ -93,9 +75,8 @@ OFDCanvas::DrawDevice::~DrawDevice(){
 // ********************************************************
 class CairoDrawDevice : public OFDCanvas::DrawDevice {
 public:
-    CairoDrawDevice();
+    CairoDrawDevice(double mmWidth, double mmHeight);
     virtual ~CairoDrawDevice();
-    virtual bool AddFontFace(int fontID, int faceIndex, const char *fontFaceBuf, size_t bufSize) override;
     virtual bool SetCharSize(int fontID, int ptSize, int dpiX, int dpiY) override;
     virtual bool SetPixelSize(int fontID, int pixelWidth, int pixelHeight) override;
 
@@ -135,7 +116,8 @@ cairo_scaled_font_t* cairo_create_scaled_font(cairo_t *cr, cairo_font_face_t *fo
 }
 
 // ======== CairoDrawDevice::CairoDrawDevice() ========
-CairoDrawDevice::CairoDrawDevice(){
+CairoDrawDevice::CairoDrawDevice(double mmWidth, double mmHeight)
+    : OFDCanvas::DrawDevice(mmWidth, mmHeight){
     init();
 }
 
@@ -165,47 +147,6 @@ void CairoDrawDevice::clear(){
         FT_Done_FreeType(m_library);
     }
 }
-/**
- *
- * struct cairo_matrix_t {
- *      double xx; double yx;
- *      double xy; double yy;
- *      double x0; double y0;
- * };
- *
- * x_new = xx * x + xy * y + x0;
- * y_new = yx * x + yy * y + y0;
- *
- * **/
-// ======== CairoDrawDevice::AddFontFace() ========
-bool CairoDrawDevice::AddFontFace(int fontID, int faceIndex, const char *fontFaceBuf, size_t bufSize){
-    bool ok = false;
-
-    FT_Face ft_face = freetype_create_memory_face(m_library, faceIndex, fontFaceBuf, bufSize);
-    if ( ft_face != nullptr ){
-        // Flags to pass to FT_Load_Glyph when loading glyphs from the font. 
-        // These flags are OR'ed together with the flags derived from the 
-        // cairo_font_options_t passed to cairo_scaled_font_create(), 
-        // so only a few values such as FT_LOAD_VERTICAL_LAYOUT, 
-        // and FT_LOAD_FORCE_AUTOHINT are useful.  
-        int load_flags = 0;
-        cairo_font_face_t *cairo_face = cairo_ft_font_face_create_for_ft_face(ft_face, load_flags);
-
-        static const cairo_user_data_key_t key{};
-        int status = cairo_font_face_set_user_data(cairo_face, &key, ft_face, (cairo_destroy_func_t) FT_Done_Face);
-        if ( status ) {
-            cairo_font_face_destroy(cairo_face);
-            FT_Done_Face(ft_face);
-            return false;
-        }
-
-        m_faces[fontID] = cairo_face;
-        ok = true;
-    }
-
-    return ok;
-}
-
 // ======== CairoDrawDevice::SetCharSize() ========
 bool CairoDrawDevice::SetCharSize(int fontID, int ptSize, int dpiX, int dpiY){
     return true;
@@ -264,9 +205,8 @@ void CairoDrawDevice::DrawGlyph(double x, double y, const std::string &text, int
 // ********************************************************
 class FreetypeDrawDevice : public OFDCanvas::DrawDevice {
 public:
-    FreetypeDrawDevice();
+    FreetypeDrawDevice(double mmWidth, double mmHeight);
     virtual ~FreetypeDrawDevice();
-    virtual bool AddFontFace(int fontID, int faceIndex, const char *fontFaceBuf, size_t bufSize) override;
     virtual bool SetCharSize(int fontID, int ptSize, int dpiX, int dpiY) override;
     virtual bool SetPixelSize(int fontID, int pixelWidth, int pixelHeight) override;
     virtual void WriteGlyph(int fontID, double fontSize, uint64_t charcode) override;
@@ -291,7 +231,8 @@ private:
 
 
 // ======== FreetypeDrawDevice::FreetypeDrawDevice() ========
-FreetypeDrawDevice::FreetypeDrawDevice(){
+FreetypeDrawDevice::FreetypeDrawDevice(double mmWidth, double mmHeight)
+    : OFDCanvas::DrawDevice(mmWidth, mmHeight){
     init();
 }
 
@@ -316,18 +257,6 @@ void FreetypeDrawDevice::clear(){
     }
     m_faces.clear();
     FT_Done_FreeType(m_library);
-}
-
-// ======== FreetypeDrawDevice::AddFontFace() ========
-bool FreetypeDrawDevice::AddFontFace(int fontID, int faceIndex, const char *faceBuf, size_t bufSize){
-    bool ok = false;
-
-    FT_Face face = freetype_create_memory_face(m_library, faceIndex, faceBuf, bufSize);
-    if ( face != nullptr ){
-        m_faces[fontID] = face;
-        ok = true;
-    }
-    return ok;
 }
 
 // ======== FreetypeDrawDevice::SetCharSize() ========
@@ -395,19 +324,14 @@ void FreetypeDrawDevice::DrawGlyph(double x, double y, const std::string &text, 
 // ********************************************************
 
 // ======== OFDCanvas::OFDCanvas() ========
-OFDCanvas::OFDCanvas(){
-    m_drawDevice = std::unique_ptr<OFDCanvas::DrawDevice>((static_cast<OFDCanvas::DrawDevice*>(new CairoDrawDevice())));
+OFDCanvas::OFDCanvas(double mmWidth, double mmHeight){
+    m_drawDevice = std::unique_ptr<OFDCanvas::DrawDevice>((static_cast<OFDCanvas::DrawDevice*>(new CairoDrawDevice(mmWidth, mmHeight))));
     //m_drawDevice = std::unique_ptr<OFDCanvas::DrawDevice>((static_cast<OFDCanvas::DrawDevice*>(new FreetypeDrawDevice())));
 }
 
 // ======== OFDCanvas::~OFDCanvas() ========
 OFDCanvas::~OFDCanvas(){
     m_drawDevice = nullptr;
-}
-
-// ======== OFDCanvas::AddFontFace() ========
-bool OFDCanvas::AddFontFace(int fontID, int faceIndex, const char *fontFaceBuf, size_t bufSize){
-    return m_drawDevice->AddFontFace(fontID, faceIndex, fontFaceBuf, bufSize);
 }
 
 // ======== OFDCanvas::SetCharSize() ========

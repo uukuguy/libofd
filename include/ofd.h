@@ -82,32 +82,6 @@ namespace ofd {
         }
     };
 
-    struct OFDFont {
-        int ID;
-        std::string FontName;
-        std::string FamilyName;
-        std::string Charset;
-        std::string FontFile;
-
-        std::string ToString() const {
-            std::stringstream ss;
-            ss << std::endl 
-                << "------------------------------" << std::endl
-                << "OFDFont" << std::endl;
-
-                ss << "ID: " << ID << std::endl;
-                ss << "FontName: " << FontName << std::endl;
-                ss << "FamilyName: " << FamilyName << std::endl;
-                ss << "Charset: " << Charset << std::endl;
-                ss << "FontFile: " << FontFile << std::endl;
-
-                ss << std::endl
-                   << "------------------------------" << std::endl;
-
-            return ss.str();
-        }
-    };
-
     enum class OFDMultiMediaType {
         UNKNOWN = -1,
         IMAGE,

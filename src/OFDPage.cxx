@@ -1,8 +1,10 @@
 #include <iostream>
 #include <sstream>
+#include "FontREsource.h"
 #include "OFDPackage.h"
 #include "OFDDocument.h"
 #include "OFDPage.h"
+#include "OFDCanvas.h"
 #include "OFDTextObject.h"
 #include "utils.h"
 #include "logger.h"
@@ -82,6 +84,12 @@ bool OFDPage::Open() {
 
     m_opened = parseXML(content);
 
+    if ( IsOpened() ){
+        double mmWidth = m_attributes.PageArea.PhysicalBox.Width();
+        double mmHeight = m_attributes.PageArea.PhysicalBox.Height();
+        m_canvas = std::unique_ptr<OFDCanvas>(new OFDCanvas(mmWidth, mmHeight));
+    }
+
     return IsOpened();
 }
 
@@ -101,6 +109,8 @@ void OFDPage::clear() {
         if ( ofdObject != nullptr ) delete ofdObject;
     }
     m_ofdObjects.clear();
+
+    m_canvas = nullptr;
 }
 
 std::string OFDPage::String() const {
@@ -336,8 +346,8 @@ bool OFDPage::RenderToPNGFile(const std::string& filename){
     cairo_stroke(cr);
 
 
-    cairo_text_extents_t te;
-    cairo_select_font_face(cr, "Simsun", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+    // -------- Set FontFace --------
+    //cairo_select_font_face(cr, "Simsun", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
     //cairo_set_font_size(cr, 12);
 
     cairo_scale(cr, pixels_per_mm, pixels_per_mm);
@@ -359,6 +369,18 @@ bool OFDPage::RenderToPNGFile(const std::string& filename){
 
         OFDTextObject *textObject = static_cast<OFDTextObject*>(ofdObject);
 
+        const std::shared_ptr<FontResource> fontResource = m_document->GetFontResource();
+        cairo_font_face_t *fontFace = (cairo_font_face_t*)fontResource->GetFontFace(textObject->Font);
+        if ( fontFace != nullptr ){
+            cairo_set_font_face(cr, fontFace);
+            //cairo_font_options_t *font_options = cairo_font_options_create();
+            //cairo_scaled_font_t *scaled_font = cairo_scaled_font_create(fontFace, &font_matrix, &ctm, font_options);
+            //cairo_set_scaled_font(cr, scaled_font);
+
+        } else {
+            LOG(WARNING) << "Font not found. ID=" << textObject->Font;
+        }
+
         // -------- textObject->CTM --------
         double xx = textObject->CTM.xx;
         double xy = textObject->CTM.xy;
@@ -373,43 +395,45 @@ bool OFDPage::RenderToPNGFile(const std::string& filename){
                <<  "xx:" << xx << " xy:" << xy << std::endl
                << " yx:" << yx << " yy:" << yy << std::endl
                << " x0:" << x0 << " y0:" << y0 << std::endl;
+        //cairo_matrix_t ctm{xx, xy, yx, yy, x0, y0};
 
         //cairo_set_matrix(cr, &cairo_matrix);
 
         // -------- font_matrix --------
         cairo_matrix_t font_matrix;
         cairo_get_font_matrix(cr, &font_matrix);
-        VLOG_N_TIMES(MAX_LOG_ITEMS, 1) << "Before font_matrix: {"<< 
-            font_matrix.xx << ", " <<
-            font_matrix.xy << ", " <<
-            font_matrix.yx << ", " <<
-            font_matrix.yy << ", " <<
-            font_matrix.x0 << "，" <<
-            font_matrix.y0 << "}";
+        //VLOG_N_TIMES(MAX_LOG_ITEMS, 1) << "Before font_matrix: {"<< 
+            //font_matrix.xx << ", " <<
+            //font_matrix.xy << ", " <<
+            //font_matrix.yx << ", " <<
+            //font_matrix.yy << ", " <<
+            //font_matrix.x0 << "，" <<
+            //font_matrix.y0 << "}";
 
         //double ratio = mmWidth / textObject->Boundary.w;
         double fontSize = textObject->FontSize;
-        double ratio = dpi / 72;
+        //double ratio = dpi / 72;
         //double realFontSize = fontSize / pixels_per_mm;
         //double realFontSize = fontSize * pixels_per_mm;
 
         double fontPixels = dpi * fontSize / 72;
         //cairo_set_font_size(cr, fontPixels);
-        VLOG_N_TIMES(MAX_LOG_ITEMS, 1) << "fontSize:" << fontSize << " fontPixels:" << fontPixels << " ratio:" << ratio;
+        //VLOG_N_TIMES(MAX_LOG_ITEMS, 1) << "fontSize:" << fontSize << " fontPixels:" << fontPixels << " ratio:" << ratio;
         font_matrix.xx = fontPixels * xx;
         font_matrix.yy = fontPixels * yy;
         font_matrix.x0 = x0;
         font_matrix.y0 = y0;
-        cairo_set_font_matrix(cr, &font_matrix);
+        //cairo_set_font_matrix(cr, &font_matrix);
         
         cairo_get_font_matrix(cr, &font_matrix);
-        VLOG_N_TIMES(MAX_LOG_ITEMS, 1) << "After font_matrix: {"<< 
-            font_matrix.xx << ", " <<
-            font_matrix.xy << ", " <<
-            font_matrix.yx << ", " <<
-            font_matrix.yy << ", " <<
-            font_matrix.x0 << "，" <<
-            font_matrix.y0 << "}";
+        //VLOG_N_TIMES(MAX_LOG_ITEMS, 1) << "After font_matrix: {"<< 
+            //font_matrix.xx << ", " <<
+            //font_matrix.xy << ", " <<
+            //font_matrix.yx << ", " <<
+            //font_matrix.yy << ", " <<
+            //font_matrix.x0 << "，" <<
+            //font_matrix.y0 << "}";
+
 
 
         std::string Text = textObject->Text;
@@ -465,6 +489,7 @@ bool OFDPage::RenderToPNGFile(const std::string& filename){
         //drawText(textObject);
         
 
+        cairo_text_extents_t te;
         cairo_text_extents(cr, Text.c_str(), &te);
         cairo_move_to(cr, X1 + 0.5 - te.width / 2 - te.x_bearing, Y1 + 0.5 - te.height / 2 - te.y_bearing);
         cairo_show_text(cr, Text.c_str());

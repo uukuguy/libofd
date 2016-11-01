@@ -9,10 +9,9 @@ const int defaultDPI = 300;
 
 class OFDCanvas {
 public:
-    OFDCanvas();
+    OFDCanvas(double mmWidth, double mmHeight);
     virtual ~OFDCanvas();
 
-    bool AddFontFace(int fontID, int faceIndex, const char *fontFaceBuf, size_t bufSize);
     bool SetCharSize(int fontID, int ptSize, int dpiX = defaultDPI, int dpiY = 0);
     bool SetPixelSize(int fontID, int pixelWidth, int pixelHeight = 0);
     void WriteGlyph(int fontID, double fontSize, uint64_t charcode);

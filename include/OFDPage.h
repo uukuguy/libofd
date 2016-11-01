@@ -3,6 +3,7 @@
 
 #ifdef __cplusplus
 
+#include <memory>
 #include <string>
 #include <vector>
 #include <tuple>
@@ -10,9 +11,11 @@
 
 namespace ofd {
 
+class FontResource;
 class OFDDocument;
 class OFDObject;
 class OFDTextObject;
+class OFDCanvas;
 
 class OFDPage {
 public:
@@ -58,6 +61,8 @@ public:
 
     std::string String() const;
 
+    const std::shared_ptr<FontResource> GetFontResource() const {return m_fontResource;};
+
 private:
     OFDDocument *m_document;
     //std::weak_ptr<OFDDocument> m_document;
@@ -75,6 +80,9 @@ private:
     bool parseXML(const std::string &content); 
 
     void drawText(const OFDTextObject *textObject) const;
+
+    std::unique_ptr<OFDCanvas> m_canvas;
+    std::shared_ptr<FontResource> m_fontResource;
 
 }; // class OFDPage
 

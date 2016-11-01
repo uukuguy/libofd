@@ -22,6 +22,7 @@ public:
     bool Open(const std::string& filename);
     void Close();
 
+    bool ReadFile(const std::string &filename, char **buffer, size_t *bufSize) const;
     std::tuple<std::string, bool> GetFileContent(const std::string &filename) const; 
     std::string GetDocRoot() const {return m_attributes.DocRoot;};
 

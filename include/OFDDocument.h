@@ -9,12 +9,15 @@
 #include <map>
 #include <tuple>
 #include "ofd.h"
+#include "OFDFont.h"
 
 namespace ofd {
 
+class FontResource;
 class OFDPackage;
 class OFDPage;
 class OFDCanvas;
+
 
 
 class OFDDocument {
@@ -138,8 +141,8 @@ public:
 
     std::string String() const;
 
-    std::shared_ptr<OFDCanvas> GetCanvas() {return m_canvas;};
-    const std::shared_ptr<OFDCanvas> GetCanvas() const {return m_canvas;};
+
+    const std::shared_ptr<FontResource> GetFontResource() const {return m_fontResource;};
 
 private:
     OFDPackage *m_package;
@@ -156,7 +159,7 @@ private:
     bool parseDocumentResXML();
     bool loadFonts();
 
-    std::shared_ptr<OFDCanvas> m_canvas;
+    std::shared_ptr<FontResource> m_fontResource;
 
 }; // class OFDDocument
 

@@ -5,6 +5,7 @@
 #include "OFDDocument.h"
 #include "OFDPage.h"
 #include "OFDCanvas.h"
+#include "FontResource.h"
 #include "utils.h"
 #include "logger.h"
 
@@ -15,14 +16,14 @@ using namespace ofd;
 
 OFDDocument::OFDDocument(OFDPackage *package, const std::string &filename)
     : m_package(package), m_filename(filename), m_opened(false), 
-    m_rootDir(filename.substr(0, filename.rfind('/'))),
-    m_canvas(std::shared_ptr<OFDCanvas>(new OFDCanvas())){
+    m_rootDir(filename.substr(0, filename.rfind('/'))){
         m_attributes.clear();
 }
 
 
 OFDDocument:: ~OFDDocument() {
     this->Close();
+    m_fontResource = nullptr;
 }
 
 bool OFDDocument::Open() {
@@ -30,13 +31,14 @@ bool OFDDocument::Open() {
         LOG(DEBUG) << "Document is already opened.";
         return true;
     }
-
     m_opened = false;
 
     if ( m_package == nullptr ) {
         LOG(WARNING) << "m_package == nullptr.";
         return false;
     }
+
+    m_fontResource = std::shared_ptr<FontResource>(FontResource::NewFontResource());
 
     if ( parseXML() ){
         if ( parsePublicResXML() ){
@@ -73,6 +75,7 @@ void OFDDocument::Close() {
     if ( !IsOpened() ) return;
 
     m_attributes.clear();
+    m_fontResource = nullptr;
 }
 
 std::string OFDDocument::String() const {
@@ -316,24 +319,25 @@ bool OFDDocument::loadFonts() {
         const OFDFont &font = GetFont(i);
         LOG(DEBUG) << font.ID;
 
-        for ( size_t i = 0 ; i < GetFontsCount() ; i++ ){
-            const OFDFont &font = GetFont(i);
+        std::string fontFileName = m_rootDir + "/" + m_attributes.PublicRes.BaseLoc + "/" + font.FontFile; 
+        LOG(DEBUG) << fontFileName;
+        bool ok;
+        //std::string fontContent;
+        //std::tie(fontContent, ok) = m_package->GetFileContent(fontFileName);
+        char *buffer = nullptr;
+        size_t bufSize = 0;
+        ok = m_package->ReadFile(fontFileName, &buffer, &bufSize);
+        if ( !ok ) {
+            LOG(WARNING) << "Get font file content failed. fontFileName:" << fontFileName;
+            continue;
+        } 
+        LOG(DEBUG) << "fontContent length:" << bufSize;
 
-            std::string fontFileName = m_rootDir + "/" + m_attributes.PublicRes.BaseLoc + "/" + font.FontFile; 
-            bool ok;
-            std::string fontContent;
-            std::tie(fontContent, ok) = m_package->GetFileContent(fontFileName);
-            if ( !ok ) {
-                LOG(WARNING) << "Get font file content failed. fontFileName:" << fontFileName;
-                continue;
-            }
-
-            int fontIndex = 0;
-            size_t bufSize = fontContent.length();
-            m_canvas->AddFontFace(font.ID, fontIndex, fontContent.c_str(), bufSize);
-        }
-
+        int fontIndex = 0;
+        m_fontResource->AddFontFace(font.ID, fontIndex, buffer, bufSize);
+        delete buffer;
     }
+
     return true;
 }
 

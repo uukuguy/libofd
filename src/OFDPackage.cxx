@@ -78,6 +78,54 @@ size_t OFDPackage::getZipFileSize(zip* handle, const char *filename){
     return st.size;
 }
 
+bool OFDPackage::ReadFile(const std::string &filename, char **buffer, size_t *bufSize) const {
+    bool ok = false;
+    std::string fileContent;
+
+    auto it = m_files.find(filename);
+    if ( it != m_files.end() ){
+        std::string filename = it->first;
+        size_t filesize = it->second;
+        LOG(DEBUG) << "filesize:" << filesize;
+
+        zip_file *file = zip_fopen(m_zip, filename.c_str(), ZIP_FL_NOCASE);
+        char *content = new char[filesize];
+        const zip_int64_t did_read = zip_fread(file, content, filesize);
+        LOG(DEBUG) << "did_read:" << did_read;
+        if (did_read != filesize ) {
+            LOG(WARNING) << "File " << filename << " readed " << did_read << " bytes, but is not equal to excepted filesize " << filesize << " bytes.";
+            delete[] content;
+        } else {
+            content[filesize] = '\0';
+            *buffer = content;
+            *bufSize = filesize;
+            ok = true;
+        }
+        //if ( did_read > 0 ){
+            //if ( strlen(content) < filesize ){
+                //LOG(WARNING) << "File " << filename << " is truncated. from " << filesize << " to " << strlen(content) << " did_read: " << did_read;
+            //}
+            //if ( strlen(content) > filesize ){
+                //LOG(WARNING) << "File readed " << strlen(content) << " more then " << filesize << ". did_read: " << did_read;
+                //content[filesize] = '\0';
+            //}
+
+            //if ( VLOG_IS_ON(5) ){
+                //VLOG(5) << "\n[ " << filename << " ]\n\n" << content << "\n\n--------\n\n";
+            //}
+
+            //fileContent = std::string(content);
+            //ok = true;
+            //delete[] content;
+        //}
+        zip_fclose(file);
+    } else {
+        LOG(ERROR) << filename << " is not exist in zipfile.";
+    }
+
+    return ok;
+}
+
 std::tuple<std::string, bool> OFDPackage::GetFileContent(const std::string &filename) const {
     bool ok = false;
     std::string fileContent;
@@ -86,11 +134,12 @@ std::tuple<std::string, bool> OFDPackage::GetFileContent(const std::string &file
     if ( it != m_files.end() ){
         std::string filename = it->first;
         size_t filesize = it->second;
-
+        LOG(DEBUG) << "filesize:" << filesize;
 
         zip_file *file = zip_fopen(m_zip, filename.c_str(), ZIP_FL_NOCASE);
         char *content = new char[filesize];
         const zip_int64_t did_read = zip_fread(file, content, filesize);
+        LOG(DEBUG) << "did_read:" << did_read;
         if (did_read != filesize ) {
             LOG(WARNING) << "File " << filename << " readed " << did_read << " bytes, but is not equal to excepted filesize " << filesize << " bytes.";
             delete[] content;
