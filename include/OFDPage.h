@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <tuple>
+#include <cairo/cairo.h>
 #include "ofd.h"
 
 namespace ofd {
@@ -45,6 +46,7 @@ public:
     uint64_t GetID() const {return m_id;};
     std::string GetText() const {return m_text;};
 
+    bool Render(cairo_surface_t *surface);
     bool RenderToPNGFile(const std::string& filename);
 
 public:

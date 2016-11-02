@@ -316,18 +316,10 @@ void OFDPage::drawText(const OFDTextObject *textObject) const {
 }
 
 #include <cairo/cairo.h>
-bool OFDPage::RenderToPNGFile(const std::string& filename){
+bool OFDPage::Render(cairo_surface_t *surface){
     //double dpi = default_dpi;
     double dpi = 96;
     double pixels_per_mm = dpi / mm_per_inch;
-    double mmWidth = m_attributes.PageArea.PhysicalBox.Width();
-    double mmHeight = m_attributes.PageArea.PhysicalBox.Height();
-    double pixelWidth = length_to_pixel(mmWidth, dpi);
-    double pixelHeight = length_to_pixel(mmHeight, dpi);
-    LOG(DEBUG) << "mmWidth: " << mmWidth << " mmHeight: " << mmHeight;
-    LOG(DEBUG) << "pixelWidth: " << pixelWidth << " pixelHeight: " << pixelHeight;
-
-    cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, pixelWidth, pixelHeight);
     cairo_t *cr = cairo_create(surface);
 
     cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
@@ -347,7 +339,7 @@ bool OFDPage::RenderToPNGFile(const std::string& filename){
 
 
     // -------- Set FontFace --------
-    //cairo_select_font_face(cr, "Simsun", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
+    cairo_select_font_face(cr, "Simsun", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
     //cairo_set_font_size(cr, 12);
 
     cairo_scale(cr, pixels_per_mm, pixels_per_mm);
@@ -369,17 +361,18 @@ bool OFDPage::RenderToPNGFile(const std::string& filename){
 
         OFDTextObject *textObject = static_cast<OFDTextObject*>(ofdObject);
 
-        const std::shared_ptr<FontResource> fontResource = m_document->GetFontResource();
-        cairo_font_face_t *fontFace = (cairo_font_face_t*)fontResource->GetFontFace(textObject->Font);
-        if ( fontFace != nullptr ){
-            cairo_set_font_face(cr, fontFace);
-            //cairo_font_options_t *font_options = cairo_font_options_create();
-            //cairo_scaled_font_t *scaled_font = cairo_scaled_font_create(fontFace, &font_matrix, &ctm, font_options);
-            //cairo_set_scaled_font(cr, scaled_font);
+        //const std::shared_ptr<FontResource> fontResource = m_document->GetFontResource();
+        //cairo_font_face_t *fontFace = (cairo_font_face_t*)fontResource->GetFontFace(textObject->Font);
+        //if ( fontFace != nullptr ){
+            //cairo_set_font_face(cr, fontFace);
+            
+            ////cairo_font_options_t *font_options = cairo_font_options_create();
+            ////cairo_scaled_font_t *scaled_font = cairo_scaled_font_create(fontFace, &font_matrix, &ctm, font_options);
+            ////cairo_set_scaled_font(cr, scaled_font);
 
-        } else {
-            LOG(WARNING) << "Font not found. ID=" << textObject->Font;
-        }
+        //} else {
+            //LOG(WARNING) << "Font not found. ID=" << textObject->Font;
+        //}
 
         // -------- textObject->CTM --------
         double xx = textObject->CTM.xx;
@@ -423,7 +416,7 @@ bool OFDPage::RenderToPNGFile(const std::string& filename){
         font_matrix.yy = fontPixels * yy;
         font_matrix.x0 = x0;
         font_matrix.y0 = y0;
-        //cairo_set_font_matrix(cr, &font_matrix);
+        cairo_set_font_matrix(cr, &font_matrix);
         
         cairo_get_font_matrix(cr, &font_matrix);
         //VLOG_N_TIMES(MAX_LOG_ITEMS, 1) << "After font_matrix: {"<< 
@@ -496,8 +489,23 @@ bool OFDPage::RenderToPNGFile(const std::string& filename){
 
         //cairo_restore(cr);
     }
+    return true;
+}
 
+bool OFDPage::RenderToPNGFile(const std::string& filename){
+    //double dpi = default_dpi;
+    double dpi = 72;
+    //double pixels_per_mm = dpi / mm_per_inch;
+    double mmWidth = m_attributes.PageArea.PhysicalBox.Width();
+    double mmHeight = m_attributes.PageArea.PhysicalBox.Height();
+    double pixelWidth = length_to_pixel(mmWidth, dpi);
+    double pixelHeight = length_to_pixel(mmHeight, dpi);
+    LOG(DEBUG) << "mmWidth: " << mmWidth << " mmHeight: " << mmHeight;
+    LOG(DEBUG) << "pixelWidth: " << pixelWidth << " pixelHeight: " << pixelHeight;
 
+    cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, pixelWidth, pixelHeight);
+
+    Render(surface);
 
     cairo_surface_write_to_png(surface, filename.c_str());
 

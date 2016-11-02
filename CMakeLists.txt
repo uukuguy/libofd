@@ -1,6 +1,6 @@
 PROJECT(libofd)
 
-CMAKE_MINIMUM_REQUIRED(VERSION 3.6)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
 
 INCLUDE_DIRECTORIES(
     ./include
@@ -10,8 +10,12 @@ LINK_DIRECTORIES(
     /usr/local/lib
 )
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror -Wno-c++11-extensions")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -Wno-c++11-extensions")
 SET(LIBOFD_DEPENDICES freetype cairo tinyxml2 zip stdc++)
+
+# -std=c++11
+SET(CMAKE_CXX_STANDARD 11)
+SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # cmake policy CMP0042
 # ``MACOSX_RPATH`` is enabled by default
@@ -22,6 +26,7 @@ SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(tests)
+ADD_SUBDIRECTORY(tools)
 
 ADD_TEST(ofdtest ${PROJECT_BINARY_DIR}/bin/ofdtest)
 ENABLE_TESTING()
