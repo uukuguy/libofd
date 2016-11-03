@@ -26,10 +26,10 @@ public:
     std::tuple<std::string, bool> GetFileContent(const std::string &filename) const; 
     std::string GetDocRoot() const {return m_attributes.DocRoot;};
 
-    OFDDocument *GetOFDDocument() {return m_document;};
-    const OFDDocument *GetOFDDocument() const {return m_document;};
-    //OFDDocumentPtr GetOFDDocument() {return m_document;};
-    //const OFDDocumentPtr GetOFDDocument() const {return m_document;};
+    //OFDDocument *GetOFDDocument() {return m_document;};
+    //const OFDDocument *GetOFDDocument() const {return m_document;};
+    OFDDocumentPtr GetOFDDocument() {return m_document;};
+    const OFDDocumentPtr GetOFDDocument() const {return m_document;};
 
 public:
     struct Attributes {
@@ -56,8 +56,8 @@ private:
     std::string m_filename;
     Attributes m_attributes;
 
-    OFDDocument *m_document;
-    //OFDDocumentPtr m_document;
+    //OFDDocument *m_document;
+    OFDDocumentPtr m_document;
 
     bool m_opened;
     zip *m_zip;

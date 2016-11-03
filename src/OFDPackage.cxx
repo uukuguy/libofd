@@ -61,7 +61,7 @@ void OFDPackage::Close(){
     if (!m_opened) return;
 
     if ( m_document != nullptr ){
-        delete m_document;
+        //delete m_document;
         m_document = nullptr;
     }
 
@@ -283,8 +283,8 @@ bool OFDPackage::parseAttributesXML(const std::string &content){
 bool OFDPackage::initRootDocument() {
     bool ok = false;
 
-    m_document = new OFDDocument(this, GetDocRoot());
-    //m_document = OFDDocumentPtr(new OFDDocument(OFDPackagePtr(this), GetDocRoot()));
+    //m_document = new OFDDocument(this, GetDocRoot());
+    m_document = OFDDocumentPtr(new OFDDocument(this, GetDocRoot()));
     ok = m_document->Open();
 
     return ok;

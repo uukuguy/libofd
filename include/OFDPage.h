@@ -83,7 +83,7 @@ private:
 
     void drawText(const OFDTextObject *textObject) const;
 
-    std::unique_ptr<OFDCanvas> m_canvas;
+    //std::unique_ptr<OFDCanvas> m_canvas;
     std::shared_ptr<FontResource> m_fontResource;
 
 }; // class OFDPage

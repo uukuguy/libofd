@@ -57,7 +57,7 @@ const OFDPackage *OFDPage::GetPackage() const {
 
 bool OFDPage::Open() {
     if ( IsOpened() ) {
-        LOG(DEBUG) << "Page is already opened!";
+        //LOG(DEBUG) << "Page is already opened!";
         return true;
     }
 
@@ -85,9 +85,9 @@ bool OFDPage::Open() {
     m_opened = parseXML(content);
 
     if ( IsOpened() ){
-        double mmWidth = m_attributes.PageArea.PhysicalBox.Width();
-        double mmHeight = m_attributes.PageArea.PhysicalBox.Height();
-        m_canvas = std::unique_ptr<OFDCanvas>(new OFDCanvas(mmWidth, mmHeight));
+        //double mmWidth = m_attributes.PageArea.PhysicalBox.Width();
+        //double mmHeight = m_attributes.PageArea.PhysicalBox.Height();
+        //m_canvas = std::unique_ptr<OFDCanvas>(new OFDCanvas(mmWidth, mmHeight));
     }
 
     return IsOpened();
@@ -110,7 +110,7 @@ void OFDPage::clear() {
     }
     m_ofdObjects.clear();
 
-    m_canvas = nullptr;
+    //m_canvas = nullptr;
 }
 
 std::string OFDPage::String() const {

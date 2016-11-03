@@ -10,8 +10,8 @@ using namespace ofd;
 void test_libofd(int argc, char *argv[]){
     OFDPackage package;
     if ( package.Open(argv[1]) ){
-        OFDDocument *document = package.GetOFDDocument(); 
-        //OFDDocumentPtr document = package.GetOFDDocument(); 
+        //OFDDocument *document = package.GetOFDDocument(); 
+        OFDDocumentPtr document = package.GetOFDDocument(); 
 
         LOG(DEBUG) << document->String();
 
@@ -148,8 +148,8 @@ int main(int argc, char *argv[]){
 
     LOG(INFO) << "Start " << argv[0];
 
-    //test_libofd(argc, argv);
-    test_freetype(argc, argv);
+    test_libofd(argc, argv);
+    //test_freetype(argc, argv);
 
     LOG(INFO) << "Done.";
 

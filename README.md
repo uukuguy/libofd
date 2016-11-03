@@ -31,25 +31,16 @@ libfreetype6-dev
 
 ## Build
 
-$ git clone https://github.com/uukuguy/libofd.git
-
+```
+$ git clone https://github.com/idleuncle/libofd.git
 $ cd libofd
-
 $ mkdir build && cd build && cmake .. && make
+```
 
 ## Test
 
+```
 $ cd build
-
-### For production.
-$ ./bin/ofdtest ../data/sample0.ofd 
-
-### For debug in production.
-$ ./bin/ofdtest ../data/sample0.ofd --v=1
-
-### for debug in development.
-$ ./bin/ofdtest ../data/sample0.ofd --v=3
-
-### for detail debug info in development. (maybe too slow).
-$ ./bin/ofdtest ../data/sample0.ofd --v=5
+$ ./bin/ofdviewer ../data/sample0.ofd --v=1
+```
 
