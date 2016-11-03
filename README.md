@@ -24,6 +24,9 @@ libsdl2-mixer-dev
 libsdl2-net-dev
 libsdl2-gfx-dev
 
+libharfbuzz-dev
+libicu-dev
+
 libfreetype6-dev
 
 ## Build

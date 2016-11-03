@@ -92,24 +92,25 @@ int main(int argc, char *argv[]){
         totalPages = n_pages;
         LOG(INFO) << "Loading " << n_pages << " pages.";
 
-        for ( size_t i = 0 ; i < n_pages ; i++ ){
-            TIMED_SCOPE(timerDrawPage, "Draw Page");
+        //for ( size_t i = 0 ; i < n_pages ; i++ ){
+            //TIMED_SCOPE(timerDrawPage, "Draw Page");
 
-            OFDPagePtr page = document->GetOFDPage(i);
-            //page = document->GetOFDPage(i);
-            page->Open();
+            //OFDPagePtr page = document->GetOFDPage(i);
+            ////page = document->GetOFDPage(i);
+            //page->Open();
 
-            VLOG(3) << page->String(); 
-            LOG(INFO) << page->GetText();
+            //VLOG(3) << page->String(); 
+            //LOG(INFO) << page->GetText();
 
-            //std::stringstream ss;
-            //ss << "Page" << (i + 1) << ".png";
-            //std::string png_filename = ss.str();
-            //page->RenderToPNGFile(png_filename);
+            ////std::stringstream ss;
+            ////ss << "Page" << (i + 1) << ".png";
+            ////std::string png_filename = ss.str();
+            ////page->RenderToPNGFile(png_filename);
 
-            //page->Close();
-        }
+            ////page->Close();
+        //}
         currentPage = document->GetOFDPage(0);
+        currentPage->Open();
 
     } else {
         LOG(ERROR) << "package.Open() failed. " << argv[1];
@@ -183,6 +184,7 @@ int main(int argc, char *argv[]){
                         showPage--;
                     }
                     currentPage = document->GetOFDPage(showPage);
+                    currentPage->Open();
                     break;
                 } else if (event.key.keysym.sym == SDLK_DOWN) {
                     if ( showPage < totalPages - 1 ){
@@ -191,6 +193,7 @@ int main(int argc, char *argv[]){
                         showPage = 0;
                     }
                     currentPage = document->GetOFDPage(showPage);
+                    currentPage->Open();
                     break;
                 } else if (event.key.keysym.sym == SDLK_RETURN) {
                     if (fullScreen){

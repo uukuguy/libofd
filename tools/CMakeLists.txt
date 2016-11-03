@@ -1,7 +1,6 @@
 AUX_SOURCE_DIRECTORY(. SRC_LIST)
 ADD_EXECUTABLE(ofdviewer ${SRC_LIST})
 
-
 # -------- SDL2 --------
 INCLUDE(FindPkgConfig)
 
