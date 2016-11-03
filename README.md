@@ -9,13 +9,22 @@ The libofd is the first open-source C++ development library for OFD. It was esta
 
 ## Dependencies
 
-Cairo http://cairographics.org
+libcairo2-dev http://cairographics.org
 
-tinyxml2 https://github.com/leethomason/tinyxml2  
+libtinyxml2-dev https://github.com/leethomason/tinyxml2  
 
-libzip https://github.com/nih-at/libzip 
+libzip-dev https://github.com/nih-at/libzip 
 
 easylogging++ https://github.com/easylogging/easyloggingpp
+
+libsdl2-dev
+libsdl2-image-dev
+libsdl2-ttf-dev
+libsdl2-mixer-dev
+libsdl2-net-dev
+libsdl2-gfx-dev
+
+libfreetype6-dev
 
 ## Build
 

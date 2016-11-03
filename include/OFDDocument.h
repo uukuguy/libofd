@@ -8,6 +8,7 @@
 #include <vector>
 #include <map>
 #include <tuple>
+#include <cstring>
 #include "ofd.h"
 #include "OFDFont.h"
 

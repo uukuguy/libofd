@@ -90,7 +90,7 @@ bool OFDPackage::ReadFile(const std::string &filename, char **buffer, size_t *bu
 
         zip_file *file = zip_fopen(m_zip, filename.c_str(), ZIP_FL_NOCASE);
         char *content = new char[filesize];
-        const zip_int64_t did_read = zip_fread(file, content, filesize);
+        size_t did_read = zip_fread(file, content, filesize);
         LOG(DEBUG) << "did_read:" << did_read;
         if (did_read != filesize ) {
             LOG(WARNING) << "File " << filename << " readed " << did_read << " bytes, but is not equal to excepted filesize " << filesize << " bytes.";
@@ -138,7 +138,7 @@ std::tuple<std::string, bool> OFDPackage::GetFileContent(const std::string &file
 
         zip_file *file = zip_fopen(m_zip, filename.c_str(), ZIP_FL_NOCASE);
         char *content = new char[filesize];
-        const zip_int64_t did_read = zip_fread(file, content, filesize);
+        size_t did_read = zip_fread(file, content, filesize);
         LOG(DEBUG) << "did_read:" << did_read;
         if (did_read != filesize ) {
             LOG(WARNING) << "File " << filename << " readed " << did_read << " bytes, but is not equal to excepted filesize " << filesize << " bytes.";

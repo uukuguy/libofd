@@ -10,6 +10,10 @@ LINK_DIRECTORIES(
     /usr/local/lib
 )
 
+INCLUDE(FindPkgConfig)
+FIND_PACKAGE(Freetype REQUIRED)
+INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIRS})
+
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -Wno-c++11-extensions")
 SET(LIBOFD_DEPENDICES freetype cairo tinyxml2 zip stdc++)
 

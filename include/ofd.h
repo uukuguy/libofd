@@ -2,6 +2,8 @@
 #define __LIBOFD_H__
 
 #include <sstream>
+#include <iostream>
+#include <memory>
 
 namespace ofd {
 

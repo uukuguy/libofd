@@ -65,9 +65,9 @@ void test_freetype(){
     //int width = bbox.xMax - bbox.xMin;
     //int height = bbox.yMax - bbox.yMin;
 
-    FT_Vector origin;
-    origin.x = 32;
-    origin.y = 0;
+    //FT_Vector origin;
+    //origin.x = 32;
+    //origin.y = 0;
 
     //draw_bitmap(&slot->bitmap, pen_x + slot->bitmap_left, pen_y + slot->bitmap_top);
 

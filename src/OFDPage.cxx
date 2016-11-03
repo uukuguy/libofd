@@ -1,6 +1,6 @@
 #include <iostream>
 #include <sstream>
-#include "FontREsource.h"
+#include "FontResource.h"
 #include "OFDPackage.h"
 #include "OFDDocument.h"
 #include "OFDPage.h"
