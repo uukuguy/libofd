@@ -3,6 +3,7 @@
 #include "OFDObject.h"
 #include "OFDTextObject.h"
 #include "OFDPathObject.h"
+#include "OFDImageObject.h"
 #include "logger.h"
 #include "utils.h"
 
@@ -24,6 +25,9 @@ OFDObject *OFDObject::CreateObject(const std::string &elementName) {
     } else if ( elementName == "ofd:PathObject" ){
         OFDPathObject *pathObject = new OFDPathObject();        
         object = static_cast<OFDObject*>(pathObject);
+    } else if ( elementName == "ofd:ImageObject" ){
+        OFDImageObject *imageObject = new OFDImageObject();        
+        object = static_cast<OFDObject*>(imageObject);
     } else {
         LOG(WARNING) << "Unknown objec type: " << elementName;
     }
