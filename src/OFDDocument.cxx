@@ -317,7 +317,7 @@ bool OFDDocument::parseXML(){
 bool OFDDocument::loadFonts() {
     for ( size_t i = 0 ; i < GetFontsCount() ; i++ ){
         const OFDFont &font = GetFont(i);
-        LOG(DEBUG) << font.ID;
+        LOG(DEBUG) << "font.ID:" << font.ID;
 
         std::string fontFileName = m_rootDir + "/" + m_attributes.PublicRes.BaseLoc + "/" + font.FontFile; 
         LOG(DEBUG) << fontFileName;
