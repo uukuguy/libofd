@@ -42,14 +42,13 @@ bool OFDDocument::Open() {
 
     if ( parseXML() ){
         if ( parsePublicResXML() ){
-            if ( parseDocumentResXML() ){
-                if ( !loadFonts() ){
-                    LOG(WARNING) << "loadFonts() failed.";
-                }
-                m_opened = true;
-            } else {
+            if ( !parseDocumentResXML() ){
                 LOG(WARNING) << "parseDocumentResXML() failed.";
             }
+            if ( !loadFonts() ){
+                LOG(WARNING) << "loadFonts() failed.";
+            }
+            m_opened = true;
         } else {
             LOG(WARNING) << "parsePublicResXML() failed.";
         }
@@ -116,6 +115,7 @@ std::string OFDDocument::String() const {
 bool OFDDocument::parsePublicResXML(){
     std::string publicResFileName = m_rootDir + "/" + m_attributes.CommonData.PublicRes;
 
+    LOG(DEBUG) << "-------- Before GetFileContent() publicResFileName:" << publicResFileName;
     OFDPACKAGE_GET_FILE_CONTENT(m_package, publicResFileName, content);
 
     TEXT_TO_XML(content, xmldoc);
@@ -199,6 +199,7 @@ bool OFDDocument::parsePublicResXML(){
 bool OFDDocument::parseDocumentResXML(){
     std::string documentResFileName = m_rootDir + "/" + m_attributes.CommonData.DocumentRes;
 
+    LOG(DEBUG) << "-------- Before GetFileContent() documentResFileName:" << documentResFileName;
     OFDPACKAGE_GET_FILE_CONTENT(m_package, documentResFileName, content);
 
     TEXT_TO_XML(content, xmldoc);
@@ -247,6 +248,7 @@ bool OFDDocument::parseDocumentResXML(){
 
 bool OFDDocument::parseXML(){
 
+    LOG(DEBUG) << "-------- Before GetFileContent() m_filename:" << m_filename;
     OFDPACKAGE_GET_FILE_CONTENT(m_package, m_filename, content);
 
     TEXT_TO_XML(content, xmldoc);
@@ -280,10 +282,15 @@ bool OFDDocument::parseXML(){
             const XMLElement *documentResElement = commonDataElement->FirstChildElement("ofd:DocumentRes");
             const XMLElement *maxUnitIDElement = commonDataElement->FirstChildElement("ofd:MaxUnitID");
 
-            this->m_attributes.CommonData.PublicRes = publicResElement->GetText();
-            this->m_attributes.CommonData.DocumentRes = documentResElement->GetText();
-            this->m_attributes.CommonData.MaxUnitID = atol(maxUnitIDElement->GetText());
-
+            if ( publicResElement != nullptr ){
+                this->m_attributes.CommonData.PublicRes = publicResElement->GetText();
+            }
+            if ( documentResElement != nullptr ){
+                this->m_attributes.CommonData.DocumentRes = documentResElement->GetText();
+            }
+            if ( maxUnitIDElement != nullptr ){
+                this->m_attributes.CommonData.MaxUnitID = atol(maxUnitIDElement->GetText());
+            }
         }
 
         if ( pagesElement != nullptr ) {

@@ -33,14 +33,35 @@ libfreetype6-dev
 
 ```
 $ git clone https://github.com/idleuncle/libofd.git
+```
+
+```
+$ make build
+```
+
+or
+
+```
 $ cd libofd
 $ mkdir build && cd build && cmake .. && make
 ```
 
-## Test
+## Run
 
 ```
-$ cd build
-$ ./bin/ofdviewer ../data/sample0.ofd --v=1
+$ make run
 ```
+
+or
+
+```
+$ ./build/bin/ofdviewer ./data/sample0.ofd --v=1
+```
+
+| Key            | Action     |
+|--------------- |----------- |
+| KEY\_UP        | PageUp     |
+| KEY\_DOWN      | PageDown   |
+| RETURN         | Fullscreen |
+| ESC (or KEY_Q) | Exit       |
 

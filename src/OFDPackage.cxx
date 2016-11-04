@@ -137,9 +137,9 @@ std::tuple<std::string, bool> OFDPackage::GetFileContent(const std::string &file
         LOG(DEBUG) << "filesize:" << filesize;
 
         zip_file *file = zip_fopen(m_zip, filename.c_str(), ZIP_FL_NOCASE);
-        char *content = new char[filesize];
+        char *content = new char[filesize + 1];
         size_t did_read = zip_fread(file, content, filesize);
-        LOG(DEBUG) << "did_read:" << did_read;
+        LOG(DEBUG) << "did_read:" << did_read << " filesize:" << filesize;
         if (did_read != filesize ) {
             LOG(WARNING) << "File " << filename << " readed " << did_read << " bytes, but is not equal to excepted filesize " << filesize << " bytes.";
             delete[] content;
@@ -171,7 +171,7 @@ std::tuple<std::string, bool> OFDPackage::GetFileContent(const std::string &file
         LOG(ERROR) << filename << " is not exist in zipfile.";
     }
 
-
+    std::make_tuple(fileContent, ok);
     return std::make_tuple(fileContent, ok);
 }
 
