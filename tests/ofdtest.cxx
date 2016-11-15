@@ -7,6 +7,8 @@
 
 using namespace ofd;
 
+void test_poppler(int argc, char *argv[]);
+
 void test_libofd(int argc, char *argv[]){
     OFDPackage package;
     if ( package.Open(argv[1]) ){
@@ -148,7 +150,8 @@ int main(int argc, char *argv[]){
 
     LOG(INFO) << "Start " << argv[0];
 
-    test_libofd(argc, argv);
+    test_poppler(argc, argv);
+    //test_libofd(argc, argv);
     //test_freetype(argc, argv);
 
     LOG(INFO) << "Done.";
