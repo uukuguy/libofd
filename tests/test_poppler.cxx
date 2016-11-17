@@ -82,14 +82,20 @@ struct Param
     std::string input_filename, output_filename;
 };
 
+#include "PDFExtractor.h"
+
 void test_poppler(int argc, char *argv[]){
     //PDFDoc *pdfdoc = nullptr;
     //GooString *ownerPW=(param.owner_password == "") ? (nullptr) : (new GooString(param.owner_password.c_str()));
 
-    std::string pdf_filename = argv[1];
-    std::string owner_passwd = "";
-    std::string user_passwd = "";
-    LOG(DEBUG) << "Try to open pdf file: " << pdf_filename;
+    std::string pdfFilename = argv[1];
+    std::string ownerPasswd = "";
+    std::string userPasswd = "";
+    LOG(DEBUG) << "Try to open pdf file: " << pdfFilename;
+
+    PDFExtractor pdfExtractor;
+    pdfExtractor.Process(pdfFilename, ownerPasswd, userPasswd);
+
 
     //GError* gerror  = nullptr;
     //PopplerDocument* poppler_document = poppler_document_new_from_file(pdf_filename.c_str(),
@@ -109,44 +115,42 @@ void test_poppler(int argc, char *argv[]){
             
     //}
 
-    GooString fileName(pdf_filename.c_str());
-    GooString *ownerPW = (owner_passwd == "") ? nullptr: new GooString(owner_passwd.c_str(), owner_passwd.length());
-    GooString *userPW = (user_passwd == "") ? nullptr : new GooString(user_passwd.c_str(), user_passwd.length());
+    //GooString fileName(pdf_filename.c_str());
+    //GooString *ownerPW = (owner_passwd == "") ? nullptr: new GooString(owner_passwd.c_str(), owner_passwd.length());
+    //GooString *userPW = (user_passwd == "") ? nullptr : new GooString(user_passwd.c_str(), user_passwd.length());
 
-    PDFDoc *pdfdoc = PDFDocFactory().createPDFDoc(fileName, ownerPW, userPW);
-    if ( pdfdoc != nullptr ){
-        if ( pdfdoc->isOk() ){
-            if (pdfdoc->okToCopy()){
-                size_t num_pages = pdfdoc->getNumPages();
-                LOG(DEBUG) << "Total " << num_pages << " pages in pdf file: " << pdf_filename;
-
-
+    //PDFDoc *pdfdoc = PDFDocFactory().createPDFDoc(fileName, ownerPW, userPW);
+    //if ( pdfdoc != nullptr ){
+        //if ( pdfdoc->isOk() ){
+            //if (pdfdoc->okToCopy()){
+                //size_t num_pages = pdfdoc->getNumPages();
+                //LOG(DEBUG) << "Total " << num_pages << " pages in pdf file: " << pdf_filename;
 
 
 
-            } else {
-                LOG(ERROR) << "PDF file is not okToCopy. " << pdf_filename;
-            }
-        } else {
-            LOG(ERROR) << "Cann't read pdf file: " << pdf_filename;
-        }
+            //} else {
+                //LOG(ERROR) << "PDF file is not okToCopy. " << pdf_filename;
+            //}
+        //} else {
+            //LOG(ERROR) << "Cann't read pdf file: " << pdf_filename;
+        //}
 
-        delete pdfdoc;
-        pdfdoc = nullptr;
-    } else {
-        LOG(WARNING) << "pdfdoc == nullptr";
-    }
+        //delete pdfdoc;
+        //pdfdoc = nullptr;
+    //} else {
+        //LOG(WARNING) << "pdfdoc == nullptr";
+    //}
 
-    if ( ownerPW != nullptr ){
-        delete ownerPW;
-        ownerPW = nullptr;
-    }
-    if ( userPW != nullptr ){
-        delete userPW;
-        userPW = nullptr;
-    }
+    //if ( ownerPW != nullptr ){
+        //delete ownerPW;
+        //ownerPW = nullptr;
+    //}
+    //if ( userPW != nullptr ){
+        //delete userPW;
+        //userPW = nullptr;
+    //}
 
-    Object::memCheck(stderr);
-    gMemReport(std::stderr);
+    //Object::memCheck(stderr);
+    //gMemReport(std::stderr);
 }
 
