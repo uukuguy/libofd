@@ -88,6 +88,8 @@ void test_poppler(int argc, char *argv[]){
     //PDFDoc *pdfdoc = nullptr;
     //GooString *ownerPW=(param.owner_password == "") ? (nullptr) : (new GooString(param.owner_password.c_str()));
 
+    globalParams = new GlobalParams(nullptr);
+
     std::string pdfFilename = argv[1];
     std::string ownerPasswd = "";
     std::string userPasswd = "";
@@ -96,6 +98,7 @@ void test_poppler(int argc, char *argv[]){
     PDFExtractor pdfExtractor;
     pdfExtractor.Process(pdfFilename, ownerPasswd, userPasswd);
 
+    delete globalParams;
 
     //GError* gerror  = nullptr;
     //PopplerDocument* poppler_document = poppler_document_new_from_file(pdf_filename.c_str(),

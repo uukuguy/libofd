@@ -31,7 +31,7 @@ public:
     virtual GBool upsideDown() { return gFalse; }
 
     // Does this device use drawChar() or drawString()?
-    virtual GBool useDrawChar() { return gTrue; }
+    virtual GBool useDrawChar() { return gFalse; }
 
     // Does this device use beginType3Char/endType3Char?  Otherwise,
     // text in Type 3 fonts will be drawn with drawChar/drawString.
@@ -45,9 +45,12 @@ public:
             double originX, double originY,
             CharCode code, int nBytes, Unicode *u, int uLen);
 
+    virtual void drawString(GfxState * state, GooString * s);
+
     class InnerData;
 private:
     std::unique_ptr<InnerData> m_innerData;
+
 
 }; // class PDFExtractor
 
