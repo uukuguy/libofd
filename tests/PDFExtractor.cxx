@@ -52,6 +52,27 @@ bool PDFExtractor::Process(const std::string &pdfFilename, const std::string &ow
                     LOG(DEBUG) << "mdeiaBox:(" << mediaBox->x1 << ", " << mediaBox->y1
                         << ", " << mediaBox->x2 << ", " << mediaBox->y2 << ")";
 
+                    double pageMediaWidth = pdfPage->getMediaWidth();
+                    double pageMediaHeight = pdfPage->getMediaHeight();
+                    double pageCropWidth = pdfPage->getCropWidth();
+                    double pageCropHeight = pdfPage->getCropHeight();
+                    int pageRotate = pdfPage->getRotate();
+
+                    LOG(DEBUG) << "Page " << i << " Media(" << pageMediaWidth << ", " << pageMediaHeight << ") " 
+                        << "Crop(" << pageCropWidth << ", " << pageCropHeight << ") "
+                        << "Rotate: " << pageRotate;
+
+
+                    double pageCTM[6];
+                    pdfPage->getDefaultCTM(&pageCTM[0], 72, 72, 0, false, false);
+                    LOG(DEBUG) << "Default CTM(" << 
+                        pageCTM[0] << ", " <<
+                        pageCTM[1] << ", " <<
+                        pageCTM[2] << ", " <<
+                        pageCTM[3] << ", " <<
+                        pageCTM[4] << ", " <<
+                        pageCTM[5] << ") ";
+
                     LOG(DEBUG) << "Start pdfDoc->displayPage() Page:" << i;
 
                     pdfPage->display(this, DEFAULT_DPI, DEFAULT_DPI,
