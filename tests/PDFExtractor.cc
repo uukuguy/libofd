@@ -1,6 +1,7 @@
 #include <string>
 
 #include "PDFExtractor.h"
+#include "PDFFont.h"
 #include "logger.h"
 #include "unicode.h"
 
@@ -10,9 +11,9 @@ static const double DEFAULT_DPI = 72.0;
 
 #include <math.h>
 //static inline double round(double x) { return (std::abs(x) > EPS) ? x : 0.0; }
-static inline bool equal(double x, double y) { return std::abs(x-y) <= EPS; }
-static inline bool is_positive(double x) { return x > EPS; }
-static inline bool tm_equal(const double * tm1, const double * tm2, int size = 6) {
+static inline bool equal(double x, double y) { return fabs(x-y) <= EPS; }
+__attribute__((unused)) static inline bool is_positive(double x) { return x > EPS; }
+__attribute__((unused)) static inline bool tm_equal(const double * tm1, const double * tm2, int size = 6) {
     for(int i = 0; i < size; ++i)
         if(!equal(tm1[i], tm2[i]))
             return false;
@@ -22,7 +23,6 @@ static inline long long hash_ref(const Ref * id)
 {
     return (((long long)(id->num)) << (sizeof(id->gen)*8)) | (id->gen);
 }
-
 
 std::string content;
 bool need_rescale_font = true;
@@ -47,6 +47,7 @@ public:
     void check_state_change(GfxState *state);
     void prepare_text_line(GfxState *state);
 
+    bool GfxFont2PDFFont(GfxFont &font, PDFFont &pdfFont);
 
 }; //class PDFExtractor::InnerData
 
@@ -74,6 +75,72 @@ void PDFExtractor::InnerData::prepare_text_line(GfxState * state){
     state->transform(state->getCurX() + rise_x, state->getCurY() + rise_y, &string_x, &string_y);
 }
 
+// -------- PDFExtractor::InnerData::GfxFont2PDFFont() --------
+bool PDFExtractor::InnerData::GfxFont2PDFFont(GfxFont &font, PDFFont &pdfFont){
+    pdfFont.ID = hash_ref(font.getID());
+    pdfFont.tag =  font.getTag() != nullptr ? font.getTag()->getCString() : "";
+    pdfFont.family = font.getFamily() != nullptr ? font.getFamily()->getCString() : "";
+    pdfFont.name = font.getName() != nullptr ? font.getName()->getCString() : "";
+
+    GfxFontType fontType = font.getType();
+    if ( fontType == fontTrueType ){
+        pdfFont.type = PDFFontType::TrueType;
+    } else if ( fontType == fontCIDType2 ){
+        pdfFont.type = PDFFontType::CIDType2;
+    } else if ( fontType == fontType1 ){
+        pdfFont.type = PDFFontType::Type1;
+    } else if ( fontType == fontType3 ){
+        pdfFont.type = PDFFontType::Type3;
+    }
+
+    long long embID;
+    Ref embRef;
+    if ( font.getEmbeddedFontID(&embRef) ){
+        embID = hash_ref(&embRef);
+    } else {
+        embID = hash_ref(&embRef);
+        //embID = -1;
+    }
+    pdfFont.embID = embID;
+
+    pdfFont.encodingName = font.getEncodingName() != nullptr ? font.getEncodingName()->getCString() : "";
+    pdfFont.flags = font.getFlags();
+
+    auto *font_loc = font.locateFont(m_pdfDoc->getXRef(), nullptr);
+    if ( font_loc != nullptr ){
+        switch(font_loc->locType)
+        {
+            case gfxFontLocEmbedded:
+                pdfFont.location = PDFFontLocation::Embedded;
+                break;
+            case gfxFontLocExternal:
+                pdfFont.location = PDFFontLocation::External;
+                break;
+            case gfxFontLocResident:
+                pdfFont.location = PDFFontLocation::Resident;
+                break;
+        };
+    }
+
+    GfxFontLoc *localfontloc = font.locateFont(m_pdfDoc->getXRef(), nullptr);
+    pdfFont.filePath = localfontloc != nullptr ?  
+        (localfontloc->path != nullptr ? localfontloc->path->getCString() : "") 
+        : "";
+
+    pdfFont.embeddedName = font.getEmbeddedFontName() != nullptr ? font.getEmbeddedFontName()->getCString() : "";
+
+    double *ctm = font.getFontMatrix();
+    if ( ctm != nullptr ){
+        memcpy(pdfFont.ctm, ctm, sizeof(double) * 6);
+    }
+
+    double *bbox = font.getFontBBox();
+    if ( bbox != nullptr ){
+        memcpy(pdfFont.bbox, bbox, sizeof(double) * 4);
+    }
+
+    return true;
+}
 template<typename T, typename ...Args>
 std::unique_ptr<T> make_unique(Args&& ...args){
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
@@ -211,6 +278,7 @@ bool PDFExtractor::OpenPDFFile(const std::string &pdfFilename, const std::string
 void PDFExtractor::ClosePDFFile(){
 }
 
+
 // ======== PDFExtractor::drawChar() ========
 void PDFExtractor::drawChar(GfxState *state, double x, double y,
         double dx, double dy,
@@ -304,109 +372,10 @@ void PDFExtractor::drawString(GfxState * state, GooString * s){
                     content += std::string(buf);
 
                     // Font
-                    long long fontId = hash_ref(font->getID());
+                    PDFFont pdfFont;
+                    m_innerData->GfxFont2PDFFont(*font, pdfFont);
+                    LOG(INFO) << pdfFont.ToString();
 
-                    GooString *fontTag = font->getTag();
-                    std::string strFontTag = fontTag != nullptr ? fontTag->getCString() : "";
-
-                    GooString *fontFamily = font->getFamily();
-                    std::string strFontFamily = fontFamily != nullptr ? fontFamily->getCString() : "";
-                    GooString *fontName = font->getName();
-                    std::string strFontName = fontName != nullptr ? fontName->getCString() : "";
-
-                    GfxFontType fontType = font->getType();
-                    std::string strFontType = "UnknownType";
-                    if ( fontType == fontTrueType ){
-                        strFontType = "TrueType";
-                    } else if ( fontType == fontCIDType2 ){
-                        strFontType = "CIDType2";
-                    } else if ( fontType == fontType1 ){
-                        strFontType = "Type1";
-                    } else if ( fontType == fontType3 ){
-                        strFontType = "Type3";
-                    }
-
-                    long long embID;
-                    Ref embRef;
-                    if ( font->getEmbeddedFontID(&embRef) ){
-                        embID = hash_ref(&embRef);
-                    } else {
-                        embID = hash_ref(&embRef);
-                        //embID = -1;
-                    }
-
-                    GooString *fontEncodingName = font->getEncodingName();
-                    std::string strFontEncodingName = fontEncodingName != nullptr ? fontEncodingName->getCString() : "";
-
-                    int fontFlags = font->getFlags();
-                    bool isFixedWidth = font->isFixedWidth();
-                    bool isSerif = font->isSerif();
-                    bool isSymbolic = font->isSymbolic();
-                    bool isItalic = font->isItalic();
-                    bool isBold = font->isBold();
-
-                    double *fontMatrix = font->getFontMatrix();
-                    double m0 = 0.0;
-                    double m1 = 0.0;
-                    double m2 = 0.0;
-                    double m3 = 0.0;
-                    if ( fontMatrix != nullptr ){
-                        m0 = fontMatrix[0];
-                        m1 = fontMatrix[1];
-                        m2 = fontMatrix[2];
-                        m3 = fontMatrix[3];
-                    }
-
-                    std::string strFontLoc = "FontLocUnknown";
-                    auto *font_loc = font->locateFont(m_innerData->m_pdfDoc->getXRef(), nullptr);
-                    if ( font_loc != nullptr ){
-
-                        switch(font_loc -> locType)
-                        {
-                            case gfxFontLocEmbedded:
-                                strFontLoc = "FontLocEmbedded";
-                                break;
-                            case gfxFontLocExternal:
-                                strFontLoc = "FontLocExternal";
-                                break;
-                            case gfxFontLocResident:
-                                strFontLoc = "FontLocResident";
-                                break;
-                        };
-                    }
-    
-                    GfxFontLoc *localfontloc = font->locateFont(m_innerData->m_pdfDoc->getXRef(), nullptr);
-                    std::string strLocalFontLoc = localfontloc != nullptr ?  localfontloc->path->getCString() : "";
-
-                    GooString *embeddedFontName = font->getEmbeddedFontName();
-                    std::string strEmbeddedFontName = embeddedFontName != nullptr ? embeddedFontName->getCString() : "";
-
-                    double * fontBBox = font->getFontBBox();
-
-                    //char *fontbuf = font->readEmbFontFile(
-
-
-                    LOG(DEBUG) << "Font "
-                                << " id:" << fontId 
-                                << " tag:" << strFontTag
-                                << " family:" << strFontFamily
-                                << " name:" << strFontName
-                                << " Type:" << strFontType << "(" << int(fontType) << ") "
-                                << " Loc:" << strFontLoc
-                                << " LocalFontLoc:" << strLocalFontLoc
-                                << " embID:" << embID
-                                << " embName:" << strEmbeddedFontName
-                                << " encodingName:" << strFontEncodingName
-                                << " fontFlags:" << fontFlags
-                                << " FixedWidth:" << isFixedWidth  
-                                << " Serif:" <<  isSerif
-                                << " Symbolic:" << isSymbolic
-                                << " Italic:" << isItalic
-                                << " Bold:" << isBold
-                                << " fontMatrix:(" << m0 << ", " << m1 << ", " << m2 << ", " << m3 << ")"
-                                << " fontBBox:(" << fontBBox[0] << ", " << fontBBox[1] << ", " << fontBBox[2] << ", " << fontBBox[3] << ")"
-                                ;
-                    LOG(DEBUG) << "(" << m_innerData->string_x << ", " << m_innerData->string_y << ") " << "'" << std::string(buf) << "'";
                 //} else {
                     //uu = unicode_from_font(code, font);
                 //}
