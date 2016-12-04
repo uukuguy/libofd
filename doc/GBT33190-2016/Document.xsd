@@ -108,7 +108,7 @@
     </xs:complexType>
     <xs:complexType name="CT_VPreferences">
         <xs:sequence>
-            <xs:element default="None" minOccurs="0" name="PageMode">
+            <xs:element name="PageMode" default="None" minOccurs="0">
                 <xs:simpleType>
                     <xs:restriction base="xs:string">
                         <xs:enumeration value="None"/>
@@ -122,7 +122,7 @@
                     </xs:restriction>
                 </xs:simpleType>
             </xs:element>
-            <xs:element default="OneColumn" minOccurs="0" name="PageLayout">
+            <xs:element name="PageLayout" default="OneColumn" minOccurs="0">
                 <xs:simpleType>
                     <xs:restriction base="xs:string">
                         <xs:enumeration value="OnePage"/>
@@ -134,7 +134,7 @@
                     </xs:restriction>
                 </xs:simpleType>
             </xs:element>
-            <xs:element default="DocTitle" minOccurs="0" name="TabDisplay">
+            <xs:element name="TabDisplay" default="DocTitle" minOccurs="0">
                 <xs:simpleType>
                     <xs:restriction base="xs:string">
                         <xs:enumeration value="DocTitle"/>

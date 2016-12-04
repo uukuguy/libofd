@@ -6,21 +6,46 @@
 
 namespace ofd {
 
-class OFDFont {
-public:
-    OFDFont();
-    virtual ~OFDFont();
+    namespace Font{
 
-public:
-    int ID;
-    std::string FontName;
-    std::string FamilyName;
-    std::string Charset;
-    std::string FontFile;
+        enum class Type {
+            Unknown = -1,
+            TrueType,
+            CIDType2,
+            Type1,
+            Type3,
+        };
 
-    std::string ToString() const;
+        enum class Location{
+            Unknown = -1,
+            Embedded,
+            External,
+            Resident,
+        };
+    };
 
-}; // class OFDFont
+    class OFDFont {
+    public:
+        OFDFont();
+        virtual ~OFDFont();
+
+    public:
+        int ID;
+        std::string FontName;
+        std::string FamilyName;
+        std::string Charset;
+        std::string FontFile;
+
+        Font::Type FontType;
+        Font::Location FontLoc;
+
+        char *FontStream;
+        size_t FontStreamSize;
+
+
+        std::string ToString() const;
+
+    }; // class OFDFont
 
 }; // namespace ofd
 

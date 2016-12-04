@@ -256,7 +256,8 @@
         </xs:complexContent>
     </xs:complexType>
 
-    <!--矢量图像对象定义-->
+    <!--矢量图像对象定义??-->
+    <!--复合对象定义??-->
     <xs:complexType name="CT_Composite">
         <xs:complexContent>
             <xs:extension base="CT_GraphicUnit">

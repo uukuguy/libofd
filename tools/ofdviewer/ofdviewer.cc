@@ -2,7 +2,7 @@
 #include <SDL2/SDL_image.h>
 #include <cairo/cairo.h>
 #include <assert.h>
-#include "OFDPackage.h"
+#include "OFDFile.h"
 #include "OFDDocument.h"
 #include "OFDPage.h"
 #include "logger.h"
@@ -345,14 +345,17 @@ void MySDLApp::OnEvent(SDL_Event event, bool &done){
     };
 }
 
+#include "OFDCairoRender.h"
 // ======== MySDLApp::OnRender() ========
 void MySDLApp::OnRender(cairo_surface_t *surface){
     if ( m_document != nullptr ){
         size_t totalPages = m_document->GetPagesCount();
         if ( totalPages > 0 ){
-            OFDPagePtr currentPage = m_document->GetOFDPage(m_pageIndex);
+            OFDPagePtr currentPage = m_document->GetPage(m_pageIndex);
             if ( currentPage->Open() ){
-                currentPage->Render(surface);
+                std::unique_ptr<OFDCairoRender> cairoRender(new OFDCairoRender(surface));
+                cairoRender->Draw(currentPage.get());
+                //currentPage->Render(surface);
             } else {
                 LOG(ERROR) << "currentPage->Open() failed. pageIndex=" << m_pageIndex;
             }
@@ -388,14 +391,14 @@ int main(int argc, char *argv[]){
 
     std::string filename = argv[1];
 
-    OFDPackage package;
-    if ( !package.Open(filename) ){
-        LOG(ERROR) << "OFDPackage::Open() failed. filename:" << filename;
+    OFDFile ofdFile;
+    if ( !ofdFile.Open(filename) ){
+        LOG(ERROR) << "OFDFile::Open() failed. filename:" << filename;
         return -1;
     }
-    OFDDocumentPtr document = OFDDocumentPtr(package.GetOFDDocument()); 
+    OFDDocumentPtr document = OFDDocumentPtr(ofdFile.GetDocument()); 
     assert(document != nullptr);
-    LOG(DEBUG) << document->String();
+    LOG(DEBUG) << document->to_string();
 
     size_t total_pages = document->GetPagesCount();
     LOG(INFO) << total_pages << " pages in " << filename;
@@ -409,7 +412,7 @@ int main(int argc, char *argv[]){
         app.Execute();
     }
 
-    package.Close();
+    ofdFile.Close();
 
 
 

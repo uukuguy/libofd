@@ -64,44 +64,43 @@
                                     <xs:attribute name="Name" type="xs:string" use="required"/>
                                 </xs:complexType>
                             </xs:element>
-                            <xs:element name="URI">
-                                <xs:complexType>
-                                    <xs:attribute name="URI" type="xs:string" use="required"/>
-                                    <xs:attribute name="Base" type="xs:string"/>
-                                    <xs:attribute name="Target" type="xs:string"/>
-                                </xs:complexType>
-                            </xs:element>
-                            <xs:element name="GotoA">
-                                <xs:complexType>
-                                    <xs:attribute name="AttachID" type="xs:IDREF" use="required"/>
-                                    <xs:attribute default="true" name="NewWindow" type="xs:boolean"
-                                    />
-                                </xs:complexType>
-                            </xs:element>
-                            <xs:element name="Sound">
-                                <xs:complexType>
-                                    <xs:attribute name="ResourceID" type="ST_RefID" use="required"/>
-                                    <xs:attribute name="Value" type="xs:int"/>
-                                    <xs:attribute name="Repeat" type="xs:boolean"/>
-                                    <xs:attribute name="Synchronous" type="xs:boolean"/>
-                                </xs:complexType>
-                            </xs:element>
-                            <xs:element name="Movie">
-                                <xs:complexType>
-                                    <xs:attribute name="ResourceID" type="ST_RefID" use="required"/>
-                                    <xs:attribute name="Operator" default="Play">
-                                        <xs:simpleType>
-                                            <xs:restriction base="xs:string">
-                                                <xs:enumeration value="Play"/>
-                                                <xs:enumeration value="Stop"/>
-                                                <xs:enumeration value="Pause"/>
-                                                <xs:enumeration value="Resume"/>
-                                            </xs:restriction>
-                                        </xs:simpleType>
-                                    </xs:attribute>
-                                </xs:complexType>
-                            </xs:element>
                         </xs:choice>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="URI">
+                    <xs:complexType>
+                        <xs:attribute name="URI" type="xs:string" use="required"/>
+                        <xs:attribute name="Base" type="xs:string"/>
+                        <xs:attribute name="Target" type="xs:string"/>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="GotoA">
+                    <xs:complexType>
+                        <xs:attribute name="AttachID" type="xs:IDREF" use="required"/>
+                        <xs:attribute name="NewWindow" type="xs:boolean" default="true"/>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Sound">
+                    <xs:complexType>
+                        <xs:attribute name="ResourceID" type="ST_RefID" use="required"/>
+                        <xs:attribute name="Value" type="xs:int"/>
+                        <xs:attribute name="Repeat" type="xs:boolean"/>
+                        <xs:attribute name="Synchronous" type="xs:boolean"/>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Movie">
+                    <xs:complexType>
+                        <xs:attribute name="ResourceID" type="ST_RefID" use="required"/>
+                        <xs:attribute name="Operator" default="Play">
+                            <xs:simpleType>
+                                <xs:restriction base="xs:string">
+                                    <xs:enumeration value="Play"/>
+                                    <xs:enumeration value="Stop"/>
+                                    <xs:enumeration value="Pause"/>
+                                    <xs:enumeration value="Resume"/>
+                                </xs:restriction>
+                            </xs:simpleType>
+                        </xs:attribute>
                     </xs:complexType>
                 </xs:element>
             </xs:choice>

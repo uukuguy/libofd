@@ -24,11 +24,48 @@ static inline long long hash_ref(const Ref * id)
     return (((long long)(id->num)) << (sizeof(id->gen)*8)) | (id->gen);
 }
 
+GooString g_content;
 std::string content;
+std::string content0;
 bool need_rescale_font = true;
 bool process_type3 = false;
 bool space_as_offset = false;
 
+
+#include <UnicodeMap.h>
+#include <GlobalParams.h>
+#include <PDFDocEncoding.h>
+std::string unicode_to_string(GooString *s){
+    UnicodeMap *uMap = globalParams->getTextEncoding();
+
+    std::string str;
+    char buf[9];
+    GBool isUnicode;
+    Unicode u;
+    int i, n;
+    if ( (s->getChar(0) & 0xff ) == 0xfe && 
+            (s->getChar(1) & 0xff) == 0xff ){
+        isUnicode = gTrue;
+        i = 2;
+    } else {
+        isUnicode = gFalse;
+        i = 0;
+    }
+    while ( i < s->getLength() ){
+        if ( isUnicode ){
+            u = ((s->getChar(i) & 0xff) << 8) |
+                (s->getChar(i+1) & 0xff);
+            i += 2;
+        } else {
+            u = pdfDocEncoding[s->getChar(i) & 0xff];
+            i++;
+        }
+        n = uMap->mapUnicode(u, buf, sizeof(buf));
+        buf[n] = '\0';
+        str += std::string(buf);
+    };
+    return str;
+}
 
 
 class PDFExtractor::InnerData {
@@ -221,6 +258,12 @@ bool PDFExtractor::Process(const std::string &pdfFilename, const std::string &ow
             file.write(content.c_str(), content.length());
             file.close();
 
+            content0 = unicode_to_string(&g_content);
+            std::fstream file0;
+            file0.open("content0.txt", std::ios::binary | std::ios::out | std::ios::trunc);
+            file0.write(content0.c_str(), content0.length());
+            file0.close();
+
             ok = true;
         } else {
             LOG(WARNING) << "pdfDoc is nullptr";
@@ -289,11 +332,14 @@ void PDFExtractor::drawChar(GfxState *state, double x, double y,
 
 // ======== PDFExtractor::drawString() ========
 void PDFExtractor::drawString(GfxState * state, GooString * s){
-    std::string text = std::string(s->getCString());
-    if ( text.empty() ) return;
+    //std::string text = std::string(s->getCString());
+    //std::string text = unicode_to_string(s);
+    //if ( text.empty() ) return;
 
-    //content += text;
-    LOG(DEBUG) << "call drawString()" << text << " len=" << text.length();
+    //content0 += text;
+    //LOG(DEBUG) << "call drawString()" << text << " len=" << text.length();
+
+    g_content.append(s);
 
     auto font = state->getFont();
     double cur_letter_space = state->getCharSpace();
@@ -335,6 +381,12 @@ void PDFExtractor::drawString(GfxState * state, GooString * s){
     {
         auto n = font->getNextChar(p, len, &code, &u, &uLen, &ax, &ay, &ox, &oy);
         //HR_DEBUG(printf("HTMLRenderer::drawString:unicode=%lc(%d)\n", (wchar_t)u[0], u[0]));
+        //char unicodeBuf[32];
+        //sprintf(unicodeBuf, "unicode=%lc(%d)", (wchar_t)u[0], u[0]);
+        //sprintf(unicodeBuf, "unicode=%X(%x)", (wchar_t)u[0], u[0]);
+        //LOG(DEBUG) << "----->" <<  std::string(unicodeBuf) << "<-------";
+        //unicodeBuf[0] = u[0];
+        //unicodeBuf[1] = u[1];
 
         if(!(equal(ox, 0) && equal(oy, 0))) {
             std::cerr << "TODO: non-zero origins" << std::endl;
@@ -355,30 +407,41 @@ void PDFExtractor::drawString(GfxState * state, GooString * s){
             //// ignore horiz_scaling, as it has been merged into CTM
             //html_text_page.get_cur_line()->append_offset((ax * m_innerData->cur_font_size + cur_letter_space + cur_word_space) * draw_text_scale);
         } else {
+            char cbuf[32];
+            for ( auto k = 0 ; k < uLen ; k++ ){
+                cbuf[k] = u[k];
+            }
+            cbuf[uLen] = '\0';
+            content += std::string(cbuf);
+
             bool decompose_ligature = true;
             if((decompose_ligature) && (uLen > 1) && std::none_of(u, u+uLen, is_illegal_unicode)) {
                 //html_text_page.get_cur_line()->append_unicodes(u, uLen, ddx);
             } else {
                 Unicode uu;
                 //if(cur_text_state.font_info->use_tounicode) {
+                if ( true ) {
                     uu = check_unicode(u, uLen, code, font);
                     char buf[16];
-                    sprintf(buf, "%X", uu);
-                    LOG(INFO) << buf;
-                    char *u = (char*)&uu;
-                    buf[0] = u[0];
-                    buf[1] = u[1];
-                    buf[2] = '\0';
-                    content += std::string(buf);
+                    sprintf(buf, "%X -->(%X)", uu, code);
+                    LOG(INFO) << buf << "**********";
+
+                    char *u0 = (char*)&uu;
+                    for (auto i = 0 ; i < uLen ; i++ ){
+                        buf[i] = u0[i];
+                    }
+                    buf[uLen] = 0;
+                    //LOG(DEBUG) << std::string(buf) << std::endl;
+                    //content += std::string(buf);
 
                     // Font
                     PDFFont pdfFont;
                     m_innerData->GfxFont2PDFFont(*font, pdfFont);
-                    LOG(INFO) << pdfFont.ToString();
+                    //LOG(INFO) << pdfFont.ToString();
 
-                //} else {
+                } else {
                     //uu = unicode_from_font(code, font);
-                //}
+                }
                 //html_text_page.get_cur_line()->append_unicodes(&uu, 1, ddx);
 
                 /*

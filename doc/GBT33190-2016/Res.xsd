@@ -120,7 +120,11 @@
                 </xs:restriction>
             </xs:simpleType>
         </xs:attribute>
-        <xs:attribute default="8" name="BitsPerComponent" type="xs:int"/>
+        <xs:attribute default="8" name="BitsPerComponent">
+            <xs:simpleType>
+                <xs:restriction base="xs:int"/>
+            </xs:simpleType>
+        </xs:attribute>
         <xs:attribute name="Profile" type="ST_Loc"/>
     </xs:complexType>
 

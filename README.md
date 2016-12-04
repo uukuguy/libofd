@@ -65,3 +65,6 @@ $ ./build/bin/ofdviewer ./data/sample0.ofd --v=1
 | RETURN         | Fullscreen |
 | ESC (or KEY_Q) | Exit       |
 
+## 勘误表
+
+

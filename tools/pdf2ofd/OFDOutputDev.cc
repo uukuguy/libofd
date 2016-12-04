@@ -1,0 +1,333 @@
+#include <iostream>
+#include <iomanip>
+#include "OFDOutputDev.h"
+#include "logger.h"
+
+GBool rawOrder = gFalse;
+
+OFDOutputDev::OFDOutputDev() : 
+    m_xref(nullptr), m_textPage(nullptr), m_actualText(nullptr){
+
+    m_textPage = new TextPage(rawOrder);
+    m_actualText = new ActualText(m_textPage);
+}
+
+OFDOutputDev::~OFDOutputDev(){
+
+    if ( m_textPage != nullptr ){ 
+        m_textPage->decRefCnt();
+    }
+    if ( m_actualText != nullptr ){
+        delete m_actualText;  
+    }
+}
+
+void OFDOutputDev::ProcessDoc(PDFDoc *pdfDoc){
+    if ( pdfDoc == nullptr ) return;
+
+    double resolution = 72.0;
+    GBool useMediaBox = gTrue;
+    GBool crop = gFalse;
+    GBool printing = gFalse;
+
+    auto numPages = pdfDoc->getNumPages();
+    LOG(INFO) << "Total " << numPages << " pages in pdf file"; 
+
+    for ( auto i = 0 ; i < numPages ; i++ ){
+        pdfDoc->displayPage(this, i + 1, resolution, resolution, 0, useMediaBox, crop, printing);
+    }
+}
+
+void OFDOutputDev::SetTextPage(TextPage *textPage)
+{
+    if ( m_textPage != nullptr ){ 
+        m_textPage->decRefCnt();
+    }
+    if ( m_actualText != nullptr ){
+        delete m_actualText;
+    }
+    if ( textPage != nullptr ){
+        m_textPage = textPage;
+        m_textPage->incRefCnt();
+        m_actualText = new ActualText(m_textPage);
+    } else {
+        m_textPage = nullptr;
+        m_actualText = nullptr;
+    }
+}
+
+TextPage *OFDOutputDev::TakeTextPage(){
+    TextPage *textPage;
+
+    textPage = m_textPage;
+    if ( textPage != nullptr ){
+        delete m_actualText;
+    }
+
+    m_textPage = new TextPage(rawOrder);
+    m_actualText = new ActualText(m_textPage);
+
+    return textPage;
+}
+
+void OFDOutputDev::startPage(int /*pageNum*/, GfxState *state, XRef *xrefA) {
+    if ( m_textPage != nullptr ){
+        delete m_actualText;
+        m_textPage->decRefCnt();
+        m_textPage = new TextPage(rawOrder);
+        m_actualText = new ActualText(m_textPage);
+
+        m_textPage->startPage(state);
+    }
+    if ( xrefA != nullptr){
+        m_xref = xrefA;
+    }
+}
+
+void printLine(TextLine *line){
+    double xMin, yMin, xMax, yMax;
+    double lineXMin = 0, lineYMin = 0, lineXMax = 0, lineYMax = 0;
+    TextWord *word;
+    std::stringstream wordXML;
+    wordXML << std::fixed << std::setprecision(6);
+
+    for (word = line->getWords(); word; word = word->getNext()) {
+        word->getBBox(&xMin, &yMin, &xMax, &yMax);
+
+        if (lineXMin == 0 || lineXMin > xMin) lineXMin = xMin;
+        if (lineYMin == 0 || lineYMin > yMin) lineYMin = yMin;
+        if (lineXMax < xMax) lineXMax = xMax;
+        if (lineYMax < yMax) lineYMax = yMax;
+
+        const std::string myString = word->getText()->getCString();
+        wordXML << "          <word xMin=\"" << xMin << "\" yMin=\"" << yMin << "\" xMax=\"" <<
+            xMax << "\" yMax=\"" << yMax << "\">" << myString << "</word>\n";
+    }
+
+    //LOG(INFO) << wordXML.str();
+}
+
+void processTextPage(TextPage *textPage){
+    double xMin, yMin, xMax, yMax;
+    for ( auto flow = textPage->getFlows(); flow != nullptr ; flow = flow->getNext()){
+        for ( auto blk = flow->getBlocks(); blk != nullptr ; blk = blk->getNext()){
+            blk->getBBox(&xMin, &yMin, &xMax, &yMax);
+            for ( auto line = blk->getLines(); line != nullptr ; line = line->getNext()){
+                printLine(line);
+            }
+        }
+    }
+}
+
+void OFDOutputDev::endPage() {
+  if ( m_textPage != nullptr ){
+    m_textPage->endPage();
+    m_textPage->coalesce(gTrue, 0, gFalse);
+
+    processTextPage(m_textPage);
+  }
+
+}
+
+void OFDOutputDev::saveState(GfxState *state){
+    if ( m_textPage != nullptr ){
+        m_textPage->updateFont(state);
+    }
+}
+
+void OFDOutputDev::restoreState(GfxState *state){
+    if ( m_textPage != nullptr ){
+        m_textPage->updateFont(state);
+    }
+}
+
+
+void showGfxFont(GfxFont *gfxFont){
+
+    LOG(INFO) << "******** showGfxFont ********";
+    Ref *ref = gfxFont->getID();
+    GooString *family = gfxFont->getFamily();
+    std::string fontFamily;
+    if ( family != nullptr ){
+        fontFamily = std::string(family->getCString());
+    }
+
+    GooString *name = gfxFont->getName();
+    std::string fontName;
+    if ( name != nullptr ){
+        fontName = std::string(name->getCString());
+    }
+
+    GooString *encodingName = gfxFont->getEncodingName();
+    std::string fontEncodingName;
+    if ( encodingName != nullptr ){
+        fontEncodingName = std::string(encodingName->getCString());
+    }
+
+    GooString *embFontName = gfxFont->getEmbeddedFontName();
+    std::string fontEmbeddedName;
+    if ( embFontName != nullptr ){
+        fontEmbeddedName = std::string(embFontName->getCString());
+    }
+
+    Ref embID;
+    embID.num = -1;
+    embID.gen = -1;
+    gfxFont->getEmbeddedFontID(&embID);
+
+
+    GfxFontType fontType = gfxFont->getType();
+    GfxFont::Stretch fontStretch = gfxFont->getStretch();
+    GfxFont::Weight fontWeight = gfxFont->getWeight();
+
+    bool isItalic = gfxFont->isItalic();
+    bool isBold = gfxFont->isBold();
+
+    double *fontMatrix = gfxFont->getFontMatrix();
+    double *fontBBox = gfxFont->getFontBBox();
+
+    std::string fontTypeName = "()";
+    if ( fontType == fontCIDType2 ){
+        fontTypeName = "(fontCIDType2)";
+    }
+
+    LOG(INFO) << "fontID(num,gen):(" << ref->num << ", " << ref->gen << ") "
+        << "FontType: " << int(fontType) << fontTypeName << " "
+        << "FontFamily:" << fontFamily << " "
+        << "FontName:" << fontName << " "
+        << "FontEncodingName:" << fontEncodingName << " "
+        << "fontEmbeddedName:" << fontEmbeddedName << " "
+        << "embID(num,gen): (" << embID.num << ", " << embID.gen << ") "
+        << "FontStretch: " << fontStretch << " "
+        << "FontWeight: " << fontWeight << " "
+        << "isItalic: " << isItalic << " "
+        << "isBold: " << isBold << " "
+        << "fontMatrix: [" << fontMatrix[0] << ", " << fontMatrix[1] << ", " << fontMatrix[2] << ", "
+        << fontMatrix[3] << ", " <<  fontMatrix[4] << ", " << fontMatrix[5] << "] "
+        << "fontBBox: [" << fontBBox[0] << ", " << fontBBox[1] << ", " << fontBBox[2] << ", " << fontBBox[3] << "] "
+        ;
+
+}
+
+void OFDOutputDev::PrintFonts() const{
+    LOG(INFO) << m_fonts.size() << " fonts in pdf file.";
+    for ( auto font : m_fonts ){
+        LOG(INFO) << font.second->ToString();
+    }
+}
+
+std::shared_ptr<ofd::OFDFont> GfxFont_to_OFDFont(GfxFont *gfxFont, XRef *xref){
+    std::shared_ptr<ofd::OFDFont> ofdFont = std::make_shared<ofd::OFDFont>();
+
+    // -------- FontID --------
+    Ref *ref = gfxFont->getID();
+    ofdFont->ID = ref->num;
+
+    // -------- FontFamily --------
+    GooString *family = gfxFont->getFamily();
+    if ( family != nullptr ){
+        ofdFont->FamilyName = std::string(family->getCString());
+    }
+
+    // -------- FontName --------
+    GooString *name = gfxFont->getName();
+    if ( name != nullptr ){
+        ofdFont->FontName = std::string(name->getCString());
+    }
+
+    // -------- FontType --------
+    GfxFontType fontType = gfxFont->getType();
+    if ( fontType == fontCIDType2 ){
+        ofdFont->FontType = ofd::Font::Type::CIDType2;
+    } else if (fontType == fontType1 ){
+        ofdFont->FontType = ofd::Font::Type::Type1;
+    } else if (fontType == fontType3 ){
+        ofdFont->FontType = ofd::Font::Type::Type3;
+    } else if (fontType == fontTrueType ){
+        ofdFont->FontType = ofd::Font::Type::TrueType;
+    } else {
+        ofdFont->FontType = ofd::Font::Type::Unknown;
+    }
+
+    // -------- FontLoc --------
+    GfxFontLoc *fontLoc = gfxFont->locateFont(xref, nullptr);
+    if ( fontLoc != nullptr ){
+        if ( fontLoc->locType == gfxFontLocEmbedded ){
+            ofdFont->FontLoc = ofd::Font::Location::Embedded;
+        } else if ( fontLoc->locType == gfxFontLocExternal ){
+            ofdFont->FontLoc = ofd::Font::Location::External;
+            ofdFont->FontFile = std::string(fontLoc->path->getCString());
+        } else if ( fontLoc->locType == gfxFontLocResident ){
+            ofdFont->FontLoc = ofd::Font::Location::Resident;
+        } else {
+            ofdFont->FontLoc = ofd::Font::Location::Unknown;
+        }
+    } else {
+        LOG(WARNING) << "fontLoc == nullptr.";
+    }
+
+    // -------- FontStream --------
+    int fontStreamSize = 0;
+    char *fontStream = gfxFont->readEmbFontFile(xref, &fontStreamSize);
+    ofdFont->FontStream = fontStream;
+    ofdFont->FontStreamSize = fontStreamSize;
+
+    return ofdFont;
+}
+
+void OFDOutputDev::updateFont(GfxState *state){
+    GfxFont *gfxFont = state->getFont();
+    if ( gfxFont != nullptr ){
+        Ref *ref = gfxFont->getID();
+        int fontID = ref->num;
+        if ( m_fonts.find(fontID) == m_fonts.end() ){
+            std::shared_ptr<ofd::OFDFont> ofdFont = GfxFont_to_OFDFont(gfxFont, m_xref);
+
+            m_fonts.insert(std::map<int, std::shared_ptr<ofd::OFDFont> >::value_type(fontID, ofdFont));
+
+            showGfxFont(gfxFont);
+
+            PrintFonts();
+        }
+    }
+}
+
+void OFDOutputDev::beginString(GfxState *state, GooString *s){
+}
+
+void OFDOutputDev::endString(GfxState *state){
+}
+
+void OFDOutputDev::drawChar(GfxState *state, double x, double y,
+        double dx, double dy,
+        double originX, double originY,
+        CharCode code, int nBytes, Unicode *u, int uLen){
+    //LOG(DEBUG) << "(x,y,dx,dy):" << std::setprecision(3) << "(" << x << ", " << y << ", " << dx << ", " << dy << ")" 
+        //<< " (originX, originY):" << "(" << originX << ", " << originY << ")"
+        //<< " code:" << std::hex << std::setw(4) << std::setfill('0') << code
+        //<< " nBytes:" << nBytes << " uLen:" << uLen;
+
+    //LOG(DEBUG) << "code:" << std::hex << std::setw(4) << std::setfill('0') << code << " nBytes:" << nBytes << " uLen:" << uLen;
+    if ( m_textPage != nullptr ){
+        //LOG(INFO) << "code:" << std::hex << std::setw(4) << std::setfill('0') << code << " nBytes:" << nBytes << " uLen:" << uLen;
+        m_actualText->addChar(state, x, y, dx, dy, code, nBytes, u, uLen);
+    }
+}
+
+void OFDOutputDev::incCharCount(int nChars){
+    if ( m_textPage != nullptr ){
+        m_textPage->incCharCount(nChars);
+    }
+}
+
+void OFDOutputDev::beginActualText(GfxState *state, GooString *text) {
+    if ( m_textPage != nullptr ){
+        m_actualText->begin(state, text);
+    }
+}
+
+void OFDOutputDev::endActualText(GfxState *state) {
+    if ( m_textPage != nullptr ){
+        m_actualText->end(state);
+    }
+}

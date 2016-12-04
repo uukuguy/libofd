@@ -6,6 +6,15 @@
 #include <tinyxml2.h>
 using namespace tinyxml2;
 
+//#include "GBT33190-2016.h"
+//#include "OFD/OFD.h"
+//#include "OFD/Document.h"
+//#include "OFD/Page.h"
+//#include "OFD/Res.h"
+//#include "OFD/GraphicUnit.h"
+//#include "OFD/Annotation.h"
+//#include "OFD/Signature.h"
+//#include "OFD/Version.h"
 
 using namespace ofd;
 

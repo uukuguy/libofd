@@ -1,171 +1,73 @@
-#ifndef __OFDDOCUMENT_H__
-#define __OFDDOCUMENT_H__
+#ifndef __OFD_DOCUMENT_H__
+#define __OFD_DOCUMENT_H__
 
-#ifdef __cplusplus
-
-#include <zip.h>
-#include <string>
+#include <memory>
 #include <vector>
-#include <map>
-#include <tuple>
-#include <cstring>
-#include "ofd.h"
-#include "OFDFont.h"
+#include <string>
+#include "OFDCommon.h"
 
-namespace ofd {
+namespace ofd{
 
-class FontResource;
-class OFDPackage;
-class OFDPage;
-class OFDCanvas;
+    class OFDPage;
+    typedef std::shared_ptr<OFDPage> OFDPagePtr;
 
-
-
-class OFDDocument {
-public:
-    OFDDocument(OFDPackage *package, const std::string &filename);
-    //OFDDocument(OFDPackagePtr package, const std::string &filename);
-    ~OFDDocument();
-
-    bool Open();
-    void Close();
-
-    OFDPackage *GetPackage(){return m_package;};
-    const OFDPackage *GetPackage() const {return m_package;};
-    //OFDPackagePtr GetPackage(){return m_package.lock();};
-    //const OFDPackagePtr GetPackage() const {return m_package.lock();};
-
-    bool IsOpened() const {return m_opened;};
-
-    size_t GetPagesCount() const {return m_attributes.Pages.size();};
-    //OFDPage *GetOFDPage(size_t idx) {return m_attributes.Pages[idx];};
-    //const OFDPage *GetOFDPage(size_t idx) const {return m_attributes.Pages[idx];};
-    OFDPagePtr GetOFDPage(size_t idx) {return m_attributes.Pages[idx];};
-    const OFDPagePtr GetOFDPage(size_t idx) const {return m_attributes.Pages[idx];};
-
-    bool HasFont(int fontID) const {return m_attributes.PublicRes.HasFont(fontID);};
-    const OFDFont &GetFontByID(int fontID) const {return m_attributes.PublicRes.GetFontByID(fontID);};
-    size_t GetFontsCount() const {return m_attributes.PublicRes.GetFontsCount();};
-    const OFDFont &GetFont(size_t idx) const {return m_attributes.PublicRes.GetFont(idx);};
-
-    std::string GetRootDir() const {return m_rootDir;};
-    std::string GetPublicResBaseLoc() const {return m_attributes.PublicRes.BaseLoc;};
-    std::string GetDocumentResBaseLoc() const {return m_attributes.DocumentRes.BaseLoc;};
-
-public:
-    class OFDPublicRes {
+    class OFDDocument{
     public:
-        std::string BaseLoc;
-        std::string m_filename;
+        OFDDocument();
+        virtual ~OFDDocument();
 
-        size_t GetFontsCount() const {return m_fonts.size();};
-        const OFDFont& GetFont(size_t idx) const {return m_fonts[idx];};
-        void AppendFont(const OFDFont& font){
-            m_fonts.push_back(font);
-            m_mapFonts[font.ID] = font;
-        };
+        bool Open();
+        void Close();
+        bool IsOpened() const;
 
-        size_t GetColorSpacesCount() const {return m_colorSpaces.size();};
-        const OFDColorSpace& GetColorSpace(size_t idx) const {return m_colorSpaces[idx];};
-        void AppendColorSpace(const OFDColorSpace& colorSpace) {
-            m_colorSpaces.push_back(colorSpace);
-        };
+        // -------- CommonData --------
+        // 文档公共数据，定义了页面区域、公共资源等数据。
+        class CommonData{
+        public:
+            // 当前文档中所有对象使用标识的最大值，初始值为0。
+            // MaxUnitID主要用于文档编辑，在向文档中新增一个对象时，
+            // 需要分配一个新的标识，新标识取值宜为MaxUnitID+1，
+            // 同时需要修改此MaxUnitID值。必选。
+            ST_ID MaxUnitID;
 
-        void clear(){
-            m_mapFonts.clear();
-            m_fonts.clear();
-            m_colorSpaces.clear();
-        }
+            // 指定该文档区域的默认大小和位置。必选。
+            CT_PageArea PageArea;
 
-        bool HasFont(int fontID) const {
-            std::map<int, OFDFont>::const_iterator it = m_mapFonts.find(fontID);
-            if ( it != m_mapFonts.end() ){
-                return true;
-            } else{
-                return false;
-            }
-        }
+            // 公共资源序列，每一个节点指向OFD包内的一个资源描述文档。
+            std::vector<ST_Loc> PublicRes;
 
-        const OFDFont &GetFontByID(int fontID) const {
-            std::map<int, OFDFont>::const_iterator it = m_mapFonts.find(fontID);
-            return it->second;
-        };
+            // 文档资源序列，每一个节点指向OFD包内的一个资源描述文档。
+            std::vector<ST_Loc> DocumentRes;
+
+            // 模板页序列，为一系列模板页的集合，模板页内容结构和普通页相同。
+            //CT_TemplatePage TemplatePage;
+            
+            // 引用在资源文件中定义的颜色空间标识。如果此项不存在，采用RGB作为默认颜色空间。
+            ST_RefID DefaultCS;
+
+
+            CommonData() : MaxUnitID(0) {};
+
+        }; // class CommonData
+
+
+        const CommonData& GetCommonData() const;
+        CommonData& GetCommonData();
+
+        size_t GetPagesCount() const;
+        const OFDPagePtr GetPage(size_t idx) const;
+        OFDPagePtr GetPage(size_t idx);
+
+        OFDPagePtr AddNewPage();
+
+        std::string to_string() const;
 
     private:
-        std::vector<OFDFont> m_fonts;
-        std::map<int, OFDFont> m_mapFonts;
-        std::vector<OFDColorSpace> m_colorSpaces;
-    };
+        class ImplCls;
+        std::unique_ptr<ImplCls> m_impl;
 
-    class OFDDocumentRes {
-    public:
-        std::string BaseLoc;
-        std::string m_filename;
+    }; // class OFDDocument
 
-        size_t GetMultiMediasCount() const {return m_multiMedias.size();};
-        const OFDMultiMedia& GetMultiMedia(size_t idx) const {return m_multiMedias[idx];};
-        void AppendMultiMedia(const OFDMultiMedia& multiMedia){m_multiMedias.push_back(multiMedia);};
+}; // namespace ofd
 
-        void clear(){
-            m_multiMedias.clear();
-        }
-
-    private:
-        std::vector<OFDMultiMedia> m_multiMedias;
-    };
-
-    class OFDCommonData{
-    public:
-        OFDPageArea PageArea;
-        std::string PublicRes;
-        std::string DocumentRes;
-        uint64_t MaxUnitID;
-
-        void clear() {
-            memset(&PageArea, 0, sizeof(OFDPageArea));
-        }
-
-    }; // class OFDCommonData
-
-    struct Attributes {
-        OFDPublicRes PublicRes;
-        OFDDocumentRes DocumentRes;
-        OFDCommonData CommonData;
-        //std::vector<OFDPage*> Pages;
-        std::vector<OFDPagePtr> Pages;
-
-        void clear();
-    };
-
-    const Attributes& GetAttributes() const {return m_attributes;};
-    Attributes& GetAttributes() {return m_attributes;};
-
-    std::string String() const;
-
-
-    const std::shared_ptr<FontResource> GetFontResource() const {return m_fontResource;};
-
-private:
-    OFDPackage *m_package;
-    //std::weak_ptr<OFDPackage> m_package;
-    std::string m_filename;
-
-    Attributes m_attributes;
-
-    bool m_opened;
-    std::string m_rootDir;
-
-    bool parseXML();
-    bool parsePublicResXML();
-    bool parseDocumentResXML();
-    bool loadFonts();
-
-    std::shared_ptr<FontResource> m_fontResource;
-
-}; // class OFDDocument
-
-} // namespace ofd
-
-#endif // #ifdef __cplusplus
-
-#endif // __OFDDOCUMENT_H__
+#endif // __OFD_DOCUMENT_H__
