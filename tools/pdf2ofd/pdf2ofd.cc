@@ -52,10 +52,15 @@ PDFDoc* OpenPDFFile(const std::string &pdfFilename, const std::string &ownerPass
     return pdfDoc;
 }
 
+DEFINE_string(pdffile, "", "The PDF file to translated.");
+
 int main(int argc, char *argv[]){
 
     Logger::Initialize(argc, argv);
 
+    gflags::ParseCommandLineFlags(&argc, &argv, true);
+
+    // Init poppler.
     globalParams = new GlobalParams(nullptr);
 
     std::string pdfFilename = argv[1];
