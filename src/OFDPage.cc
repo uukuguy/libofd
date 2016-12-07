@@ -1,4 +1,5 @@
 #include <sstream>
+#include <assert.h>
 #include "logger.h"
 #include "OFDPage.h"
 
@@ -21,6 +22,8 @@ public:
     OFDLayerPtr GetLayer(size_t idx);
 
     OFDLayerPtr AddNewLayer(Layer::Type layerType);
+    const OFDLayerPtr GetBodyLayer() const;
+    OFDLayerPtr GetBodyLayer();
 
     // -------- Private Attributes --------
 
@@ -31,7 +34,6 @@ public:
 }; // class OFDPage::ImplCls
 
 OFDPage::ImplCls::ImplCls() : m_opened(false) {
-    AddNewLayer(Layer::Type::BODY);
 }
 
 OFDPage::ImplCls::~ImplCls(){
@@ -72,10 +74,24 @@ OFDLayerPtr OFDPage::ImplCls::AddNewLayer(Layer::Type layerType){
     return layer;
 }
 
+const OFDLayerPtr OFDPage::ImplCls::GetBodyLayer() const{
+    assert( Layers.size() > 0 );
+    const OFDLayerPtr bodyLayer = Layers[0]; 
+    return bodyLayer;
+}
+
+OFDLayerPtr OFDPage::ImplCls::GetBodyLayer(){
+    assert( Layers.size() > 0 );
+    OFDLayerPtr bodyLayer = Layers[0]; 
+    return bodyLayer;
+}
+
 // **************** class OFDPage ****************
 
 OFDPage::OFDPage(){
     m_impl = std::unique_ptr<ImplCls>(new ImplCls());
+
+    AddNewLayer(Layer::Type::BODY);
 }
 
 OFDPage::~OFDPage(){
@@ -113,3 +129,10 @@ OFDLayerPtr OFDPage::AddNewLayer(Layer::Type layerType){
     return m_impl->AddNewLayer(layerType);
 }
 
+const OFDLayerPtr OFDPage::GetBodyLayer() const{
+    return m_impl->GetBodyLayer();
+}
+
+OFDLayerPtr OFDPage::GetBodyLayer(){
+    return m_impl->GetBodyLayer();
+}

@@ -1,4 +1,6 @@
 #include <sstream>
+#include <assert.h>
+#include <zip.h>
 #include "OFDFile.h"
 #include "OFDDocument.h"
 #include "logger.h"
@@ -19,23 +21,29 @@ public:
     void Close();
     bool Save(const std::string &filename);
 
-    typedef std::vector<DocBodyPtr> DocBodiesList;
+    const OFDDocumentPtr GetDefaultDocument() const;
+    OFDDocumentPtr GetDefaultDocument();
+
+    OFDDocumentPtr AddNewDocument();
+
+    // -------- Private Attributes --------
 
     std::string   Version;   // 文件格式的版本号，取值为”1.0“
     std::string   DocType;   // 文件格式子集类型，取值为”OFD“，表明此文件符合本标准
                              // 取值为”OFD-A“，表明此文件符合OFD存档规范
-    DocBodiesList DocBodies; // 文件对象入口集合
-
-    // -------- Private Attributes --------
-
     std::string m_filename;  // 包文件绝对路径
     bool m_opened;           // 包文件是否成功打开标志
+
+    typedef std::vector<OFDDocumentPtr> DocumentsList;
+    DocumentsList m_documents; // 文件对象入口集合
+
+    zip *m_archive;
 
 }; // class OFDFile::ImplCls
 
 OFDFile::ImplCls::ImplCls() :
     Version("1.0"), DocType("OFD"),
-    m_opened(false){
+    m_opened(false), m_archive(nullptr){
 }
 
 OFDFile::ImplCls::ImplCls(const std::string &filename) :
@@ -67,22 +75,183 @@ void OFDFile::ImplCls::Close(){
     }
 }
 
+bool AddZipFile(zip *archive, const std::string &filename, const std::string &text){
+    zip_source *s = zip_source_buffer(archive, text.c_str(), text.length(), 0);
+    if ( s == nullptr ) return false;
+    int ret = zip_add(archive, filename.c_str(), s);
+    return ret != -1;
+}
+
+bool AddZipDir(zip *archive, const std::string &dirName){
+    int ret = zip_add_dir(archive, dirName.c_str());
+    return ret != -1;
+}
+
 bool OFDFile::ImplCls::Save(const std::string &filename){
-    if ( !m_opened ) return false;
+    //if ( !m_opened ) return false;
+
+    LOG(INFO) << "Save OFD file: " << filename;
 
     bool ok = false;
 
     if ( !filename.empty() ) m_filename = filename;
     if ( m_filename.empty() ) return false;
 
+    int error = 0;
+    m_archive = zip_open(filename.c_str(), ZIP_CREATE, &error);
+    if ( m_archive == nullptr ){
+        LOG(ERROR) << "Error: Open " << filename << " failed. error=" << error;
+        return false;
+    }
+
+    // -------- OFD.xml
+    std::string strOFDxml;
+    AddZipFile(m_archive, "OFD.xml", strOFDxml);
+
+    int n = 0;
+    for ( auto document : m_documents ) {
+        // -------- mkdir Doc_N
+        std::stringstream ss;
+        ss << "Doc_" << n;
+        std::string Doc_N = ss.str();
+        AddZipDir(m_archive, Doc_N);
+
+        // Doc_N/Document.xml
+        std::string strDocumentXML;
+        AddZipFile(m_archive, Doc_N + "/Document.xml", strDocumentXML); 
+
+        // Doc_N/PublicRes.xml
+        std::string strPublicResXML;
+        AddZipFile(m_archive, Doc_N + "/PublicRes.xml", strPublicResXML); 
+
+        // Doc_N/DocumentRes.xml
+        std::string strDocumentResXML;
+        AddZipFile(m_archive, Doc_N + "/DocumentRes.xml", strDocumentResXML); 
+        
+        // mkdir Doc_N/Pages
+        AddZipDir(m_archive, Doc_N + "/Pages"); 
+
+        auto numPages = document->GetPagesCount();
+        for ( auto k = 0 ; k < numPages ; k++ ){
+            OFDPagePtr page = document->GetPage(n);
+
+            std::stringstream ssPageK;
+            ssPageK << "Page_" << k;
+            std::string Page_K = ssPageK.str();
+
+            std::string pageDir = Doc_N + "/Pages/" + Page_K;
+            AddZipDir(m_archive, pageDir);
+
+            // Doc_N/Pages/Page_K/Content.xml
+            std::string strContentXML;
+            AddZipFile(m_archive, pageDir + "/Content.xml", strContentXML);
+
+            // Doc_N/Pages/Page_K/PageRes.xml
+            std::string strPageResXML;
+            AddZipFile(m_archive, pageDir + "/PageRes.xml", strPageResXML);
+
+            // mkdir Doc_N/Pages/Page_K/Res
+            std::string pageResDir = pageDir + "/Res";
+            AddZipDir(m_archive, pageResDir);
+
+            for ( auto m = 0 ; m < 1 ; m++ ){
+                // Doc_N/Pages/Page_K/Res/Image_M.png
+                std::stringstream ssImage;
+                ssImage << "Image_" << m << ".png";
+                std::string imageFileName = pageResDir + "/" + ssImage.str();
+
+                std::string strImage;
+                AddZipFile(m_archive, imageFileName, strImage);
+            }
+
+        }
+
+        // mkdir Doc_N/Signs
+        std::string signsDir = Doc_N + "/Signs";
+        AddZipDir(m_archive, signsDir); 
+
+        // Doc_N/Signs/Signatures.xml
+        std::string strSignaturesXML;
+        AddZipFile(m_archive, signsDir + "/Signatures.xml", strSignaturesXML);
+
+        for ( auto m = 0 ; m < 1 ; m++ ){
+            // mkdir Doc_N/Signs/Sign_N
+            std::stringstream ssSignN;
+            ssSignN << "Sign_" << m;
+            std::string Sign_N = ssSignN.str();
+            std::string signDir = Doc_N + "/Signs/" + Sign_N; 
+            AddZipDir(m_archive, signDir);
+            // Doc_N/Signs/Sign_N/Seal.esl
+            std::string strSealESL;
+            AddZipFile(m_archive, signDir + "/Seal.esl", strSealESL); 
+            // Doc_N/Signs/Sign_N/Signature.xml
+            std::string strSignatureXML;
+            AddZipFile(m_archive, signDir + "/Signature.xml", strSignatureXML);
+            // Doc_N/Signs/Sign_N/SignedValue.dat
+            std::string strSignedValueDAT;
+            AddZipFile(m_archive, signDir + "/SignedValue.dat", strSignedValueDAT);
+        }
+        
+        // mkdir Doc_N/Res
+        std::string resDir = Doc_N + "/Res";
+        AddZipDir(m_archive, resDir); 
+
+        for ( auto m = 0 ; m < 1 ; m++ ){
+            // Doc_N/Res/Image_M.png
+            std::stringstream ssImage;
+            ssImage << "Image_" << m << ".png";
+            std::string imageFileName = resDir + "/" + ssImage.str();
+
+            std::string strImage;
+            AddZipFile(m_archive, imageFileName, strImage);
+        }
+
+        for ( auto m = 0 ; m < 1 ; m++ ){
+            // Doc_N/Res/Font_M.ttf
+            std::stringstream ssFont;
+            ssFont << "Font_" << m << ".ttf";
+            std::string fontFileName = resDir + "/" + ssFont.str();
+
+            std::string strFont;
+            AddZipFile(m_archive, fontFileName, strFont);
+        }
+        
+        n++;
+    }
+
+    zip_close(m_archive);
+    m_archive = nullptr;
+
+    ok = true;
+    LOG(INFO) << "Save " << filename << " done.";
 
     return ok;
+}
+
+const OFDDocumentPtr OFDFile::ImplCls::GetDefaultDocument() const{
+    assert( m_documents.size() > 0 );
+    const OFDDocumentPtr defaultDocument = m_documents[0];
+    return defaultDocument;
+}
+
+OFDDocumentPtr OFDFile::ImplCls::GetDefaultDocument(){
+    assert( m_documents.size() > 0 );
+    OFDDocumentPtr defaultDocument = m_documents[0];
+    return defaultDocument;
+}
+
+OFDDocumentPtr OFDFile::ImplCls::AddNewDocument(){
+    OFDDocumentPtr document = std::make_shared<OFDDocument>();
+    m_documents.push_back(document);
+    return document;
 }
 
 // **************** class OFDFile ****************
 
 OFDFile::OFDFile() {
     m_impl = std::unique_ptr<ImplCls>(new ImplCls());
+
+    AddNewDocument();
 }
 
 OFDFile::OFDFile(const std::string &filename){
@@ -104,13 +273,16 @@ bool OFDFile::IsOpened() const{
     return m_impl->m_opened;
 }
 
-
-OFDDocumentPtr OFDFile::GetDocument(){
-    return OFDDocumentPtr(nullptr);
+const OFDDocumentPtr OFDFile::GetDefaultDocument() const{
+    return m_impl->GetDefaultDocument();
 }
 
-const OFDDocumentPtr OFDFile::GetDocument() const{
-    return OFDDocumentPtr(nullptr);
+OFDDocumentPtr OFDFile::GetDefaultDocument(){
+    return m_impl->GetDefaultDocument();
+}
+
+OFDDocumentPtr OFDFile::AddNewDocument(){
+    return m_impl->AddNewDocument();
 }
 
 std::string OFDFile::GetVersion() const{
@@ -121,16 +293,16 @@ std::string OFDFile::GetDocType() const{
     return m_impl->DocType;
 }
 
-size_t OFDFile::GetDocBodiesCount() const{
-    return m_impl->DocBodies.size();
+size_t OFDFile::GetDocumentsCount() const{
+    return m_impl->m_documents.size();
 }
 
-const OFDFile::DocBodyPtr OFDFile::GetDocBody(size_t idx) const{
-    return m_impl->DocBodies[idx];
+const OFDDocumentPtr OFDFile::GetDocument(size_t idx) const{
+    return m_impl->m_documents[idx];
 }
 
-OFDFile::DocBodyPtr OFDFile::GetDocBody(size_t idx) {
-    return m_impl->DocBodies[idx];
+OFDDocumentPtr OFDFile::GetDocument(size_t idx) {
+    return m_impl->m_documents[idx];
 }
 
 bool OFDFile::Save(const std::string &filename){

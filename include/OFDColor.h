@@ -9,7 +9,7 @@
 
 namespace ofd{
 
-    class OFDColor;
+    struct OFDColor;
     typedef std::vector<OFDColor> ColorArray;
 
     namespace ColorSpace{
@@ -33,20 +33,20 @@ namespace ofd{
 
     namespace Color{
 
+        typedef struct RGB{
+            uint32_t Red;   // 红色
+            uint32_t Green; // 绿色
+            uint32_t Blue;  // 蓝色
+        } RGB_t;
+
+        typedef struct CMYK{
+            uint32_t Cyan;    // 青色
+            uint32_t Magenta; // 品红色
+            uint32_t Yellow;  // 黄色
+            uint32_t blacK;   // 黑色
+        } CMYK_t;
+
         typedef struct Value{
-
-            typedef struct RGB{
-                uint32_t Red;   // 红色
-                uint32_t Green; // 绿色
-                uint32_t Blue;  // 蓝色
-            } RGB_t;
-
-            typedef struct CMYK{
-                uint32_t Cyan;    // 青色
-                uint32_t Magenta; // 品红色
-                uint32_t Yellow;  // 黄色
-                uint32_t blacK;   // 黑色
-            } CMYK_t;
 
             union{
                 uint32_t Gray; // 灰度，只包含一个通道来表明灰度值。

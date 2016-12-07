@@ -44,7 +44,11 @@ namespace ofd{
         size_t GetObjectsCount() const {return Objects.size();};
         const OFDObjectPtr GetObject(size_t idx) const {return Objects[idx];};
         OFDObjectPtr GetObject(size_t idx) {return Objects[idx];};
-        void AddObject(OFDObjectPtr object) {Objects.push_back(object);};
+        void AddObject(OFDObjectPtr object) {
+            if ( object != nullptr ){
+                Objects.push_back(object);
+            }
+        }
 
         std::vector<OFDObjectPtr> Objects;
 

@@ -29,7 +29,7 @@ public:
     Text::ReadDirection RD;       // 阅读方向，可选值为0,90,180,270，默认值为0。
     Text::CharDirection CD;       // 字符方向，指定了文字放置的方式，
                                   // 可选值为：0, 90, 180, 270，默认值为0。
-    Text::Weight        W;        // 文字对象的粗细值，可选取值为100, 200, 300, 400, 500, 
+    Text::Weight        Weight;   // 文字对象的粗细值，可选取值为100, 200, 300, 400, 500, 
                                   // 600, 700, 800, 900。 默认值为400。
     bool                Italic;   // 是否是斜体样式，默认值为false。
 
@@ -74,6 +74,7 @@ void OFDTextObject::ImplCls::ClearTextCodes(){
 // **************** class OFDTextObject ****************
 
 OFDTextObject::OFDTextObject(){
+    m_impl = std::unique_ptr<ImplCls>(new ImplCls());
 }
 
 OFDTextObject::~OFDTextObject(){
@@ -122,25 +123,25 @@ bool OFDTextObject::GetHScale() const{
 }
 
 void OFDTextObject::SetHScale(double dHScale){
-    m_impl->HScale = HScale;
+    m_impl->HScale = dHScale;
 }
 
 // 阅读方向，可选值为0,90,180,270，默认值为0。
 Text::ReadDirection OFDTextObject::GetReadDirection() const{
-    return m_impl->ReadDirection;
+    return m_impl->RD;
 }
 
 void OFDTextObject::SetReadDirection(Text::ReadDirection readDirection){
-    m_impl->ReadDirection = readDirection;
+    m_impl->RD = readDirection;
 }
 
 // 字符方向，指定了文字放置的方式，可选值为：0, 90, 180, 270，默认值为0。
 Text::CharDirection OFDTextObject::GetCharDirection() const{
-    return m_impl->CharDirection;
+    return m_impl->CD;
 }
 
 void OFDTextObject::SetCharDirection(Text::CharDirection charDirection){
-    m_impl->CharDirection = charDirection;
+    m_impl->CD = charDirection;
 }
 
 // 文字对象的粗细值，可选取值为100, 200, 300, 400, 500, 600, 700, 800, 900。
@@ -176,7 +177,7 @@ OFDColorPtr OFDTextObject::GetStrokeColor() const{
     return m_impl->StrokeColor;
 }
 
-void OfDTextObject::SteStrokeColor(OFDColorPtr strokeColor){
+void OFDTextObject::SteStrokeColor(OFDColorPtr strokeColor){
     m_impl->StrokeColor = strokeColor;
 }
 

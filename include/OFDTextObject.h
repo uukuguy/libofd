@@ -63,7 +63,7 @@ namespace ofd{
 
         // 引用资源文件中定义的字型的标识。
         const OFDFontPtr GetFont() const;
-        void SetFont(const OFDFontPtr &font);
+        void SetFont(const OFDFontPtr font);
 
         // 字号，单位为毫米。
         double GetFontSize() const;

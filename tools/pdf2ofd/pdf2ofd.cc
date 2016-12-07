@@ -90,8 +90,11 @@ int main(int argc, char *argv[]){
     PDFDoc *pdfDoc = OpenPDFFile(pdfFilename, ownerPassword, userPassword);
     if ( pdfDoc != nullptr ){
 
-        OFDOutputDev *ofdOut = new OFDOutputDev();
+        ofd::OFDFilePtr ofdFile = std::make_shared<ofd::OFDFile>();
+        OFDOutputDev *ofdOut = new OFDOutputDev(ofdFile);
         ofdOut->ProcessDoc(pdfDoc);
+
+        ofdFile->Save(ofdFilename);
 
         delete ofdOut;
         ofdOut = nullptr;

@@ -396,7 +396,7 @@ int main(int argc, char *argv[]){
         LOG(ERROR) << "OFDFile::Open() failed. filename:" << filename;
         return -1;
     }
-    OFDDocumentPtr document = OFDDocumentPtr(ofdFile.GetDocument()); 
+    OFDDocumentPtr document = OFDDocumentPtr(ofdFile.GetDefaultDocument()); 
     assert(document != nullptr);
     LOG(DEBUG) << document->to_string();
 

@@ -47,12 +47,15 @@ namespace ofd{
         const OFDLayerPtr GetLayer(size_t idx) const;
         OFDLayerPtr GetLayer(size_t idx);
         OFDLayerPtr AddNewLayer(Layer::Type layerType);
+        const OFDLayerPtr GetBodyLayer() const;
+        OFDLayerPtr GetBodyLayer();
 
     private:
         class ImplCls;
         std::unique_ptr<ImplCls> m_impl;
 
     }; // OFDPage
+    typedef std::shared_ptr<OFDPage> OFDPagePtr;
 
 }; // namespace ofd
 

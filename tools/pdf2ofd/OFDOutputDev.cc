@@ -1,15 +1,24 @@
 #include <iostream>
 #include <iomanip>
 #include "OFDOutputDev.h"
+#include "OFDPage.h"
+#include "OFDTextObject.h"
 #include "logger.h"
+
+using namespace ofd;
 
 GBool rawOrder = gFalse;
 
-OFDOutputDev::OFDOutputDev() : 
-    m_xref(nullptr), m_textPage(nullptr), m_actualText(nullptr){
+OFDOutputDev::OFDOutputDev(ofd::OFDFilePtr ofdFile) : 
+    m_xref(nullptr), m_textPage(nullptr), m_actualText(nullptr),
+    m_ofdFile(ofdFile), m_ofdDocument(nullptr), m_currentOFDPage(nullptr) {
 
     m_textPage = new TextPage(rawOrder);
     m_actualText = new ActualText(m_textPage);
+
+    if ( ofdFile != nullptr ){
+        m_ofdDocument = ofdFile->GetDefaultDocument();
+    }
 }
 
 OFDOutputDev::~OFDOutputDev(){
@@ -82,9 +91,13 @@ void OFDOutputDev::startPage(int /*pageNum*/, GfxState *state, XRef *xrefA) {
     if ( xrefA != nullptr){
         m_xref = xrefA;
     }
+
+    if ( m_ofdDocument != nullptr ){
+        m_currentOFDPage = m_ofdDocument->AddNewPage();
+    }
 }
 
-void printLine(TextLine *line){
+void printLine(TextLine *line, OFDLayerPtr bodyLayer){
     double xMin, yMin, xMax, yMax;
     double lineXMin = 0, lineYMin = 0, lineXMax = 0, lineYMax = 0;
     TextWord *word;
@@ -102,18 +115,34 @@ void printLine(TextLine *line){
         const std::string myString = word->getText()->getCString();
         wordXML << "          <word xMin=\"" << xMin << "\" yMin=\"" << yMin << "\" xMax=\"" <<
             xMax << "\" yMax=\"" << yMax << "\">" << myString << "</word>\n";
+
+        if ( bodyLayer != nullptr ){
+            OFDTextObject *textObject = new OFDTextObject();
+            Text::TextCode textCode;
+            textCode.X = xMin;
+            textCode.Y = yMax;
+            textCode.Text = myString;
+            textObject->AddTextCode(textCode);
+            OFDObjectPtr object = std::shared_ptr<OFDObject>(textObject);
+            bodyLayer->AddObject(object);
+        }
     }
 
-    //LOG(INFO) << wordXML.str();
+    LOG(INFO) << wordXML.str();
 }
 
-void processTextPage(TextPage *textPage){
+void processTextPage(TextPage *textPage, OFDPagePtr currentOFDPage){
+    OFDLayerPtr bodyLayer = nullptr;
+    if ( currentOFDPage != nullptr ){
+        bodyLayer = currentOFDPage->GetBodyLayer();
+    }
+
     double xMin, yMin, xMax, yMax;
     for ( auto flow = textPage->getFlows(); flow != nullptr ; flow = flow->getNext()){
         for ( auto blk = flow->getBlocks(); blk != nullptr ; blk = blk->getNext()){
             blk->getBBox(&xMin, &yMin, &xMax, &yMax);
             for ( auto line = blk->getLines(); line != nullptr ; line = line->getNext()){
-                printLine(line);
+                printLine(line, bodyLayer);
             }
         }
     }
@@ -124,9 +153,8 @@ void OFDOutputDev::endPage() {
     m_textPage->endPage();
     m_textPage->coalesce(gTrue, 0, gFalse);
 
-    processTextPage(m_textPage);
+    processTextPage(m_textPage, m_currentOFDPage);
   }
-
 }
 
 void OFDOutputDev::saveState(GfxState *state){

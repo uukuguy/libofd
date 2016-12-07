@@ -19,11 +19,12 @@ public:
 
     OFDPagePtr AddNewPage();
 
-    CommonData commonData;
-    std::vector<OFDPagePtr> Pages;
-
     // -------- Private Attributes --------
     bool m_opened;
+
+    DocBody    m_docBody;
+    CommonData m_commonData;
+    std::vector<OFDPagePtr> m_pages;
 
 }; // class OFDDocument::ImplCls
 
@@ -36,7 +37,7 @@ OFDDocument::ImplCls::~ImplCls(){
 std::string OFDDocument::ImplCls::to_string() const{
     std::ostringstream ss;
     ss << "\n======== ofd::OFDDocument ========\n";
-    ss << "Pages: " << Pages.size() << "\n";
+    ss << "Pages: " << m_pages.size() << "\n";
     ss << std::endl;
     return ss.str();
 }
@@ -53,7 +54,7 @@ void OFDDocument::ImplCls::Close(){
 
 OFDPagePtr OFDDocument::ImplCls::AddNewPage(){
     OFDPagePtr page = std::make_shared<OFDPage>();
-    Pages.push_back(page);
+    m_pages.push_back(page);
     return page;
 }
 
@@ -66,24 +67,32 @@ OFDDocument::OFDDocument(){
 OFDDocument::~OFDDocument(){
 }
 
+const DocBody& OFDDocument::GetDocBody() const{
+    return m_impl->m_docBody;
+}
+
+DocBody& OFDDocument::GetDocBody(){
+    return m_impl->m_docBody;
+}
+
 const OFDDocument::CommonData& OFDDocument::GetCommonData() const{
-    return m_impl->commonData;
+    return m_impl->m_commonData;
 }
 
 OFDDocument::CommonData& OFDDocument::GetCommonData(){
-    return m_impl->commonData;
+    return m_impl->m_commonData;
 }
 
 size_t OFDDocument::GetPagesCount() const{
-    return m_impl->Pages.size();
+    return m_impl->m_pages.size();
 }
 
 const OFDPagePtr OFDDocument::GetPage(size_t idx) const{
-    return m_impl->Pages[idx];
+    return m_impl->m_pages[idx];
 }
 
 OFDPagePtr OFDDocument::GetPage(size_t idx){
-    return m_impl->Pages[idx];
+    return m_impl->m_pages[idx];
 }
 
 OFDPagePtr OFDDocument::AddNewPage(){
