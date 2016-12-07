@@ -24,6 +24,7 @@ namespace ofd {
         };
     };
 
+    // ======== class OFDFont ========
     class OFDFont {
     public:
         OFDFont();

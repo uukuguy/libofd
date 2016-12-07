@@ -1,6 +1,8 @@
 #ifndef __OFD_COMMON_H__
 #define __OFD_COMMON_H__
 
+#include <vector>
+
 namespace ofd{
 
     // 以下类型定义在OFD标准的Definitions.xsd文件中
@@ -38,6 +40,7 @@ namespace ofd{
     } ST_Box_t;
 
     typedef uint64_t ST_TIME;
+    typedef std::vector<double> DArray;
 
     // ======== CT_PageArea ========
     // 页面区域结构

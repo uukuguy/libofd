@@ -7,6 +7,7 @@ namespace ofd{
 
     class OFDPage;
 
+    // ======== class OFDRender ========
     class OFDRender {
     public:
         OFDRender();

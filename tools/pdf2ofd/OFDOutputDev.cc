@@ -144,7 +144,6 @@ void OFDOutputDev::restoreState(GfxState *state){
 
 void showGfxFont(GfxFont *gfxFont){
 
-    LOG(INFO) << "******** showGfxFont ********";
     Ref *ref = gfxFont->getID();
     GooString *family = gfxFont->getFamily();
     std::string fontFamily;
@@ -285,9 +284,10 @@ void OFDOutputDev::updateFont(GfxState *state){
 
             m_fonts.insert(std::map<int, std::shared_ptr<ofd::OFDFont> >::value_type(fontID, ofdFont));
 
+            LOG(INFO) << "******** UpdateFont() ********";
             showGfxFont(gfxFont);
 
-            PrintFonts();
+            //PrintFonts();
         }
     }
 }

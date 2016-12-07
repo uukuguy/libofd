@@ -3,8 +3,34 @@
 
 #include <memory>
 #include <string>
+#include "OFDObject.h"
 
 namespace ofd{
+
+    namespace Layer{
+
+        enum class Type{
+            BODY,
+            BACKGROUND,
+            FOREGROUND,
+            CUSTOM,
+        };
+
+    }; // namespace Layer
+
+    class OFDLayer : public PageBlock {
+    public:
+        OFDLayer(){};
+        OFDLayer(Layer::Type layerType) : Type(layerType){};
+        virtual ~OFDLayer(){};
+
+        uint64_t    ID;
+        Layer::Type Type;
+        // ST_REfID DrawParam
+
+    }; // class OFDLayer
+
+    typedef std::shared_ptr<OFDLayer> OFDLayerPtr;
 
     class OFDPage{
     public:
@@ -16,6 +42,11 @@ namespace ofd{
         bool Open();
         void Close();
         bool IsOpened() const;
+
+        size_t GetLayersCount() const;
+        const OFDLayerPtr GetLayer(size_t idx) const;
+        OFDLayerPtr GetLayer(size_t idx);
+        OFDLayerPtr AddNewLayer(Layer::Type layerType);
 
     private:
         class ImplCls;

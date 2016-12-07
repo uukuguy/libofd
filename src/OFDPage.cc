@@ -16,13 +16,22 @@ public:
     bool Open();
     void Close();
 
+    size_t GetLayersCount() const;
+    const OFDLayerPtr GetLayer(size_t idx) const;
+    OFDLayerPtr GetLayer(size_t idx);
+
+    OFDLayerPtr AddNewLayer(Layer::Type layerType);
+
     // -------- Private Attributes --------
 
     bool m_opened;
 
+    std::vector<OFDLayerPtr> Layers;
+
 }; // class OFDPage::ImplCls
 
 OFDPage::ImplCls::ImplCls() : m_opened(false) {
+    AddNewLayer(Layer::Type::BODY);
 }
 
 OFDPage::ImplCls::~ImplCls(){
@@ -43,6 +52,24 @@ bool OFDPage::ImplCls::Open(){
 
 void OFDPage::ImplCls::Close(){
     if ( !m_opened ) return;
+}
+
+size_t OFDPage::ImplCls::GetLayersCount() const{
+    return Layers.size();
+}
+
+const OFDLayerPtr OFDPage::ImplCls::GetLayer(size_t idx) const{
+    return Layers[idx];
+}
+
+OFDLayerPtr OFDPage::ImplCls::GetLayer(size_t idx){
+    return Layers[idx];
+}
+
+OFDLayerPtr OFDPage::ImplCls::AddNewLayer(Layer::Type layerType){
+    OFDLayerPtr layer = std::make_shared<OFDLayer>(layerType);
+    Layers.push_back(layer);
+    return layer;
 }
 
 // **************** class OFDPage ****************
@@ -68,5 +95,21 @@ void OFDPage::Close(){
 
 bool OFDPage::IsOpened() const{
     return m_impl->m_opened;
+}
+
+size_t OFDPage::GetLayersCount() const{
+    return m_impl->GetLayersCount();
+}
+
+const OFDLayerPtr OFDPage::GetLayer(size_t idx) const{
+    return m_impl->GetLayer(idx);
+}
+
+OFDLayerPtr OFDPage::GetLayer(size_t idx){
+    return m_impl->GetLayer(idx);
+}
+
+OFDLayerPtr OFDPage::AddNewLayer(Layer::Type layerType){
+    return m_impl->AddNewLayer(layerType);
 }
 

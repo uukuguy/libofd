@@ -7,6 +7,7 @@
 
 namespace ofd{
 
+    // ======== class OFDCairoRender ========
     class OFDCairoRender : public OFDRender {
     public:
         OFDCairoRender();

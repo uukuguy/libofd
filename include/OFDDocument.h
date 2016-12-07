@@ -11,6 +11,7 @@ namespace ofd{
     class OFDPage;
     typedef std::shared_ptr<OFDPage> OFDPagePtr;
 
+    // ======== class OFDDocument ========
     class OFDDocument{
     public:
         OFDDocument();

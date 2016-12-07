@@ -57,6 +57,7 @@ namespace ofd{
 
     } CT_DocInfo_t;
 
+    // ======== class OFDFile ========
     class OFDFile{
     public:
 

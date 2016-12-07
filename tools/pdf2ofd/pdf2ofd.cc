@@ -53,20 +53,39 @@ PDFDoc* OpenPDFFile(const std::string &pdfFilename, const std::string &ownerPass
 }
 
 DEFINE_string(pdffile, "", "The PDF file to translated.");
+DEFINE_string(owner_password, "", "The owner password of PDF file.");
+DEFINE_string(user_password, "", "The user password of PDF file.");
 
 int main(int argc, char *argv[]){
 
     Logger::Initialize(argc, argv);
 
+    gflags::SetVersionString("1.0.0");
+    gflags::SetUsageMessage("Usage: ./pdf2ofd <pdffile> [ofdfile]");
     gflags::ParseCommandLineFlags(&argc, &argv, true);
+
+    // pdf filename
+    if ( argc < 2 ){
+        LOG(WARNING) << "Usage: ./pdf2ofd <pdffile> [ofdfile]";
+        exit(-1);
+    }
+    std::string pdfFilename = argv[1];
+
+    // ofd filename
+    std::string ofdFilename = pdfFilename + ".ofd";
+    if ( argc > 2 ) {
+        ofdFilename = argv[2];
+    }
+    LOG(INFO) << "Try to translate pdf file " << pdfFilename << " to ofd file " << ofdFilename;
+
+    // owner password
+    std::string ownerPassword = FLAGS_owner_password;
+    // user password
+    std::string userPassword = FLAGS_user_password;
 
     // Init poppler.
     globalParams = new GlobalParams(nullptr);
 
-    std::string pdfFilename = argv[1];
-    std::string ownerPassword = "";
-    std::string userPassword = "";
-    LOG(DEBUG) << "Try to open pdf file: " << pdfFilename;
 
     PDFDoc *pdfDoc = OpenPDFFile(pdfFilename, ownerPassword, userPassword);
     if ( pdfDoc != nullptr ){
