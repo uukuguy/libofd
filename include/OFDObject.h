@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include "OFDCommon.h"
+#include "OFDColor.h"
 
 namespace ofd{
 

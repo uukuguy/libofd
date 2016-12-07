@@ -47,6 +47,7 @@ namespace ofd {
         std::string ToString() const;
 
     }; // class OFDFont
+    typedef std::shared_ptr<OFDFont> OFDFontPtr;
 
 }; // namespace ofd
 

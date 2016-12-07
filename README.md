@@ -80,4 +80,8 @@ $ ./build/bin/ofdviewer ./data/sample0.ofd --v=1
 | ESC (or KEY_Q) | Exit       |
 
 
+## Errata
+
+P32
+表格最后一行“格构高洛德渐变”应为“网格高洛德渐变”
 

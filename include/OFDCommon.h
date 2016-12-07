@@ -40,7 +40,7 @@ namespace ofd{
     } ST_Box_t;
 
     typedef uint64_t ST_TIME;
-    typedef std::vector<double> DArray;
+    typedef std::vector<double> DoubleArray;
 
     // ======== CT_PageArea ========
     // 页面区域结构
