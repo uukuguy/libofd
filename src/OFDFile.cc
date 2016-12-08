@@ -1,9 +1,29 @@
 #include <sstream>
 #include <assert.h>
 #include <zip.h>
+/*#include <tinyxml2.h>*/
+/*using namespace tinyxml2;*/
 #include "OFDFile.h"
 #include "OFDDocument.h"
 #include "logger.h"
+
+/*#include <xercesc/dom/DOM.hpp>*/
+/*#include <xercesc/dom/DOMDocument.hpp>*/
+/*#include <xercesc/dom/DOMDocumentType.hpp>*/
+/*#include <xercesc/dom/DOMElement.hpp>*/
+/*#include <xercesc/dom/DOMImplementation.hpp>*/
+/*#include <xercesc/dom/DOMImplementationLS.hpp>*/
+/*#include <xercesc/dom/DOMNodeIterator.hpp>*/
+/*#include <xercesc/dom/DOMNodeList.hpp>*/
+/*#include <xercesc/dom/DOMText.hpp>*/
+
+/*#include <xercesc/parsers/XercesDOMParser.hpp>*/
+/*#include <xercesc/util/XMLUni.hpp>*/
+
+/*using namespace xercesc;*/
+
+#include <libxml/encoding.h>
+#include <libxml/xmlwriter.h>
 
 using namespace ofd;
 
@@ -37,21 +57,56 @@ public:
     typedef std::vector<OFDDocumentPtr> DocumentsList;
     DocumentsList m_documents; // 文件对象入口集合
 
+private:
     zip *m_archive;
+    std::string GenerateOFDXML() const;
 
 }; // class OFDFile::ImplCls
+
+/*bool InitializeXercesC(){*/
+    /*bool ok = false;*/
+    /*try{*/
+        /*XMLPlatformUtils::Initialize();*/
+        /*ok = true;*/
+    /*} catch ( XMLException &e ){*/
+        /*char *message = XMLString::transcode(e.getMessage());*/
+        /*LOG(ERROR) << "Initialize xercesC failed. Error: " << message;*/
+        /*XMLString::release(&message);*/
+
+    /*}*/
+    /*return ok;*/
+/*}*/
+
+/*void TerminateXercesC(){*/
+    /*try{*/
+        /*XMLPlatformUtils::Terminate();*/
+    /*} catch ( XMLException &e ){*/
+        /*char *message = XMLString::transcode(e.getMessage());*/
+        /*LOG(ERROR) << "Terminate xercesC failed. Error: " << message;*/
+        /*XMLString::release(&message);*/
+    /*}*/
+/*}*/
 
 OFDFile::ImplCls::ImplCls() :
     Version("1.0"), DocType("OFD"),
     m_opened(false), m_archive(nullptr){
+
+    /*InitializeXercesC();*/
 }
 
 OFDFile::ImplCls::ImplCls(const std::string &filename) :
     Version("1.0"), DocType("OFD"),
     m_filename(filename), m_opened(false){
+
+    /*InitializeXercesC();*/
 }
 
 OFDFile::ImplCls::~ImplCls(){
+    /*TerminateXercesC();*/
+    if ( m_archive != nullptr ){
+        zip_close(m_archive);
+        m_archive = nullptr;
+    }
 }
 
 std::string OFDFile::ImplCls::to_string() const{
@@ -87,6 +142,59 @@ bool AddZipDir(zip *archive, const std::string &dirName){
     return ret != -1;
 }
 
+#define XMLENCODING "utf-8"
+
+std::string OFDFile::ImplCls::GenerateOFDXML() const{
+
+    xmlBufferPtr xmlBuf = xmlBufferCreate();
+    xmlTextWriterPtr writer = xmlNewTextWriterMemory(xmlBuf, 0);
+    if ( writer != nullptr ){
+        int rc;
+        rc = xmlTextWriterStartDocument(writer, nullptr, XMLENCODING, nullptr);
+        if ( rc >= 0 ){
+
+            // -------- <OFD>
+            xmlTextWriterStartElement(writer, BAD_CAST "OFD");{
+
+                // -------- <OFD Version="">
+                xmlTextWriterWriteAttribute(writer, BAD_CAST "Version", BAD_CAST Version.c_str());
+                // -------- <OFD DocType="">
+                xmlTextWriterWriteAttribute(writer, BAD_CAST "DocType", BAD_CAST DocType.c_str());
+
+                for ( auto document : m_documents ){
+                    // -------- <DocBody>
+                    xmlTextWriterStartElement(writer, BAD_CAST "DocBody");{
+
+                        std::string strDocBody = document->GenerateDocBodyXML();
+
+                        std::cout << "strDocBody = " << strDocBody << std::endl;
+
+                        xmlTextWriterWriteRaw(writer, BAD_CAST strDocBody.c_str());
+
+                    } xmlTextWriterEndElement(writer);
+
+                }
+
+            } xmlTextWriterEndElement(writer);
+            
+            xmlTextWriterEndDocument(writer);
+
+        } else {
+            LOG(ERROR) << "xmlTextWriterStartDocument() failed.";
+        }
+
+        xmlFreeTextWriter(writer);
+
+    } else {
+        LOG(ERROR) << "xmlNewTextWriterMemory() failed.";
+    }
+
+    std::string strXML = std::string((const char *)xmlBuf->content);
+    xmlBufferFree(xmlBuf);
+
+    return strXML;
+}
+
 bool OFDFile::ImplCls::Save(const std::string &filename){
     //if ( !m_opened ) return false;
 
@@ -98,15 +206,21 @@ bool OFDFile::ImplCls::Save(const std::string &filename){
     if ( m_filename.empty() ) return false;
 
     int error = 0;
-    m_archive = zip_open(filename.c_str(), ZIP_CREATE, &error);
+    m_archive = zip_open(filename.c_str(), ZIP_CREATE | ZIP_EXCL, &error);
     if ( m_archive == nullptr ){
-        LOG(ERROR) << "Error: Open " << filename << " failed. error=" << error;
+        if ( error == ZIP_ER_EXISTS ){
+            LOG(ERROR) << "Error: Open " << filename << " failed. error=" << error << " The file exists and ZIP_EXCL is set.";
+        } else {
+            LOG(ERROR) << "Error: Open " << filename << " failed. error=" << error;
+        }
         return false;
     }
 
     // -------- OFD.xml
-    std::string strOFDxml;
-    AddZipFile(m_archive, "OFD.xml", strOFDxml);
+    std::string strOFDXML = GenerateOFDXML();
+    std::cout << strOFDXML << std::endl;
+
+    AddZipFile(m_archive, "OFD.xml", strOFDXML);
 
     int n = 0;
     for ( auto document : m_documents ) {
@@ -131,8 +245,8 @@ bool OFDFile::ImplCls::Save(const std::string &filename){
         // mkdir Doc_N/Pages
         AddZipDir(m_archive, Doc_N + "/Pages"); 
 
-        auto numPages = document->GetPagesCount();
-        for ( auto k = 0 ; k < numPages ; k++ ){
+        size_t numPages = document->GetPagesCount();
+        for ( size_t k = 0 ; k < numPages ; k++ ){
             OFDPagePtr page = document->GetPage(n);
 
             std::stringstream ssPageK;

@@ -39,7 +39,7 @@ namespace ofd{
         double Height;
     } ST_Box_t;
 
-    typedef uint64_t ST_TIME;
+    typedef std::string ST_TIME;
     typedef std::vector<double> DoubleArray;
 
     // ======== CT_PageArea ========

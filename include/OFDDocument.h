@@ -57,6 +57,8 @@ namespace ofd{
         std::string    CreatorVersion; // 创建文档的应用程序的版本信息。
         CustomDataMap  CustomData;     // 用户自定义数据
 
+        CT_DocInfo() : DocUsage(DocInfo::Usage::Normal){};
+
     } CT_DocInfo_t;
 
     // 文件对象入口，可以存在多个，以便在一个文档中包含多个版式文件。
@@ -135,6 +137,7 @@ namespace ofd{
         OFDPagePtr GetPage(size_t idx);
 
         OFDPagePtr AddNewPage();
+        std::string GenerateDocBodyXML() const;
 
         std::string to_string() const;
 
