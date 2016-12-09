@@ -2,6 +2,7 @@
 #include <assert.h>
 #include "OFDPage.h"
 #include "utils/logger.h"
+#include "utils/xml.h"
 
 using namespace ofd;
 
@@ -25,11 +26,16 @@ public:
     const OFDLayerPtr GetBodyLayer() const;
     OFDLayerPtr GetBodyLayer();
 
+    std::string GeneratePageXML() const;
+
     // -------- Private Attributes --------
 
     bool m_opened;
 
     std::vector<OFDLayerPtr> Layers;
+
+private:
+    void generateContentXML(XMLWriter &writer) const;
 
 }; // class OFDPage::ImplCls
 
@@ -86,6 +92,62 @@ OFDLayerPtr OFDPage::ImplCls::GetBodyLayer(){
     return bodyLayer;
 }
 
+void OFDPage::ImplCls::generateContentXML(XMLWriter &writer) const{
+    if ( Layers.size() == 0 ) return;
+
+    // -------- <Content>
+    writer.StartElement("Content");{
+
+        for ( auto layer : Layers ){
+
+            // -------- <Layer>
+            writer.StartElement("Layer");{
+
+                // -------- <Layer ID="">
+                writer.WriteAttribute("ID", layer->ID);
+
+                // -------- CT_Layer --------
+
+                // TODO
+                // -------- <Layer Type="">
+
+                // TODO
+                // -------- <Layer DrawParam="">
+
+                // -------- CT_PageBlock --------
+                for ( auto object : layer->Objects ){
+                    object->GenerateXML(writer);
+                }
+
+            } writer.EndElement();
+        }
+
+    } writer.EndElement();
+}
+
+// Generate content in Doc_N/Pages/Page_N/Content.xml
+// Called by OFDFile::Save()
+// OFD P18, Page.xsd。
+std::string OFDPage::ImplCls::GeneratePageXML() const{
+
+    XMLWriter writer(true);
+
+    writer.StartDocument();
+
+    // -------- <Page>
+    writer.StartElement("Page");{
+
+        // -------- <Content>
+        // Optional. Blank page if not exist.
+        generateContentXML(writer);
+
+    } writer.EndElement();
+
+    writer.EndDocument();
+
+    return writer.GetString();
+}
+
 // **************** class OFDPage ****************
 
 OFDPage::OFDPage(){
@@ -135,4 +197,8 @@ const OFDLayerPtr OFDPage::GetBodyLayer() const{
 
 OFDLayerPtr OFDPage::GetBodyLayer(){
     return m_impl->GetBodyLayer();
+}
+
+std::string OFDPage::GeneratePageXML() const{
+    return m_impl->GeneratePageXML();
 }

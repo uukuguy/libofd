@@ -184,28 +184,36 @@ void writeBoxXML(XMLWriter &writer, const std::string &boxName, const ST_Box &bo
     writer.WriteElement(boxName, ssBox.str());
 }
 
+// Called by OFDDocument::GenerateDocumentXML().
 void OFDDocument::ImplCls::generateCommonDataXML(XMLWriter &writer) const{
 
-    // -------- <CommonData> 必选
+    // -------- <CommonData> 
+    // Required.
     writer.StartElement("CommonData");{
 
-        // -------- <MaxUnitID> 必选
+        // -------- <MaxUnitID> 
+        // Required.
         writer.WriteElement("MaxUnitID", m_commonData.MaxUnitID);
 
-        // -------- <PageArea> 必选
+        // -------- <PageArea> 
+        // Required.
         const CT_PageArea &pageArea = m_commonData.PageArea;
         writer.StartElement("PageArea");{
 
-            // -------- <PhysicalBox> 必选
+            // -------- <PhysicalBox> 
+            // Required.
             writeBoxXML(writer, "PhysicalBox", pageArea.PhysicalBox);
            
             // -------- <ApplicationBox>
+            // Optional.
             writeBoxXML(writer, "ApplicationBox", pageArea.ApplicationBox);
 
             // -------- <ContentBox>
+            // Optional.
             writeBoxXML(writer, "ContentBox", pageArea.ContentBox);
             
             // -------- <BleedBox>
+            // Optional.
             writeBoxXML(writer, "BleedBox", pageArea.BleedBox);
 
         } writer.EndElement();
@@ -213,9 +221,11 @@ void OFDDocument::ImplCls::generateCommonDataXML(XMLWriter &writer) const{
     } writer.EndElement();
 }
 
+// Called by OFDDocument::GenerateDocumentXML().
 void OFDDocument::ImplCls::generatePagesXML(XMLWriter &writer) const{
 
-    // -------- <Pages> 必选
+    // -------- <Pages> 
+    // Required.
     writer.StartElement("Pages");{
 
     } writer.EndElement();
@@ -228,13 +238,16 @@ std::string OFDDocument::ImplCls::GenerateDocumentXML() const{
     writer.StartDocument();
 
     writer.StartElement("Document");{
-        // -------- <CommonData> 必选
+        // -------- <CommonData> 
+        // Required.
         generateCommonDataXML(writer);    
 
-        // -------- <Pages> 必选
+        // -------- <Pages> 
+        // Required.
         generatePagesXML(writer);
 
         // -------- <PublicRes>
+        // Optional.
         if ( m_commonData.PublicRes.size() > 0 ){
             for ( auto pr : m_commonData.PublicRes ){
                 writer.WriteElement("PublicRes", pr);
@@ -242,6 +255,7 @@ std::string OFDDocument::ImplCls::GenerateDocumentXML() const{
         }
 
         // -------- <DocumentRes>
+        // Optional.
         if ( m_commonData.DocumentRes.size() > 0 ){
             for ( auto dr : m_commonData.DocumentRes ){
                 writer.WriteElement("DocuemntRes", dr);

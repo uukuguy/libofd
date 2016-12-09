@@ -4,6 +4,7 @@
 #include <zip.h>
 #include "OFDFile.h"
 #include "OFDDocument.h"
+#include "OFDPage.h"
 #include "utils/logger.h"
 #include "utils/xml.h"
 
@@ -193,17 +194,14 @@ bool OFDFile::ImplCls::Save(const std::string &filename){
         size_t numPages = document->GetPagesCount();
         for ( size_t k = 0 ; k < numPages ; k++ ){
             OFDPagePtr page = document->GetPage(n);
-
-            std::stringstream ssPageK;
-            ssPageK << "Page_" << k;
-            std::string Page_K = ssPageK.str();
+            std::string Page_K = std::string("Page_") + std::to_string(k);
 
             std::string pageDir = Doc_N + "/Pages/" + Page_K;
             AddZipDir(m_archive, pageDir);
 
             // Doc_N/Pages/Page_K/Content.xml
-            std::string strContentXML;
-            AddZipFile(m_archive, pageDir + "/Content.xml", strContentXML);
+            std::string strPageXML = page->GeneratePageXML();
+            AddZipFile(m_archive, pageDir + "/Content.xml", strPageXML);
 
             // Doc_N/Pages/Page_K/PageRes.xml
             std::string strPageResXML;
@@ -215,9 +213,7 @@ bool OFDFile::ImplCls::Save(const std::string &filename){
 
             for ( auto m = 0 ; m < 1 ; m++ ){
                 // Doc_N/Pages/Page_K/Res/Image_M.png
-                std::stringstream ssImage;
-                ssImage << "Image_" << m << ".png";
-                std::string imageFileName = pageResDir + "/" + ssImage.str();
+                std::string imageFileName = pageResDir + "/Image_" + std::to_string(m) + ".png";
 
                 std::string strImage;
                 AddZipFile(m_archive, imageFileName, strImage);
@@ -235,9 +231,8 @@ bool OFDFile::ImplCls::Save(const std::string &filename){
 
         for ( auto m = 0 ; m < 1 ; m++ ){
             // mkdir Doc_N/Signs/Sign_N
-            std::stringstream ssSignN;
-            ssSignN << "Sign_" << m;
-            std::string Sign_N = ssSignN.str();
+            std::string Sign_N = std::string("Sign_") + std::to_string(m);
+
             std::string signDir = Doc_N + "/Signs/" + Sign_N; 
             AddZipDir(m_archive, signDir);
             // Doc_N/Signs/Sign_N/Seal.esl
@@ -257,9 +252,7 @@ bool OFDFile::ImplCls::Save(const std::string &filename){
 
         for ( auto m = 0 ; m < 1 ; m++ ){
             // Doc_N/Res/Image_M.png
-            std::stringstream ssImage;
-            ssImage << "Image_" << m << ".png";
-            std::string imageFileName = resDir + "/" + ssImage.str();
+            std::string imageFileName = resDir + "/Image_" + std::to_string(m) + ".png";
 
             std::string strImage;
             AddZipFile(m_archive, imageFileName, strImage);
@@ -267,9 +260,7 @@ bool OFDFile::ImplCls::Save(const std::string &filename){
 
         for ( auto m = 0 ; m < 1 ; m++ ){
             // Doc_N/Res/Font_M.ttf
-            std::stringstream ssFont;
-            ssFont << "Font_" << m << ".ttf";
-            std::string fontFileName = resDir + "/" + ssFont.str();
+            std::string fontFileName = resDir + "/Font_" + std::to_string(m) + ".ttf";
 
             std::string strFont;
             AddZipFile(m_archive, fontFileName, strFont);
@@ -301,9 +292,7 @@ OFDDocumentPtr OFDFile::ImplCls::GetDefaultDocument(){
 
 OFDDocumentPtr OFDFile::ImplCls::AddNewDocument(){
     size_t idx = m_documents.size();
-    std::stringstream ss;
-    ss << "Doc_" << idx;
-    std::string docRoot = ss.str();
+    std::string docRoot = std::string("Doc_") + std::to_string(idx);
 
     OFDDocumentPtr document = std::make_shared<OFDDocument>(docRoot);
     m_documents.push_back(document);

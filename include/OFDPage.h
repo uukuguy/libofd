@@ -26,7 +26,7 @@ namespace ofd{
 
         uint64_t    ID;
         Layer::Type Type;
-        // ST_REfID DrawParam
+        /*ST_REfID    DrawParam;*/
 
     }; // class OFDLayer
 
@@ -49,6 +49,8 @@ namespace ofd{
         OFDLayerPtr AddNewLayer(Layer::Type layerType);
         const OFDLayerPtr GetBodyLayer() const;
         OFDLayerPtr GetBodyLayer();
+
+        std::string GeneratePageXML() const;
 
     private:
         class ImplCls;

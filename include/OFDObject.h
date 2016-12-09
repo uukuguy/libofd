@@ -6,6 +6,8 @@
 #include "OFDCommon.h"
 #include "OFDColor.h"
 
+class XMLWriter;
+
 namespace ofd{
 
     namespace Object{
@@ -26,12 +28,22 @@ namespace ofd{
 
         uint64_t     ID;
         Object::Type Type;
+        std::string  ObjectLabel;
+
+        // -------- GraphUnit attributes --------
+        // OFD P50. Page.xsd.
         ST_Box       Boundary; 
         std::string  Name;
         bool         Visible;
         double       CTM[6];
         double       LineWidth;
         int          Alpha;
+
+        virtual void GenerateXML(XMLWriter &writer) const;
+
+    protected:
+        virtual void GenerateAttributesXML(XMLWriter &writer) const;
+        virtual void GenerateElementsXML(XMLWriter &writer) const;
 
     }; // class OFDObject
 

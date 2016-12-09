@@ -1,5 +1,6 @@
 #include "OFDTextObject.h"
 #include "utils/logger.h"
+#include "utils/xml.h"
 
 using namespace ofd;
 
@@ -17,6 +18,9 @@ public:
     Text::TextCode& GetTextCode(size_t idx);
     void AddTextCode(const Text::TextCode &textCode);
     void ClearTextCodes();
+
+    void GenerateAttributesXML(XMLWriter &writer) const;
+    void GenerateElementsXML(XMLWriter &writer) const;
 
     // -------- Private Attributes --------
 
@@ -36,7 +40,8 @@ public:
     OFDColorPtr         FillColor;   // 填充色，默认值为黑色。
     OFDColorPtr         StrokeColor; // 勾边色，默认值为透明色。
 
-    std::vector<Text::TextCode> TextCodes;
+    typedef std::vector<Text::TextCode> TextCodeArray;
+    TextCodeArray TextCodes;
 
 }; // class OFDTextObject::ImplCls
 
@@ -71,10 +76,81 @@ void OFDTextObject::ImplCls::ClearTextCodes(){
     TextCodes.clear();
 }
 
+void OFDTextObject::ImplCls::GenerateAttributesXML(XMLWriter &writer) const{
+
+    // FIXME
+    // -------- <TextObject Font="">
+    // Required.
+    writer.WriteAttribute("Font", "");
+
+    // -------- <TextObject Size="">
+    // Required.
+    writer.WriteAttribute("Size", std::to_string(FontSize));
+
+    // -------- <TextObject Stroke="">
+    // Optional, default value: false.
+    if ( Stroke ){
+        writer.WriteAttribute("Stroke", "true");
+    }
+
+    // -------- <TextObject Fill="">
+    // Optional, default value: true.
+    if ( !Fill ){
+        writer.WriteAttribute("Fill", "false");
+    }
+
+    // -------- <Textobject HScale="">
+    // Optional, default value: 1.0
+    if ( fabs(HScale - 1.0) > 0.0000001 ){
+        writer.WriteAttribute("HScale", std::to_string(HScale));
+    }
+
+}
+
+void OFDTextObject::ImplCls::GenerateElementsXML(XMLWriter &writer) const{
+
+    // -------- <TextCode>
+    // OFD P65. Page.xsd
+    // Required.
+    for ( auto textCode : TextCodes ){
+        writer.StartElement("TextCode");{
+
+            // -------- <TextCode X="'>
+            // Optional.
+            writer.WriteAttribute("X", std::to_string(textCode.X));
+
+            // -------- <TextCode Y="'>
+            // Optional.
+            writer.WriteAttribute("Y", std::to_string(textCode.Y));
+
+            // -------- <TextCode DeltaX="'>
+            // Optional.
+            std::string strDeltaX;
+            for ( auto d : textCode.DeltaX ){
+                strDeltaX += std::to_string(d) + " ";
+            }
+            writer.WriteAttribute("DeltaX", strDeltaX);
+
+            // -------- <TextCode DeltaY="'>
+            // Optional.
+            std::string strDeltaY;
+            for ( auto d : textCode.DeltaY ){
+                strDeltaY += std::to_string(d) + " ";
+            }
+            writer.WriteAttribute("DeltaY", strDeltaY);
+
+            writer.WriteString(textCode.Text);
+
+        } writer.EndElement();
+    }
+}
+
 // **************** class OFDTextObject ****************
 
 OFDTextObject::OFDTextObject(){
     m_impl = std::unique_ptr<ImplCls>(new ImplCls());
+    ObjectLabel = "TextObject";
+
 }
 
 OFDTextObject::~OFDTextObject(){
@@ -200,3 +276,15 @@ void OFDTextObject::AddTextCode(const Text::TextCode &textCode){
 void OFDTextObject::ClearTextCodes(){
     m_impl->ClearTextCodes();
 }
+
+void OFDTextObject::GenerateAttributesXML(XMLWriter &writer) const{
+    OFDObject::GenerateAttributesXML(writer);
+    m_impl->GenerateAttributesXML(writer);
+}
+
+void OFDTextObject::GenerateElementsXML(XMLWriter &writer) const{
+    OFDObject::GenerateElementsXML(writer);
+    m_impl->GenerateElementsXML(writer);
+}
+
+

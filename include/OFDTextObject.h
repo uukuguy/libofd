@@ -55,7 +55,7 @@ namespace ofd{
     }; // namespace Text
 
     // ======== class OFDTextObject ========
-    // 标准 P64 页，Page.xsd。
+    // OFD P63，Page.xsd.
     class OFDTextObject : public OFDObject{
     public:
         OFDTextObject();
@@ -118,6 +118,10 @@ namespace ofd{
 
         void AddTextCode(const Text::TextCode &textCode);
         void ClearTextCodes();
+
+    protected:
+        virtual void GenerateAttributesXML(XMLWriter &writer) const;
+        virtual void GenerateElementsXML(XMLWriter &writer) const;
 
     private:
         class ImplCls;
