@@ -8,7 +8,7 @@
 #include <cairo/cairo-ft.h>
 
 #include "ofd.h"
-#include "logger.h"
+#include "utils/logger.h"
 #include "OFDCanvas.h"
 
 using namespace ofd;

@@ -7,7 +7,7 @@
 #include <cairo/cairo-ft.h>
 #include "OFDFont.h"
 #include "FontResource.h"
-#include "logger.h"
+#include "utils/logger.h"
 
 FT_Face freetype_create_memory_face(FT_Library library, int faceIndex, const char *faceBuf, size_t bufSize){
     FT_Face face;

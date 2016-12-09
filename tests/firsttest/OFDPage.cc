@@ -6,8 +6,8 @@
 #include "OFDPage.h"
 #include "OFDCanvas.h"
 #include "OFDTextObject.h"
-#include "utils.h"
-#include "logger.h"
+#include "utils/utils.h"
+#include "utils/logger.h"
 
 
 /***

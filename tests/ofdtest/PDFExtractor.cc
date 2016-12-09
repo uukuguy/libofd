@@ -2,7 +2,7 @@
 
 #include "PDFExtractor.h"
 #include "PDFFont.h"
-#include "logger.h"
+#include "utils/logger.h"
 #include "unicode.h"
 
 

@@ -12,7 +12,7 @@
 #include <GlobalParams.h>
 
 #include "OFDOutputDev.h"
-#include "logger.h"
+#include "utils/logger.h"
 
 PDFDoc* OpenPDFFile(const std::string &pdfFilename, const std::string &ownerPassword, const std::string &userPassword){
     GooString fileName(pdfFilename.c_str());

@@ -1,8 +1,9 @@
 #include <sstream>
-#include <libxml/xmlwriter.h>
-#include "logger.h"
+#include <iomanip>
 #include "OFDDocument.h"
 #include "OFDPage.h"
+#include "utils/logger.h"
+#include "utils/xml.h"
 
 using namespace ofd;
 
@@ -10,7 +11,7 @@ using namespace ofd;
 
 class OFDDocument::ImplCls{
 public:
-    ImplCls();
+    ImplCls(const std::string &docRoot);
     ~ImplCls();
 
     std::string to_string() const;
@@ -20,6 +21,7 @@ public:
 
     OFDPagePtr AddNewPage();
     std::string GenerateDocBodyXML() const;
+    std::string GenerateDocumentXML() const;
 
     // -------- Private Attributes --------
     bool m_opened;
@@ -28,9 +30,17 @@ public:
     CommonData m_commonData;
     std::vector<OFDPagePtr> m_pages;
 
+private:
+
+    void generateCommonDataXML(XMLWriter &writer) const;
+    void generatePagesXML(XMLWriter &writer) const;
+
 }; // class OFDDocument::ImplCls
 
-OFDDocument::ImplCls::ImplCls() : m_opened(false) {
+OFDDocument::ImplCls::ImplCls(const std::string &docRoot) : m_opened(false) {
+    m_docBody.DocRoot = docRoot;
+    m_commonData.PublicRes.push_back("PublicRes.xml");
+    m_commonData.DocumentRes.push_back("DocumentRes.xml");
 }
 
 OFDDocument::ImplCls::~ImplCls(){
@@ -60,114 +70,204 @@ OFDPagePtr OFDDocument::ImplCls::AddNewPage(){
     return page;
 }
 
-class XMLWriter{
-public:
-    XMLWriter(){
-        m_xmlBuf = xmlBufferCreate();
-        m_writer = xmlNewTextWriterMemory(m_xmlBuf, 0);
-    }
-
-    ~XMLWriter(){
-
-        xmlFreeTextWriter(m_writer);
-        xmlBufferFree(m_xmlBuf);
-    }
-
-    std::string GetString() const {
-        return std::string((const char *)m_xmlBuf->content);
-    }
-
-    void StartElement(const std::string &name){
-        xmlTextWriterStartElement(m_writer, BAD_CAST name.c_str());
-    }
-
-    void EndElement(){
-        xmlTextWriterEndElement(m_writer);
-    }
-
-    void WriteElement(const std::string &name, const std::string &value){
-        xmlTextWriterWriteElement(m_writer, BAD_CAST name.c_str(), BAD_CAST value.c_str());
-    }
-
-    void WriteAttribute(const std::string &name, const std::string &value){
-        xmlTextWriterWriteAttribute(m_writer, BAD_CAST name.c_str(), BAD_CAST value.c_str());
-    }
-
-
-    void WriteText(const std::string &text){
-        xmlTextWriterWriteString(m_writer, BAD_CAST text.c_str());
-    }
-
-    void StartDocument(const std::string &encoding){
-        xmlTextWriterStartDocument(m_writer, nullptr, encoding.c_str(), nullptr);
-    }
-
-    void EndDocument(){
-        xmlTextWriterEndElement(m_writer);
-    }
-
-private:
-    xmlBufferPtr     m_xmlBuf;
-    xmlTextWriterPtr m_writer;
-};
-
 std::string OFDDocument::ImplCls::GenerateDocBodyXML() const{
 
-    /*XMLWriter writer;*/
-    /*writer.StartElement("DocInfo");*/
-    /*const CT_DocInfo &docInfo = m_docBody.DocInfo;*/
-    /*writer.WriteElement("DocID", docInfo.DocID);*/
-    /*writer.EndElement();*/
-    /*writer.EndDocument();*/
+    XMLWriter writer;
 
-    /*std::string strXML = writer.GetString();*/
+    writer.StartDocument();
 
-    /*return strXML;*/
+    // -------- <DocInfo> 必选
+    writer.StartElement("DocInfo");{
 
-    xmlBufferPtr xmlBuf = xmlBufferCreate();
-    xmlTextWriterPtr writer = xmlNewTextWriterMemory(xmlBuf, 0);
-    if ( writer != nullptr ){
+        const CT_DocInfo &docInfo = m_docBody.DocInfo;
 
-        // -------- <DocInfo> 必选
-        xmlTextWriterStartElement(writer, BAD_CAST "DocInfo");{
+        // -------- <DocID>
+        if ( !docInfo.DocID.empty() ){
+            writer.WriteElement("DocID", docInfo.DocID);
+        }
+        // -------- <Title>
+        if ( !docInfo.Title.empty() ){
+            writer.WriteElement("Title", docInfo.Title);
+        }
+        // -------- <Author>
+        if ( !docInfo.Author.empty() ){
+            writer.WriteElement("Author", docInfo.Author);
+        }
+        // -------- <Subject>
+        if ( !docInfo.Subject.empty() ){
+            writer.WriteElement("Subject", docInfo.Subject);
+        }
+        // -------- <Abstract>
+        if ( !docInfo.Abstract.empty() ){
+            writer.WriteElement("Abstract", docInfo.Abstract);
+        }
+        // -------- <CreationDate>
+        if ( !docInfo.CreationDate.empty() ){
+            writer.WriteElement("CreationDate", docInfo.CreationDate);
+        }
+        // -------- <ModDate>
+        if ( !docInfo.ModDate.empty() ){
+            writer.WriteElement("ModDate", docInfo.ModDate);
+        }
+        // FIXME
+        // -------- <DocUsage>
+        //writer.WriteElement("DocUsage", docInfo.DocUsage);
+        // -------- <Cover>
+        if ( !docInfo.Cover.empty() ){
+            writer.WriteElement("Cover", docInfo.Cover);
+        }
+        // -------- <Keywords>
+        if ( docInfo.Keywords.size() > 0 ){
+            writer.StartElement("Keywords");{
+                for ( auto keyword : docInfo.Keywords ){
+                    writer.WriteElement("Keyword", keyword);
+                }
+            } writer.EndElement();
+        }
+        // -------- <Creator>
+        if ( !docInfo.Creator.empty() ){
+            writer.WriteElement("Creator", docInfo.Creator);
+        }
+        // -------- <CreatorVersion>
+        if ( !docInfo.CreatorVersion.empty() ){
+            writer.WriteElement("CreatorVersion", docInfo.CreatorVersion);
+        }
+        // -------- <CustomDatas>
+        if ( docInfo.CustomDatas.size() > 0 ){
+            writer.StartElement("CustomDatas");{
 
-            const CT_DocInfo &docInfo = m_docBody.DocInfo;
+                for ( auto customData : docInfo.CustomDatas ){
+                    const std::string &name = customData.first;
+                    const std::string &value = customData.second;
+                    writer.StartElement("CustomData");{
 
-            xmlTextWriterWriteElement(writer, BAD_CAST "DocID", BAD_CAST docInfo.DocID.c_str());
-            xmlTextWriterWriteElement(writer, BAD_CAST "Title", BAD_CAST docInfo.Title.c_str());
-            xmlTextWriterWriteElement(writer, BAD_CAST "Author", BAD_CAST docInfo.Author.c_str());
-            xmlTextWriterWriteElement(writer, BAD_CAST "Subject", BAD_CAST docInfo.Subject.c_str());
-            xmlTextWriterWriteElement(writer, BAD_CAST "Abstract", BAD_CAST docInfo.Abstract.c_str());
-            xmlTextWriterWriteElement(writer, BAD_CAST "CreationDate", BAD_CAST docInfo.CreationDate.c_str());
-            xmlTextWriterWriteElement(writer, BAD_CAST "ModDate", BAD_CAST docInfo.ModDate.c_str());
-            // FIXME
-            /*xmlTextWriterWriteElement(writer, BAD_CAST "DocUsage", BAD_CAST docInfo.DocUsage.c_str());*/
-            xmlTextWriterWriteElement(writer, BAD_CAST "Cover", BAD_CAST docInfo.Cover.c_str());
+                        writer.WriteAttribute("Name", name);
+                        writer.WriteString(value);
 
-        } xmlTextWriterEndElement(writer);
-        
-        // -------- <DocRoot>
+                    } writer.EndElement();
+                }
 
-        // -------- <Versions>
+            } writer.EndElement();
+        }
 
-        // -------- <Signatures>
+    } writer.EndElement();
 
-        xmlTextWriterEndDocument(writer);
-    } else {
-        LOG(ERROR) << "xmlNewTextWriterMemory() failed.";
+    // -------- <DocRoot> 
+    const ST_Loc &docRoot = m_docBody.DocRoot;
+    if ( !docRoot.empty() ){
+        writer.WriteElement("DocRoot", docRoot);
     }
 
-    std::string strXML = std::string((const char *)xmlBuf->content);
-    xmlBufferFree(xmlBuf);
+    // TODO
+    // -------- <Versions> 
+    const DocBody::VersionsList &versions = m_docBody.Versions;
+    if ( versions.size() > 0 ){
+        writer.StartElement("Versions");
 
-    
-    return strXML;
+        writer.EndElement();
+    }
+
+    // TODO
+    // -------- <Signatures> 
+    if ( !m_docBody.Signatures.empty() ){
+        writer.WriteElement("Signatures", m_docBody.Signatures);
+    }
+
+    writer.EndDocument();
+
+    return writer.GetString();
+}
+
+void writeBoxXML(XMLWriter &writer, const std::string &boxName, const ST_Box &box){
+    std::stringstream ssBox;
+    ssBox << std::setprecision(3) << box.Left << " " << box.Top << " " << box.Width << " " << box.Height; 
+    writer.WriteElement(boxName, ssBox.str());
+}
+
+void OFDDocument::ImplCls::generateCommonDataXML(XMLWriter &writer) const{
+
+    // -------- <CommonData> 必选
+    writer.StartElement("CommonData");{
+
+        // -------- <MaxUnitID> 必选
+        writer.WriteElement("MaxUnitID", m_commonData.MaxUnitID);
+
+        // -------- <PageArea> 必选
+        const CT_PageArea &pageArea = m_commonData.PageArea;
+        writer.StartElement("PageArea");{
+
+            // -------- <PhysicalBox> 必选
+            writeBoxXML(writer, "PhysicalBox", pageArea.PhysicalBox);
+           
+            // -------- <ApplicationBox>
+            writeBoxXML(writer, "ApplicationBox", pageArea.ApplicationBox);
+
+            // -------- <ContentBox>
+            writeBoxXML(writer, "ContentBox", pageArea.ContentBox);
+            
+            // -------- <BleedBox>
+            writeBoxXML(writer, "BleedBox", pageArea.BleedBox);
+
+        } writer.EndElement();
+
+    } writer.EndElement();
+}
+
+void OFDDocument::ImplCls::generatePagesXML(XMLWriter &writer) const{
+
+    // -------- <Pages> 必选
+    writer.StartElement("Pages");{
+
+    } writer.EndElement();
+}
+
+std::string OFDDocument::ImplCls::GenerateDocumentXML() const{
+
+    XMLWriter writer(true);
+
+    writer.StartDocument();
+
+    writer.StartElement("Document");{
+        // -------- <CommonData> 必选
+        generateCommonDataXML(writer);    
+
+        // -------- <Pages> 必选
+        generatePagesXML(writer);
+
+        // -------- <PublicRes>
+        if ( m_commonData.PublicRes.size() > 0 ){
+            for ( auto pr : m_commonData.PublicRes ){
+                writer.WriteElement("PublicRes", pr);
+            }
+        }
+
+        // -------- <DocumentRes>
+        if ( m_commonData.DocumentRes.size() > 0 ){
+            for ( auto dr : m_commonData.DocumentRes ){
+                writer.WriteElement("DocuemntRes", dr);
+            }
+        }
+
+        // TODO
+        // -------- <TemplatePage>
+
+        // TODO
+        // -------- <DefaultCS>
+
+    } writer.EndElement();
+
+    writer.EndDocument();
+
+    //std::string strDocumentXML = writer.GetString();
+    //std::cout << "***** strDocumentXML: " << strDocumentXML << std::endl;
+    //return strDocumentXML;
+    return writer.GetString();
 }
 
 // **************** class OFDDocument ****************
 
-OFDDocument::OFDDocument(){
-    m_impl = std::unique_ptr<ImplCls>(new ImplCls());
+OFDDocument::OFDDocument(const std::string &docRoot){
+    m_impl = std::unique_ptr<ImplCls>(new ImplCls(docRoot));
 }
 
 OFDDocument::~OFDDocument(){
@@ -207,6 +307,10 @@ OFDPagePtr OFDDocument::AddNewPage(){
 
 std::string OFDDocument::GenerateDocBodyXML() const{
     return m_impl->GenerateDocBodyXML();
+}
+
+std::string OFDDocument::GenerateDocumentXML() const{
+    return m_impl->GenerateDocumentXML();
 }
 
 std::string OFDDocument::to_string() const {

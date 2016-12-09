@@ -2,10 +2,9 @@
 // http://mupdf.com/docs/browse/source/tools/pdfextract.c
 
 //#include <mupdf/pdf.h>
-#include "logger.h"
+#include "utils/logger.h"
 
 
-//static int dorgb = 0;
 
 void test_mupdf(int argc, char *argv[]){
     //pdf_document *doc = nullptr;

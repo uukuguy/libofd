@@ -55,7 +55,7 @@ namespace ofd{
         KeywordsList   Keywords;       // 关键词集合
         std::string    Creator;        // 创建文档的应用程序。
         std::string    CreatorVersion; // 创建文档的应用程序的版本信息。
-        CustomDataMap  CustomData;     // 用户自定义数据
+        CustomDataMap  CustomDatas;     // 用户自定义数据
 
         CT_DocInfo() : DocUsage(DocInfo::Usage::Normal){};
 
@@ -88,7 +88,7 @@ namespace ofd{
     // ======== class OFDDocument ========
     class OFDDocument{
     public:
-        OFDDocument();
+        OFDDocument(const std::string &docRoot);
         virtual ~OFDDocument();
 
         bool Open();
@@ -138,6 +138,7 @@ namespace ofd{
 
         OFDPagePtr AddNewPage();
         std::string GenerateDocBodyXML() const;
+        std::string GenerateDocumentXML() const;
 
         std::string to_string() const;
 

@@ -6,8 +6,8 @@
 #include "OFDPage.h"
 #include "OFDCanvas.h"
 #include "FontResource.h"
-#include "utils.h"
-#include "logger.h"
+#include "utils/utils.h"
+#include "utils/logger.h"
 
 #include <tinyxml2.h>
 using namespace tinyxml2;

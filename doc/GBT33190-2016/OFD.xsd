@@ -69,7 +69,7 @@
             <xs:element name="ModDate" type="xs:date" minOccurs="0"/>
             <xs:element name="DocUsage" type="xs:string" minOccurs="0"/>
             <xs:element name="Cover" type="ST_Loc" minOccurs="0"/>
-            <xs:element name="Keywords" minOccurs="0">
+                <xs:element name="Keywords" minOccurs="0">
                 <xs:complexType>
                     <xs:sequence>
                         <xs:element name="Keyword" type="xs:string" maxOccurs="unbounded"/>

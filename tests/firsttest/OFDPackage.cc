@@ -1,8 +1,8 @@
 #include <iostream>
 #include "OFDPackage.h"
 #include "OFDDocument.h"
-#include "utils.h"
-#include "logger.h"
+#include "utils/utils.h"
+#include "utils/logger.h"
 #include <tinyxml2.h>
 using namespace tinyxml2;
 

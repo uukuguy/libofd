@@ -4,8 +4,8 @@
 #include "OFDTextObject.h"
 #include "OFDPathObject.h"
 #include "OFDImageObject.h"
-#include "logger.h"
-#include "utils.h"
+#include "utils/logger.h"
+#include "utils/utils.h"
 
 using namespace ofd;
 

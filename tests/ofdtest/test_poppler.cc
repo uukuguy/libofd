@@ -10,7 +10,7 @@
 #include <PDFDocFactory.h>
 #include <GlobalParams.h>
 
-#include "logger.h"
+#include "utils/logger.h"
 
 struct Param
 {
