@@ -2,9 +2,6 @@
 #include <assert.h>
 #define ZIP_DISABLE_DEPRECATED
 #include <zip.h>
-#include <libxml/encoding.h>
-#include <libxml/xmlwriter.h>
-
 #include "OFDFile.h"
 #include "OFDDocument.h"
 #include "utils/logger.h"
@@ -87,9 +84,12 @@ void OFDFile::ImplCls::Close(){
 }
 
 bool AddZipFile(zip *archive, const std::string &filename, const std::string &text){
-    //zip_error_t error;
-    //zip_source *s = zip_source_buffer_create(text.c_str(), text.length(), 0, &error);
-    zip_source *s = zip_source_buffer(archive, text.c_str(), text.length(), 0);
+    size_t len = text.length();
+    char *buf = new char[len + 1];
+    memcpy(buf, text.c_str(), len);
+    buf[len] = '\0';
+    /*zip_source *s = zip_source_buffer(archive, text.c_str(), text.length(), 0);*/
+    zip_source *s = zip_source_buffer(archive, buf, len, 1);
     if ( s == nullptr ) {
         LOG(ERROR) << "zip_source_buffer_create() failed. filename:" << filename;
         return false;
@@ -168,12 +168,14 @@ bool OFDFile::ImplCls::Save(const std::string &filename){
 
     int n = 0;
     for ( auto document : m_documents ) {
+
         // -------- mkdir Doc_N
         std::string Doc_N = document->GetDocBody().DocRoot;
         AddZipDir(m_archive, Doc_N);
 
         // Doc_N/Document.xml
-        std::string strDocumentXML = m_documents[0]->GenerateDocumentXML();
+        std::string strDocumentXML;
+        strDocumentXML = m_documents[0]->GenerateDocumentXML();
         std::cout << "strDocumentXML(" << strDocumentXML.length() <<  "): " << strDocumentXML << std::endl;
         AddZipFile(m_archive, Doc_N + "/Document.xml", strDocumentXML); 
 
