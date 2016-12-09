@@ -7,6 +7,22 @@
 
 using namespace ofd;
 
+#include <uuid/uuid.h>
+CT_DocInfo::CT_DocInfo() : DocUsage(DocInfo::Usage::Normal){
+    uuid_t id;
+    uuid_generate_random(id); 
+    char buf[36];
+    uuid_unparse_upper(id, buf);
+    char buf0[33];
+    memcpy(buf0, buf, 8);
+    memcpy(&buf0[8], &buf[9], 4);
+    memcpy(&buf0[12], &buf[14], 4);
+    memcpy(&buf0[16], &buf[19], 4);
+    memcpy(&buf0[20], &buf[24], 12);
+    buf0[32] = '\0';
+    DocID = std::string(buf0);
+}
+
 // **************** class OFDDocument::ImplCls ****************
 
 class OFDDocument::ImplCls{
@@ -66,6 +82,7 @@ void OFDDocument::ImplCls::Close(){
 
 OFDPagePtr OFDDocument::ImplCls::AddNewPage(){
     OFDPagePtr page = std::make_shared<OFDPage>();
+    page->SetID(m_pages.size());
     m_pages.push_back(page);
     return page;
 }
@@ -76,15 +93,17 @@ std::string OFDDocument::ImplCls::GenerateDocBodyXML() const{
 
     writer.StartDocument();
 
-    // -------- <DocInfo> 必选
+    // -------- <DocInfo> 
+    // OFD (section 7.4) P7. OFD.xsd.
+    // Required.
     writer.StartElement("DocInfo");{
 
         const CT_DocInfo &docInfo = m_docBody.DocInfo;
 
         // -------- <DocID>
-        if ( !docInfo.DocID.empty() ){
-            writer.WriteElement("DocID", docInfo.DocID);
-        }
+        // Required.
+        writer.WriteElement("DocID", docInfo.DocID);
+
         // -------- <Title>
         if ( !docInfo.Title.empty() ){
             writer.WriteElement("Title", docInfo.Title);
@@ -184,10 +203,35 @@ void writeBoxXML(XMLWriter &writer, const std::string &boxName, const ST_Box &bo
     writer.WriteElement(boxName, ssBox.str());
 }
 
+void writePageAreaXML(XMLWriter &writer, const CT_PageArea &pageArea){
+    // -------- <PhysicalBox> 
+    // Required.
+    writeBoxXML(writer, "PhysicalBox", pageArea.PhysicalBox);
+   
+    // -------- <ApplicationBox>
+    // Optional.
+    if ( pageArea.HasApplicationBox() ){
+        writeBoxXML(writer, "ApplicationBox", pageArea.ApplicationBox);
+    }
+
+    // -------- <ContentBox>
+    // Optional.
+    if ( pageArea.HasContentBox() ){
+        writeBoxXML(writer, "ContentBox", pageArea.ContentBox);
+    }
+    
+    // -------- <BleedBox>
+    // Optional.
+    if ( pageArea.HasBleedBox() ){
+        writeBoxXML(writer, "BleedBox", pageArea.BleedBox);
+    }
+}
+
 // Called by OFDDocument::GenerateDocumentXML().
 void OFDDocument::ImplCls::generateCommonDataXML(XMLWriter &writer) const{
 
     // -------- <CommonData> 
+    // OFD (section 7.5) P10. OFD.xsd
     // Required.
     writer.StartElement("CommonData");{
 
@@ -200,51 +244,9 @@ void OFDDocument::ImplCls::generateCommonDataXML(XMLWriter &writer) const{
         const CT_PageArea &pageArea = m_commonData.PageArea;
         writer.StartElement("PageArea");{
 
-            // -------- <PhysicalBox> 
-            // Required.
-            writeBoxXML(writer, "PhysicalBox", pageArea.PhysicalBox);
-           
-            // -------- <ApplicationBox>
-            // Optional.
-            writeBoxXML(writer, "ApplicationBox", pageArea.ApplicationBox);
-
-            // -------- <ContentBox>
-            // Optional.
-            writeBoxXML(writer, "ContentBox", pageArea.ContentBox);
-            
-            // -------- <BleedBox>
-            // Optional.
-            writeBoxXML(writer, "BleedBox", pageArea.BleedBox);
+            writePageAreaXML(writer, pageArea);
 
         } writer.EndElement();
-
-    } writer.EndElement();
-}
-
-// Called by OFDDocument::GenerateDocumentXML().
-void OFDDocument::ImplCls::generatePagesXML(XMLWriter &writer) const{
-
-    // -------- <Pages> 
-    // Required.
-    writer.StartElement("Pages");{
-
-    } writer.EndElement();
-}
-
-std::string OFDDocument::ImplCls::GenerateDocumentXML() const{
-
-    XMLWriter writer(true);
-
-    writer.StartDocument();
-
-    writer.StartElement("Document");{
-        // -------- <CommonData> 
-        // Required.
-        generateCommonDataXML(writer);    
-
-        // -------- <Pages> 
-        // Required.
-        generatePagesXML(writer);
 
         // -------- <PublicRes>
         // Optional.
@@ -258,15 +260,66 @@ std::string OFDDocument::ImplCls::GenerateDocumentXML() const{
         // Optional.
         if ( m_commonData.DocumentRes.size() > 0 ){
             for ( auto dr : m_commonData.DocumentRes ){
-                writer.WriteElement("DocuemntRes", dr);
+                writer.WriteElement("DocumentRes", dr);
             }
         }
 
         // TODO
         // -------- <TemplatePage>
+        // Optional
 
         // TODO
         // -------- <DefaultCS>
+        // Optional
+
+
+    } writer.EndElement();
+}
+
+// Called by OFDDocument::GenerateDocumentXML().
+void OFDDocument::ImplCls::generatePagesXML(XMLWriter &writer) const{
+
+    // -------- <Pages> 
+    // OFD (section 7.6) P17. Page.xsd.
+    // Required.
+    writer.StartElement("Pages");{
+        size_t idx = 0;
+        for ( auto page : m_pages ){
+            uint64_t pageID = page->GetID();
+            // -------- <Page>
+            // Required.
+            writer.StartElement("Page");{
+
+                // -------- <Page ID="">
+                // Required
+                writer.WriteAttribute("ID", std::to_string(pageID));
+
+                // -------- <Page BaseLoc="">
+                // Required.
+                writer.WriteAttribute("BaseLoc", std::string("Pages/Page_") + std::to_string(idx));
+
+                idx++;
+            } writer.EndElement();
+        }
+    } writer.EndElement();
+}
+
+std::string OFDDocument::ImplCls::GenerateDocumentXML() const{
+
+    XMLWriter writer(true);
+
+    writer.StartDocument();
+
+    writer.StartElement("Document");{
+        OFDXML_HEAD_ATTRIBUTES;
+
+        // -------- <CommonData> 
+        // Required.
+        generateCommonDataXML(writer);    
+
+        // -------- <Pages> 
+        // Required.
+        generatePagesXML(writer);
 
     } writer.EndElement();
 

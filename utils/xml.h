@@ -4,6 +4,9 @@
 #include <memory>
 #include <string>
 
+#define OFDXML_HEAD_ATTRIBUTES \
+    writer.WriteAttribute("xmlns:ofd", "http://www.ofdspec.org/2016"); 
+
 class XMLWriter{
 public:
     XMLWriter(bool bHead=false);

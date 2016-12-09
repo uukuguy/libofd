@@ -117,6 +117,7 @@ std::string OFDFile::ImplCls::GenerateOFDXML() const{
 
     // -------- <OFD>
     writer.StartElement("OFD");{
+        OFDXML_HEAD_ATTRIBUTES;
 
         // -------- <OFD Version="">
         writer.WriteAttribute("Version", Version);
@@ -177,7 +178,6 @@ bool OFDFile::ImplCls::Save(const std::string &filename){
         // Doc_N/Document.xml
         std::string strDocumentXML;
         strDocumentXML = m_documents[0]->GenerateDocumentXML();
-        std::cout << "strDocumentXML(" << strDocumentXML.length() <<  "): " << strDocumentXML << std::endl;
         AddZipFile(m_archive, Doc_N + "/Document.xml", strDocumentXML); 
 
         // Doc_N/PublicRes.xml

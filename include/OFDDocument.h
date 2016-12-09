@@ -57,7 +57,7 @@ namespace ofd{
         std::string    CreatorVersion; // 创建文档的应用程序的版本信息。
         CustomDataMap  CustomDatas;     // 用户自定义数据
 
-        CT_DocInfo() : DocUsage(DocInfo::Usage::Normal){};
+        CT_DocInfo();
 
     } CT_DocInfo_t;
 

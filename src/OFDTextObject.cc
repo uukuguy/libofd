@@ -1,3 +1,4 @@
+#include <math.h>
 #include "OFDTextObject.h"
 #include "utils/logger.h"
 #include "utils/xml.h"
@@ -46,7 +47,10 @@ public:
 }; // class OFDTextObject::ImplCls
 
 
-OFDTextObject::ImplCls::ImplCls(){
+OFDTextObject::ImplCls::ImplCls() :
+    FontSize(12.0), Stroke(false), Fill(true), HScale(1.0), 
+    RD(Text::ReadDirection::ANGLE0), CD(Text::CharDirection::ANGLE0),
+    Italic(false){
 }
 
 OFDTextObject::ImplCls::~ImplCls(){
@@ -76,12 +80,14 @@ void OFDTextObject::ImplCls::ClearTextCodes(){
     TextCodes.clear();
 }
 
+// -------- <TextObject>
+// OFD (section 11.2) P63. Page.xsd.
 void OFDTextObject::ImplCls::GenerateAttributesXML(XMLWriter &writer) const{
 
     // FIXME
     // -------- <TextObject Font="">
     // Required.
-    writer.WriteAttribute("Font", "");
+    writer.WriteAttribute("Font", "1");
 
     // -------- <TextObject Size="">
     // Required.
@@ -107,10 +113,12 @@ void OFDTextObject::ImplCls::GenerateAttributesXML(XMLWriter &writer) const{
 
 }
 
+// -------- <TextObject>
+// OFD (section 11.2) P63. Page.xsd.
 void OFDTextObject::ImplCls::GenerateElementsXML(XMLWriter &writer) const{
 
     // -------- <TextCode>
-    // OFD P65. Page.xsd
+    // OFD (section 11.3) P65. Page.xsd
     // Required.
     for ( auto textCode : TextCodes ){
         writer.StartElement("TextCode");{

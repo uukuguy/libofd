@@ -54,7 +54,7 @@ void XMLWriter::ImplCls::StartDocument(const std::string &encoding){
 }
 
 void XMLWriter::ImplCls::StartElement(const std::string &name){
-    xmlTextWriterStartElement(m_writer, BAD_CAST name.c_str());
+    xmlTextWriterStartElement(m_writer, BAD_CAST (std::string("ofd:") + name).c_str());
 }
 
 void XMLWriter::ImplCls::EndElement(){
@@ -62,7 +62,7 @@ void XMLWriter::ImplCls::EndElement(){
 }
 
 void XMLWriter::ImplCls::WriteElement(const std::string &name, const std::string &value){
-    xmlTextWriterWriteElement(m_writer, BAD_CAST name.c_str(), BAD_CAST value.c_str());
+    xmlTextWriterWriteElement(m_writer, BAD_CAST (std::string("ofd:") + name).c_str(), BAD_CAST value.c_str());
 }
 
 void XMLWriter::ImplCls::WriteElement(const std::string &name, uint64_t value){
@@ -78,11 +78,11 @@ void XMLWriter::ImplCls::WriteAttribute(const std::string &name, const std::stri
 }
 
 void XMLWriter::ImplCls::WriteAttribute(const std::string &name, uint64_t value){
-    WriteElement(name, std::to_string(value));    
+    WriteAttribute(name, std::to_string(value));    
 }
 
 void XMLWriter::ImplCls::WriteAttribute(const std::string &name, double value){
-    WriteElement(name, std::to_string(value));
+    WriteAttribute(name, std::to_string(value));
 }
 
 void XMLWriter::ImplCls::WriteRaw(const std::string &text){

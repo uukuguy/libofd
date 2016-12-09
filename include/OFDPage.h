@@ -20,7 +20,7 @@ namespace ofd{
 
     class OFDLayer : public PageBlock {
     public:
-        OFDLayer(){};
+        OFDLayer(): ID(0), Type(Layer::Type::BODY){};
         OFDLayer(Layer::Type layerType) : Type(layerType){};
         virtual ~OFDLayer(){};
 
@@ -42,6 +42,9 @@ namespace ofd{
         bool Open();
         void Close();
         bool IsOpened() const;
+
+        uint64_t GetID() const;
+        void SetID(uint64_t id);
 
         size_t GetLayersCount() const;
         const OFDLayerPtr GetLayer(size_t idx) const;

@@ -30,16 +30,20 @@ public:
 
     // -------- Private Attributes --------
 
-    bool m_opened;
+    uint64_t    ID;
+    CT_PageArea Area;
 
     std::vector<OFDLayerPtr> Layers;
+
+    bool m_opened;
 
 private:
     void generateContentXML(XMLWriter &writer) const;
 
+
 }; // class OFDPage::ImplCls
 
-OFDPage::ImplCls::ImplCls() : m_opened(false) {
+OFDPage::ImplCls::ImplCls() : ID(0), m_opened(false){
 }
 
 OFDPage::ImplCls::~ImplCls(){
@@ -76,6 +80,7 @@ OFDLayerPtr OFDPage::ImplCls::GetLayer(size_t idx){
 
 OFDLayerPtr OFDPage::ImplCls::AddNewLayer(Layer::Type layerType){
     OFDLayerPtr layer = std::make_shared<OFDLayer>(layerType);
+    layer->ID = Layers.size();
     Layers.push_back(layer);
     return layer;
 }
@@ -92,6 +97,7 @@ OFDLayerPtr OFDPage::ImplCls::GetBodyLayer(){
     return bodyLayer;
 }
 
+// Called by OFDPage::ImplCls::GeneratePageXML()
 void OFDPage::ImplCls::generateContentXML(XMLWriter &writer) const{
     if ( Layers.size() == 0 ) return;
 
@@ -101,6 +107,8 @@ void OFDPage::ImplCls::generateContentXML(XMLWriter &writer) const{
         for ( auto layer : Layers ){
 
             // -------- <Layer>
+            // OFD (section 7.7) P20.
+            // Required.
             writer.StartElement("Layer");{
 
                 // -------- <Layer ID="">
@@ -125,9 +133,12 @@ void OFDPage::ImplCls::generateContentXML(XMLWriter &writer) const{
     } writer.EndElement();
 }
 
+// Defined in OFDDocument.cc
+void writePageAreaXML(XMLWriter &writer, const CT_PageArea &pageArea);
+
 // Generate content in Doc_N/Pages/Page_N/Content.xml
 // Called by OFDFile::Save()
-// OFD P18, Page.xsd。
+// OFD (section 7.7) P18, Page.xsd。
 std::string OFDPage::ImplCls::GeneratePageXML() const{
 
     XMLWriter writer(true);
@@ -136,10 +147,31 @@ std::string OFDPage::ImplCls::GeneratePageXML() const{
 
     // -------- <Page>
     writer.StartElement("Page");{
+        OFDXML_HEAD_ATTRIBUTES;
+
+        // TODO
+        // -------- <Area>
+        // Optional.
+        writer.StartElement("Area");{
+           writePageAreaXML(writer, Area); 
+        } writer.EndElement();
+
+        // TODO
+        // -------- <Template>
+        // OFD (section 7.7) P19.
+        // Optional.
+
+        // TODO
+        // -------- <PageRes>
+        // Optional.
 
         // -------- <Content>
         // Optional. Blank page if not exist.
         generateContentXML(writer);
+
+        // TODO
+        // -------- <Actions>
+        // Optional.
 
     } writer.EndElement();
 
@@ -157,6 +189,14 @@ OFDPage::OFDPage(){
 }
 
 OFDPage::~OFDPage(){
+}
+
+uint64_t OFDPage::GetID() const{
+    return m_impl->ID;
+}
+
+void OFDPage::SetID(uint64_t id){
+    m_impl->ID = id;
 }
 
 std::string OFDPage::to_string() const{

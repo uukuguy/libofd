@@ -82,6 +82,7 @@ $ ./build/bin/ofdviewer ./data/sample0.ofd --v=1
 
 ## Errata
 
-P32
-表格最后一行“格构高洛德渐变”应为“网格高洛德渐变”
+- Section 7.4 P8 表4第一行DocID备注“可选”，按附录A.1 OFD.xsd中P92定义应为“必选”。
+
+- Section 8.3.2 P32 表26最后一行“格构高洛德渐变”应为“网格高洛德渐变”
 

@@ -21,6 +21,12 @@ pdf2ofd: ${PDF2OFD}
 	${PDF2OFD} ./data/sample0.pdf sample0.ofd && unzip -d sample0 sample0.ofd >> /dev/null 
 	cat sample0/OFD.xml | xmllint --format -
 	cat sample0/Doc_0/Document.xml | xmllint --format -
+	cat sample0/Doc_0/Pages/Page_0/Content.xml | xmllint --format -
+
+check:
+	xmllint --noout --schema ./doc/GBT33190-2016/OFD.xsd ./sample0/OFD.xml
+	xmllint --noout --schema ./doc/GBT33190-2016/Document.xsd ./sample0/Doc_0/Document.xml
+	xmllint --noout --schema ./doc/GBT33190-2016/Page.xsd ./sample0/Doc_0/Pages/Page_0/Content.xml
 
 cscope:
 	cscope -Rbq

@@ -28,6 +28,7 @@ namespace ofd{
     typedef struct ST_Pos{
         double x;
         double y;
+        ST_Pos() : x(0.0), y(0.0){};
     } ST_Pos_t;
 
     // ST_Box: 矩形区域，以空格分割，前两个值代表了该矩形的左上角坐标，
@@ -37,6 +38,11 @@ namespace ofd{
         double Top;
         double Width;
         double Height;
+
+        ST_Box() : Left(0.0), Top(0.0),
+            Width(0.0), Height(0.0) {
+        }
+
     } ST_Box_t;
 
     typedef std::string ST_TIME;
@@ -61,6 +67,22 @@ namespace ofd{
         // 不出现时，默认值为页面物理区域。
         // 出血区域与物理区域相交的部分被忽略。
         ST_Box BleedBox;
+
+        CT_PageArea() : m_bApplicationBox(false), m_bContentBox(false), m_bBleedBox(false){
+        }
+
+        bool HasApplicationBox() const {return m_bApplicationBox;};
+        bool HasContentBox() const {return m_bContentBox;};
+        bool HasBleedBox() const {return m_bBleedBox;};
+
+        void EnableApplicationBox(bool bEnable=true){m_bApplicationBox = bEnable;};
+        void EnableContentBox(bool bEnable=true){m_bContentBox = bEnable;};
+        void EnableBleedBox(bool bEnable=true){m_bBleedBox = bEnable;};
+
+    private:
+        bool m_bApplicationBox;
+        bool m_bContentBox;
+        bool m_bBleedBox;
 
     } CT_PageArea_t; 
 

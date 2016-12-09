@@ -6,7 +6,7 @@
 using namespace ofd;
 
 OFDObject::OFDObject() :
-    Visible(true), LineWidth(0.353), Alpha(255){
+    ID(0), Visible(true), LineWidth(0.353), Alpha(255){
 }
 
 OFDObject::~OFDObject(){
@@ -44,7 +44,11 @@ void OFDObject::GenerateXML(XMLWriter &writer) const{
 void OFDObject::GenerateAttributesXML(XMLWriter &writer) const{
 
     // -------- GraphUnit attributes --------
-    // OFD P50. Page.xsd.
+    // OFD (section 8.5) P50. Page.xsd.
+
+    // -------- <Object ID="">
+    // Required
+    writer.WriteAttribute("ID", ID);
 
     // -------- <Object Boundary="">
     // Required.
@@ -56,12 +60,6 @@ void OFDObject::GenerateAttributesXML(XMLWriter &writer) const{
         std::to_string(box.Height);
 
     writer.WriteAttribute("Boundary", strBoundary);
-
-    /*std::string  Name;*/
-    /*bool         Visible;*/
-    /*double       CTM[6];*/
-    /*double       LineWidth;*/
-    /*int          Alpha;*/
 
     // -------- <Object Name="">
     // Optional
