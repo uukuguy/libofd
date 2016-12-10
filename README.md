@@ -60,24 +60,18 @@ $ cd libofd
 $ mkdir build && cd build && cmake .. && make
 ```
 
-## Run
+## Test
 
 ```
-$ make run
+$ make pdf2ofd
 ```
 
-or
+or 
 
 ```
-$ ./build/bin/ofdviewer ./data/sample0.ofd --v=1
+$ build/bin/pdf2ofd data/sample0.pdf
 ```
-
-| Key            | Action     |
-|--------------- |----------- |
-| KEY\_UP        | PageUp     |
-| KEY\_DOWN      | PageDown   |
-| RETURN         | Fullscreen |
-| ESC (or KEY_Q) | Exit       |
+The command above will create a OFD file named sampl0.ofd in current directory, and upzip it into sample0 folder. See Makefile for detail.
 
 
 ## Errata

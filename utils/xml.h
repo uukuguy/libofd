@@ -1,5 +1,5 @@
-#ifndef __XML_H__
-#define __XML_H__
+#ifndef __UTILS_XML_H__
+#define __UTILS_XML_H__
 
 #include <memory>
 #include <string>
@@ -32,4 +32,4 @@ private:
     std::unique_ptr<ImplCls> m_impl;
 };
 
-#endif // __XML_H__
+#endif // __UTILS_XML_H__

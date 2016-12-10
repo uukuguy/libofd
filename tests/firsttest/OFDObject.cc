@@ -5,7 +5,7 @@
 #include "OFDPathObject.h"
 #include "OFDImageObject.h"
 #include "utils/logger.h"
-#include "utils/utils.h"
+#include "utils/tinyxml2.h"
 
 using namespace ofd;
 

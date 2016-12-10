@@ -6,7 +6,7 @@
 #include "OFDPage.h"
 #include "OFDCanvas.h"
 #include "OFDTextObject.h"
-#include "utils/utils.h"
+#include "utils/tinyxml2.h"
 #include "utils/logger.h"
 
 

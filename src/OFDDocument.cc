@@ -4,23 +4,12 @@
 #include "OFDPage.h"
 #include "utils/logger.h"
 #include "utils/xml.h"
+#include "utils/uuid.h"
 
 using namespace ofd;
 
-#include <uuid/uuid.h>
 CT_DocInfo::CT_DocInfo() : DocUsage(DocInfo::Usage::Normal){
-    uuid_t id;
-    uuid_generate_random(id); 
-    char buf[36];
-    uuid_unparse_upper(id, buf);
-    char buf0[33];
-    memcpy(buf0, buf, 8);
-    memcpy(&buf0[8], &buf[9], 4);
-    memcpy(&buf0[12], &buf[14], 4);
-    memcpy(&buf0[16], &buf[19], 4);
-    memcpy(&buf0[20], &buf[24], 12);
-    buf0[32] = '\0';
-    DocID = std::string(buf0);
+    DocID = generate_uuid32();
 }
 
 // **************** class OFDDocument::ImplCls ****************

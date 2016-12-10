@@ -1,5 +1,5 @@
-#ifndef __OFDUTILS_H__
-#define __OFDUTILS_H__
+#ifndef __UTILS_TINYXML2_H__
+#define __UTILS_TINYXML2_H__
 
 #include <tuple>
 #include <string>
@@ -20,4 +20,4 @@ extern std::tuple<double, double, double, double, bool> parsePhysicalBoxElement(
         } \
     } \
     
-#endif // __OFDUTILS_H__ 
+#endif // __UTILS_TINYXML2_H__ 
