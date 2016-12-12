@@ -70,17 +70,63 @@ std::string OFDFile::ImplCls::to_string() const{
     return ss.str();
 }
 
+std::tuple<std::string, bool> ReadZipFile(zip *archive, const std::string &fileinzip){
+    bool ok;
+    std::string fileContent;
+
+    struct zip_stat st;
+    zip_stat_init(&st);
+    zip_stat(archive, fileinzip.c_str(), ZIP_FL_NOCASE, &st);
+    LOG(INFO) << "zip_stat:" << st.valid;
+
+    size_t filesize = st.size;
+    __attribute__((unused)) size_t compsize = st.comp_size;
+
+    zip_file *file = zip_fopen(archive, fileinzip.c_str(), ZIP_FL_NOCASE);
+    char *content = new char[filesize + 1];
+    size_t did_read = zip_fread(file, content, filesize);
+    LOG(DEBUG) << "did_read:" << did_read << " filesize:" << filesize;
+    if (did_read != filesize ) {
+        LOG(WARNING) << "File " << fileinzip << " readed " << did_read << " bytes, but is not equal to excepted filesize " << filesize << " bytes.";
+        delete[] content;
+    } else {
+        content[filesize] = '\0';
+        fileContent = std::string(content);
+        ok = true;
+        delete[] content;
+    }
+    zip_fclose(file);
+
+    return std::make_tuple(fileContent, ok);
+}
+
 bool OFDFile::ImplCls::Open(const std::string &filename){
     if ( m_opened ) return true;
 
     if ( !filename.empty() ) m_filename = filename;
     if ( m_filename.empty() ) return false;
 
+    int error = 0;
+    m_archive = zip_open(m_filename.c_str(), 0, &error);
+    if ( m_archive == nullptr ){
+        LOG(ERROR) << "Error: Open " << m_filename << " failed. error=" << error;
+        return false;
+    }
+
+    bool ok = false;
+
+    std::string strOFDXML;
+    std::tie(strOFDXML, ok) = ReadZipFile(m_archive, "OFD.xml");
+
     return m_opened;
 }
 
 void OFDFile::ImplCls::Close(){
     if ( m_opened ){
+        if ( m_archive != nullptr ){
+            zip_close(m_archive);
+            m_archive = nullptr;
+        }
     }
 }
 

@@ -7,6 +7,7 @@
 
 //using namespace ofd;
 
+void test_libofd(int argc, char *argv[]);
 void test_poppler(int argc, char *argv[]);
 void test_mupdf(int argc, char *argv[]);
 
@@ -117,8 +118,9 @@ int main(int argc, char *argv[]){
 
     LOG(INFO) << "Start " << argv[0];
 
+    test_libofd(argc, argv);
     //test_poppler(argc, argv);
-    test_mupdf(argc, argv);
+    //test_mupdf(argc, argv);
     //test_freetype(argc, argv);
 
     LOG(INFO) << "Done.";
