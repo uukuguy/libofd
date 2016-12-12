@@ -30,6 +30,27 @@ public:
 private:
     class ImplCls;
     std::unique_ptr<ImplCls> m_impl;
-};
+
+}; // class XMLWriter
+
+class XMLReader{
+public:
+    XMLReader();
+    ~XMLReader();
+
+    bool ReadElement(std::string &value);
+    bool ReadElement(uint64_t &value);
+    bool ReadElement(double &value);
+    bool ReadAttribute(const std::string &name, std::string &value);
+    bool ReadAttribute(const std::string &name, uint64_t &value);
+    bool ReadAttribute(const std::string &name, double &value);
+
+    bool FromOFDXML(const std::string &strOFDXML);
+
+private:
+    class ImplCls;
+    std::unique_ptr<ImplCls> m_impl;
+
+}; // class XMLReader
 
 #endif // __UTILS_XML_H__

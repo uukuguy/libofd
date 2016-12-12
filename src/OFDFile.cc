@@ -28,6 +28,7 @@ public:
     OFDDocumentPtr GetDefaultDocument();
 
     OFDDocumentPtr AddNewDocument();
+    bool FromOFDXML(const std::string &strOFDXML);
 
     // -------- Private Attributes --------
 
@@ -118,6 +119,8 @@ bool OFDFile::ImplCls::Open(const std::string &filename){
     std::string strOFDXML;
     std::tie(strOFDXML, ok) = ReadZipFile(m_archive, "OFD.xml");
 
+    FromOFDXML(strOFDXML);
+
     return m_opened;
 }
 
@@ -186,6 +189,15 @@ std::string OFDFile::ImplCls::GenerateOFDXML() const{
     writer.EndDocument();
 
     return writer.GetString();
+}
+
+bool OFDFile::ImplCls::FromOFDXML(const std::string &strOFDXML){
+    bool ok = true;
+
+    XMLReader reader;
+    reader.FromOFDXML(strOFDXML);
+
+    return ok;
 }
 
 bool OFDFile::ImplCls::Save(const std::string &filename){
