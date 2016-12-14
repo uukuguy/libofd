@@ -28,7 +28,13 @@ public:
     std::string GenerateDocBodyXML() const;
     std::string GenerateDocumentXML() const;
 
+    bool FromDocBodyXML(XMLReader &reader);
+
+private:
+    bool FromDocInfoXML(XMLReader &reader);
+
     // -------- Private Attributes --------
+public:
     bool m_opened;
 
     DocBody    m_docBody;
@@ -186,6 +192,7 @@ std::string OFDDocument::ImplCls::GenerateDocBodyXML() const{
     return writer.GetString();
 }
 
+
 void writeBoxXML(XMLWriter &writer, const std::string &boxName, const ST_Box &box){
     std::stringstream ssBox;
     ssBox << std::setprecision(3) << box.Left << " " << box.Top << " " << box.Width << " " << box.Height; 
@@ -320,6 +327,63 @@ std::string OFDDocument::ImplCls::GenerateDocumentXML() const{
     return writer.GetString();
 }
 
+
+bool OFDDocument::ImplCls::FromDocInfoXML(XMLReader &reader){
+    bool ok = true;
+
+    if ( reader.EnterChildElement("DocInfo") ){
+        while ( reader.HasElement() ){
+
+            // -------- <DocID>
+            if ( reader.CheckElement("DocID") ){
+                std::string docID;
+                reader.ReadElement(docID);
+                LOG(INFO) << "DocID: " << docID;
+
+            // -------- <DocRoot>
+            } else if ( reader.CheckElement("Title") ){
+                std::string title;
+                reader.ReadElement(title);
+                LOG(INFO) << "Title: " << title;
+            }
+
+            reader.NextElement();
+        };
+    } reader.BackParentElement();
+
+    return ok;
+}
+
+bool OFDDocument::ImplCls::FromDocBodyXML(XMLReader &reader){
+    bool ok = true;
+
+    if ( reader.EnterChildElement("DocBody") ){
+        while ( reader.HasElement() ){
+
+            // -------- <DocInfo>
+            if ( reader.CheckElement("DocInfo") ){
+                FromDocInfoXML(reader);
+
+            // -------- <DocRoot>
+            } else if ( reader.CheckElement("DocRoot") ){
+                std::string content;
+                reader.ReadElement(content);
+                LOG(INFO) << "DocRoot: " << content;
+
+            // -------- <Versions>
+            } else if ( reader.CheckElement("Versions") ){
+
+            // -------- <Signatures>
+            } else if ( reader.CheckElement("Signatures") ){
+            }
+
+            reader.NextElement();
+        };
+    } reader.BackParentElement();
+
+    return ok;
+}
+
 // **************** class OFDDocument ****************
 
 OFDDocument::OFDDocument(const std::string &docRoot){
@@ -335,6 +399,11 @@ const DocBody& OFDDocument::GetDocBody() const{
 
 DocBody& OFDDocument::GetDocBody(){
     return m_impl->m_docBody;
+}
+
+std::string OFDDocument::GetDocRoot() const {
+    const DocBody& docBody = GetDocBody();
+    return docBody.DocRoot;
 }
 
 const OFDDocument::CommonData& OFDDocument::GetCommonData() const{
@@ -367,6 +436,10 @@ std::string OFDDocument::GenerateDocBodyXML() const{
 
 std::string OFDDocument::GenerateDocumentXML() const{
     return m_impl->GenerateDocumentXML();
+}
+
+bool OFDDocument::FromDocBodyXML(XMLReader &reader){
+    return m_impl->FromDocBodyXML(reader);
 }
 
 std::string OFDDocument::to_string() const {

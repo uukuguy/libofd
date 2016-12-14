@@ -7,6 +7,8 @@
 #define OFDXML_HEAD_ATTRIBUTES \
     writer.WriteAttribute("xmlns:ofd", "http://www.ofdspec.org/2016"); 
 
+namespace utils{
+
 class XMLWriter{
 public:
     XMLWriter(bool bHead=false);
@@ -38,6 +40,13 @@ public:
     XMLReader();
     ~XMLReader();
 
+    bool ParseXML(const std::string &xmlString);
+    bool HasElement() const;
+    void NextElement();
+    bool EnterChildElement(const std::string &name);
+    void BackParentElement();
+    bool CheckElement(const std::string &name);
+
     bool ReadElement(std::string &value);
     bool ReadElement(uint64_t &value);
     bool ReadElement(double &value);
@@ -45,12 +54,12 @@ public:
     bool ReadAttribute(const std::string &name, uint64_t &value);
     bool ReadAttribute(const std::string &name, double &value);
 
-    bool FromOFDXML(const std::string &strOFDXML);
-
 private:
     class ImplCls;
     std::unique_ptr<ImplCls> m_impl;
 
 }; // class XMLReader
+
+}
 
 #endif // __UTILS_XML_H__

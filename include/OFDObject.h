@@ -6,7 +6,10 @@
 #include "OFDCommon.h"
 #include "OFDColor.h"
 
-class XMLWriter;
+namespace utils{
+    class XMLWriter;
+};
+using namespace utils;
 
 namespace ofd{
 

@@ -7,6 +7,11 @@
 #include <unordered_map>
 #include "OFDCommon.h"
 
+namespace utils{
+    class XMLReader;
+};
+using namespace utils;
+
 namespace ofd{
 
     class OFDPage;
@@ -98,6 +103,8 @@ namespace ofd{
         const DocBody& GetDocBody() const;
         DocBody& GetDocBody();
 
+        std::string GetDocRoot() const;
+
         // -------- CommonData --------
         // 文档公共数据，定义了页面区域、公共资源等数据。
         class CommonData{
@@ -139,6 +146,8 @@ namespace ofd{
         OFDPagePtr AddNewPage();
         std::string GenerateDocBodyXML() const;
         std::string GenerateDocumentXML() const;
+
+        bool FromDocBodyXML(XMLReader &reader);
 
         std::string to_string() const;
 

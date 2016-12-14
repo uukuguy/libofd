@@ -5,7 +5,7 @@ PDF2OFD=./build/bin/pdf2ofd
 .PHONY: build run
 
 build:
-	mkdir -p build && cd build && cmake .. && make
+	mkdir -p build && cd build && cmake .. && make -j2
 
 ${OFDVIEWER}: build
 ${OFDTEST}: build

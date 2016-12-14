@@ -28,10 +28,12 @@ public:
     OFDDocumentPtr GetDefaultDocument();
 
     OFDDocumentPtr AddNewDocument();
+
+public:
     bool FromOFDXML(const std::string &strOFDXML);
 
     // -------- Private Attributes --------
-
+public:
     std::string   Version;   // 文件格式的版本号，取值为”1.0“
     std::string   DocType;   // 文件格式子集类型，取值为”OFD“，表明此文件符合本标准
                              // 取值为”OFD-A“，表明此文件符合OFD存档规范
@@ -191,11 +193,42 @@ std::string OFDFile::ImplCls::GenerateOFDXML() const{
     return writer.GetString();
 }
 
+
 bool OFDFile::ImplCls::FromOFDXML(const std::string &strOFDXML){
     bool ok = true;
 
     XMLReader reader;
-    reader.FromOFDXML(strOFDXML);
+
+    if ( reader.ParseXML(strOFDXML) ){
+        std::string Version, DocType;
+        reader.ReadAttribute("Version", Version);
+        reader.ReadAttribute("DocType", DocType);
+        LOG(INFO) << "Version:" << Version << " DocType:" << DocType;
+
+        while ( reader.HasElement() ){
+
+            // -------- <OFD>
+            if ( reader.CheckElement("OFD") ) {
+                if ( reader.EnterChildElement("OFD") ){
+
+                    // -------- <DocBody>
+                    if ( reader.CheckElement("DocBody") ){
+                        OFDDocumentPtr ofdDoc = AddNewDocument();
+                        ofdDoc->FromDocBodyXML(reader);
+
+                        std::string docRoot = ofdDoc->GetDocRoot();
+                        std::string documentXML = docRoot + "/Document.xml";
+                        LOG(INFO) << "Document xml:" << documentXML;
+                    }
+
+                } reader.BackParentElement();
+            }
+
+            reader.NextElement();
+        };
+    } else {
+        LOG(ERROR) << "ParseXML() failed.";
+    }
 
     return ok;
 }
@@ -363,7 +396,7 @@ OFDDocumentPtr OFDFile::ImplCls::AddNewDocument(){
 OFDFile::OFDFile() {
     m_impl = std::unique_ptr<ImplCls>(new ImplCls());
 
-    AddNewDocument();
+    /*AddNewDocument();*/
 }
 
 OFDFile::OFDFile(const std::string &filename){

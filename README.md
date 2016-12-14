@@ -9,6 +9,10 @@ The libofd is the first open-source C++ development library for OFD. It was esta
 
 ## Objectives
 
+### v0.5
+
+- pdf2ofd can convernt PDF file into OFD file, include text only.
+
 ### v1.0
 
 - Read and write OFD files.
