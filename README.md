@@ -7,37 +7,80 @@ October 13, 2016, the official release of the OFDnational standard, the standard
 
 The libofd is the first open-source C++ development library for OFD. It was established in October 20, 2016, only 1 week later than the standard release time. 
 
+## Objectives
+
+### v0.5
+
+- pdf2ofd can convernt PDF file into OFD file, include text only.
+
+### v1.0
+
+- Read and write OFD files.
+- Import text, path and image from PDF files.
+- Render text, path and image in OFD files.
+
+## Tools
+
+### pdf2ofd
+
+pdf2ofd is a tool translating a PDF file to a OFD file.
+
+### ofdviewer
+
+
 ## Dependencies
 
-Cairo http://cairographics.org
+- libcairo2-dev http://cairographics.org
+- libtinyxml2-dev https://github.com/leethomason/tinyxml2  
+- libzip-dev https://github.com/nih-at/libzip 
+- easylogging++ https://github.com/easylogging/easyloggingpp
 
-tinyxml2 https://github.com/leethomason/tinyxml2  
+libsdl2-dev
+libsdl2-image-dev
+libsdl2-ttf-dev
+libsdl2-mixer-dev
+libsdl2-net-dev
+libsdl2-gfx-dev
 
-libzip https://github.com/nih-at/libzip 
+libharfbuzz-dev
+libicu-dev
 
-easylogging++ https://github.com/easylogging/easyloggingpp
+libfreetype6-dev
 
 ## Build
 
-$ git clone https://github.com/uukuguy/libofd.git
+```
+$ git clone https://github.com/idleuncle/libofd.git
+```
 
+```
+$ make build
+```
+
+or
+
+```
 $ cd libofd
-
 $ mkdir build && cd build && cmake .. && make
+```
 
 ## Test
 
-$ cd build
+```
+$ make pdf2ofd
+```
 
-### For production.
-$ ./bin/ofdtest ../data/sample0.ofd 
+or 
 
-### For debug in production.
-$ ./bin/ofdtest ../data/sample0.ofd --v=1
+```
+$ build/bin/pdf2ofd data/sample0.pdf
+```
+The command above will create a OFD file named sampl0.ofd in current directory, and upzip it into sample0 folder. See Makefile for detail.
 
-### for debug in development.
-$ ./bin/ofdtest ../data/sample0.ofd --v=3
 
-### for detail debug info in development. (maybe too slow).
-$ ./bin/ofdtest ../data/sample0.ofd --v=5
+## Errata
+
+- Section 7.4 P8 表4第一行DocID备注“可选”，按附录A.1 OFD.xsd中P92定义应为“必选”。
+
+- Section 8.3.2 P32 表26最后一行“格构高洛德渐变”应为“网格高洛德渐变”
 

@@ -1,73 +1,67 @@
-#ifndef __OFDPAGE_H__
-#define __OFDPAGE_H__
+#ifndef __OFD_PAGE_H__
+#define __OFD_PAGE_H__
 
-#ifdef __cplusplus
-
+#include <memory>
 #include <string>
-#include <vector>
-#include <tuple>
-#include "ofd.h"
+#include "OFDObject.h"
 
-namespace ofd {
+namespace ofd{
 
-class OFDDocument;
-class OFDObject;
+    namespace Layer{
 
-class OFDPage {
-public:
-    OFDPage(OFDDocument *ofdDocument, uint64_t id, const std::string &filename);
-    ~OFDPage();
+        enum class Type{
+            BODY,
+            BACKGROUND,
+            FOREGROUND,
+            CUSTOM,
+        };
 
-    bool Open();
-    void Close();
+    }; // namespace Layer
 
-    const OFDDocument *GetOFDDocument() const {return m_ofdDocument;};
-    OFDDocument *GetOFDDocument() {return m_ofdDocument;};
+    class OFDLayer : public PageBlock {
+    public:
+        OFDLayer(): ID(0), Type(Layer::Type::BODY){};
+        OFDLayer(Layer::Type layerType) : Type(layerType){};
+        virtual ~OFDLayer(){};
 
-    bool IsOpened() const {return m_opened;};
+        uint64_t    ID;
+        Layer::Type Type;
+        /*ST_REfID    DrawParam;*/
 
-    size_t GetOFDObjectsCount() const {return m_ofdObjects.size();};
-    const OFDObject *GetOFDObject(size_t idx) const {return m_ofdObjects[idx];};
-    OFDObject *GetOFDObject(size_t idx) {return m_ofdObjects[idx];};
+    }; // class OFDLayer
 
-    uint64_t GetID() const {return m_id;};
-    std::string GetText() const {return m_text;};
+    typedef std::shared_ptr<OFDLayer> OFDLayerPtr;
 
-    bool RenderToPNGFile(const std::string& filename);
+    class OFDPage{
+    public:
+        OFDPage();
+        virtual ~OFDPage();
 
-public:
-    struct Attributes{
-        OFDPageArea PageArea;
+        std::string to_string() const;
 
-        void clear(){
-            memset((void*)&PageArea, 0, sizeof(PageArea));
-        }
-    };
+        bool Open();
+        void Close();
+        bool IsOpened() const;
 
-    const Attributes& GetAttributes() const {return m_attributes;};
-    Attributes& GetAttributes() {return m_attributes;};
+        uint64_t GetID() const;
+        void SetID(uint64_t id);
 
-    std::string String() const;
+        size_t GetLayersCount() const;
+        const OFDLayerPtr GetLayer(size_t idx) const;
+        OFDLayerPtr GetLayer(size_t idx);
+        OFDLayerPtr AddNewLayer(Layer::Type layerType);
+        const OFDLayerPtr GetBodyLayer() const;
+        OFDLayerPtr GetBodyLayer();
 
-private:
-    OFDDocument *m_ofdDocument;
-    uint64_t m_id;
-    std::string m_filename;
+        std::string GeneratePageXML() const;
 
-    Attributes m_attributes;
+    private:
+        class ImplCls;
+        std::unique_ptr<ImplCls> m_impl;
 
-    bool m_opened;
-    std::vector<OFDObject*> m_ofdObjects;
-    std::string m_text;
+    }; // OFDPage
+    typedef std::shared_ptr<OFDPage> OFDPagePtr;
 
-    void clear();
-    bool parseXML(const std::string &content); 
+}; // namespace ofd
 
-
-}; // class OFDPage
-
-} // namespace ofd
-
-#endif // #ifdef __cplusplus
-
-#endif // __OFDPAGE_H__
+#endif // __OFD_PAGE_H__

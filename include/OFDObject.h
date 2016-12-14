@@ -1,47 +1,80 @@
-#ifndef __OFDOBJECT_H__
-#define __OFDOBJECT_H__
+#ifndef __OFD_OBJECT_H__
+#define __OFD_OBJECT_H__
 
-#include <stdint.h>
+#include <memory>
 #include <string>
-#include "ofd.h"
+#include "OFDCommon.h"
+#include "OFDColor.h"
 
+namespace utils{
+    class XMLWriter;
+};
+using namespace utils;
 
-            //<ofd:TextObject ID="121" CTM="0.3527 0 0 0.3527 -114.807533 111.352325" 
-            //                Boundary="114.807533 185.229584 4.083549 4.733795" 
-            //                LineWidth="1" MiterLimit="3.527" Font="16" Size="14.749" 
-            //                Stroke="false" Fill="true">
-                //<ofd:FillColor ColorSpace="15" Value="0"/>
-                //<ofd:StrokeColor ColorSpace="15" Value="0"/>
-                //<ofd:CGTransform CodePosition="0" CodeCount="1" GlyphCount="1">
-                    //<ofd:Glyphs>4460</ofd:Glyphs> 
-                //</ofd:CGTransform>
-                //<ofd:TextCode X="324.419" Y="-303.723">局</ofd:TextCode>
-            //</ofd:TextObject>
-namespace ofd {
+namespace ofd{
 
-class OFDObject {
-public:
-    OFDObject();
-    virtual ~OFDObject();
+    namespace Object{
+        enum class Type{
+            UNKNOWN = -1, // 未知对象
+            TEXT,         // 文本对象
+            PATH,         // 图形对象
+            IMAGE,        // 图像对象
+            COMPOSITE,    // 复合对象
+        };
+    }; // namespace Object
 
-    virtual std::string ToString() const;
+    // ======== class OFDObject ========
+    class OFDObject {
+    public:
+        OFDObject();
+        virtual ~OFDObject();
 
-public:
-    uint64_t ID;
-    OFDCTM CTM;
-    OFDBoundary Boundary;
+        uint64_t     ID;
+        Object::Type Type;
+        std::string  ObjectLabel;
 
-    double LineWidth;
-    double MiterLimit;
-    int Font;
-    double FontSize;
-    bool Stroke;
-    bool Fill;
-    OFDColor StrokeColor;
-    OFDColor FillColor;
+        // -------- GraphUnit attributes --------
+        // OFD P50. Page.xsd.
+        ST_Box       Boundary; 
+        std::string  Name;
+        bool         Visible;
+        double       CTM[6];
+        double       LineWidth;
+        int          Alpha;
 
-}; // class OFDObject
+        virtual void GenerateXML(XMLWriter &writer) const;
 
-} // namespace ofd
+    protected:
+        virtual void GenerateAttributesXML(XMLWriter &writer) const;
+        virtual void GenerateElementsXML(XMLWriter &writer) const;
 
-#endif // __OFDOBJECT_H__
+    }; // class OFDObject
+
+    typedef std::shared_ptr<OFDObject> OFDObjectPtr;
+
+    // ======== class PageBlock ========
+    class PageBlock{
+    public:
+
+        size_t GetObjectsCount() const {return Objects.size();};
+        const OFDObjectPtr GetObject(size_t idx) const {return Objects[idx];};
+        OFDObjectPtr GetObject(size_t idx) {return Objects[idx];};
+        void AddObject(OFDObjectPtr object) {
+            if ( object != nullptr ){
+                Objects.push_back(object);
+            }
+        }
+
+        std::vector<OFDObjectPtr> Objects;
+
+    }; // class PageBlock
+
+    class OFDObjectFactory{
+    public:
+        static OFDObjectPtr CreateObject(Object::Type objType);
+
+    }; // class OFDObjectFactory
+
+}; // namespace ofd
+
+#endif // __OFD_OBJECT_H__

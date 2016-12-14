@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns="http://www.ofdspec.org/2016" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    targetNamespace="http://www.ofdspec.org/2016"
+    xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning" elementFormDefault="qualified"
+    attributeFormDefault="unqualified" vc:minVersion="1.0" vc:maxVersion="1.1">
+    <xs:include schemaLocation="Definitions.xsd"/>
+    <!--数字签名的索引文件-->
+    <xs:element name="Signatures">
+        <xs:complexType>
+            <xs:sequence>
+                <!--MaxSignId-->
+                <xs:element name="MaxSignId" type="xs:ID" minOccurs="0"/>
+                <!--Signature-->
+                <xs:element name="Signature" minOccurs="0" maxOccurs="unbounded">
+                    <xs:complexType>
+                        <!--Attribute ID-->
+                        <xs:attribute name="ID" type="xs:ID" use="required"/>
+                        <!--Attribute Type-->
+                        <xs:attribute name="Type" default="Seal">
+                            <xs:simpleType>
+                                <xs:restriction base="xs:string">
+                                    <xs:enumeration value="Seal"/>
+                                    <xs:enumeration value="Sign"/>
+                                </xs:restriction>
+                            </xs:simpleType>
+                        </xs:attribute>
+                        <!--Attribute BaseLoc-->
+                        <xs:attribute name="BaseLoc" type="ST_Loc" use="required"/>
+                    </xs:complexType>
+                </xs:element>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>
