@@ -1,10 +1,12 @@
 #include <sstream>
 #include <iomanip>
+#include <tuple>
 #include "OFDDocument.h"
 #include "OFDPage.h"
 #include "utils/logger.h"
 #include "utils/xml.h"
 #include "utils/uuid.h"
+#include "utils/utils.h"
 
 using namespace ofd;
 
@@ -29,9 +31,13 @@ public:
     std::string GenerateDocumentXML() const;
 
     bool FromDocBodyXML(XMLReader &reader);
+    bool FromDocumentXML(const std::string &strDocumentXML);
 
 private:
     bool FromDocInfoXML(XMLReader &reader);
+
+    bool FromCommonDataXML(XMLReader &reader);
+    bool FromPagesXML(XMLReader &reader);
 
     // -------- Private Attributes --------
 public:
@@ -199,6 +205,7 @@ void writeBoxXML(XMLWriter &writer, const std::string &boxName, const ST_Box &bo
     writer.WriteElement(boxName, ssBox.str());
 }
 
+// OFD (section 7.5) P11. Definitions.xsd
 void writePageAreaXML(XMLWriter &writer, const CT_PageArea &pageArea){
     // -------- <PhysicalBox> 
     // Required.
@@ -384,6 +391,147 @@ bool OFDDocument::ImplCls::FromDocBodyXML(XMLReader &reader){
     return ok;
 }
 
+// ======== OFDDocument::ImplCls::FromDocumentXML() ========
+// OFD (section 7.5) P9. Document.xsd
+bool OFDDocument::ImplCls::FromDocumentXML(const std::string &strDocumentXML){
+    bool ok = true;
+
+    XMLReader reader;
+    if ( reader.ParseXML(strDocumentXML) ){
+
+        if ( reader.CheckElement("Document") ){
+            if ( reader.EnterChildElement("Document") ){
+
+                while ( reader.HasElement() ){
+
+                    // -------- <CommonData>
+                    // OFD (section 7.5) P10. Document.xsd
+                    // Required.
+                    if ( reader.CheckElement("CommonData") ) {
+                        FromCommonDataXML(reader);
+
+                    // -------- <Pages>
+                    // OFD (section 7.6) P17. Document.xsd
+                    // Required.
+                    } else if ( reader.CheckElement("Pages") ) {
+                        FromPagesXML(reader);
+                    }
+
+                    reader.NextElement();
+                }
+
+            } reader.BackParentElement();
+        }
+
+        ok = true;
+    }
+
+    return ok;
+}
+
+// OFD (section 7.5) P11. Definitions.xsd
+std::tuple<CT_PageArea,bool> FromPageAreaXML(XMLReader &reader){
+    bool ok = false;
+    CT_PageArea pageArea;
+
+    if ( reader.EnterChildElement("PageArea") ){
+        while ( reader.HasElement() ){
+
+
+            // -------- <PhysicalBox>
+            if ( reader.CheckElement("PhysicalBox") ) {
+                if ( reader.EnterChildElement("PhysicalBox") ){
+                    std::string boxString;
+                    if ( reader.ReadElement(boxString) && !boxString.empty()){
+                        std::vector<std::string> tokens = utils::SplitString(boxString);
+                        if ( tokens.size() >= 4 ){
+                            pageArea.PhysicalBox.Left = atof(tokens[0].c_str());
+                            pageArea.PhysicalBox.Top = atof(tokens[1].c_str());
+                            pageArea.PhysicalBox.Width = atof(tokens[2].c_str());
+                            pageArea.PhysicalBox.Height = atof(tokens[3].c_str());
+                            ok = true;
+                        } else {
+                            LOG(ERROR) << "Box String tokens size >= 4 failed. boxString:" << boxString;
+                        }
+                    }
+                } reader.BackParentElement();
+
+            // -------- <ApplicationBox>
+            } else if ( reader.CheckElement("AppicationBox") ){
+
+            // -------- <ContentBox>
+            } else if ( reader.CheckElement("ContentBox") ){
+
+            // -------- <BleedBox>
+            } else if ( reader.CheckElement("BleedBox") ){
+
+            }
+
+            reader.NextElement();
+        };
+    } reader.BackParentElement();
+
+    return std::make_tuple(pageArea, ok);
+}
+
+// -------- <CommonData>
+// OFD (section 7.5) P10. Document.xsd
+// Required.
+bool OFDDocument::ImplCls::FromCommonDataXML(XMLReader &reader){
+    bool ok = true;
+
+    LOG(INFO) << "Enter FromCommonDataXML()";
+    if ( reader.EnterChildElement("CommonData") ){
+        while ( reader.HasElement() ){
+
+            // -------- <MaxUnitID>
+            // Required.
+            if ( reader.CheckElement("MaxUnitID") ){
+
+            // -------- <PageArea>
+            // OFD (section 7.5) P11. Definitions.xsd
+            // Required.
+            } else if ( reader.CheckElement("PageArea") ){
+                std::tie(m_commonData.PageArea, ok) = FromPageAreaXML(reader);
+                LOG(INFO) << "CommonData.PageArea = " << m_commonData.PageArea.to_string();
+            }
+
+            reader.NextElement();
+        };
+    } reader.BackParentElement();
+
+    return ok;
+}
+
+// -------- <Pages>
+// OFD (section 7.6) P17. Document.xsd
+// Required.
+bool OFDDocument::ImplCls::FromPagesXML(XMLReader &reader){
+    bool ok = true;
+
+    if ( reader.EnterChildElement("Pages") ){
+        uint64_t pageID = 0;
+        reader.ReadAttribute("ID", pageID);
+        std::string baseLoc;
+        reader.ReadAttribute("BaseLoc", baseLoc);
+        LOG(INFO) << "PageID: " << pageID << " BaseLoc: " << baseLoc;
+
+        while ( reader.HasElement() ){
+
+            // -------- <Page>
+            // OFD (section 7.7) P18. Page.xsd
+            // Required.
+            if ( reader.CheckElement("Page") ){
+
+            }
+
+            reader.NextElement();
+        };
+    } reader.BackParentElement();
+
+    return ok;
+}
+
 // **************** class OFDDocument ****************
 
 OFDDocument::OFDDocument(const std::string &docRoot){
@@ -440,6 +588,10 @@ std::string OFDDocument::GenerateDocumentXML() const{
 
 bool OFDDocument::FromDocBodyXML(XMLReader &reader){
     return m_impl->FromDocBodyXML(reader);
+}
+
+bool OFDDocument::FromDocumentXML(const std::string &strDocumentXML){
+    return m_impl->FromDocumentXML(strDocumentXML);
 }
 
 std::string OFDDocument::to_string() const {

@@ -6,6 +6,7 @@
 using namespace tinyxml2;
 
 #include "logger.h"
+#include "utils.h"
 
 std::string GetChildElements(const XMLElement *element){
     std::stringstream ss;
@@ -23,13 +24,6 @@ std::string GetChildElements(const XMLElement *element){
 }
 
 
-std::vector<std::string> SpliteString(const std::string& content){
-    std::istringstream iss(content);
-    std::vector<std::string> tokens{std::istream_iterator<std::string>{iss}, 
-        std::istream_iterator<std::string>{}};
-    return tokens;
-}
-
 std::tuple<double, double, double, double, bool> parsePhysicalBoxElement(const XMLElement *physicalBoxElement)
 {
     double x0, y0, x1, y1 = 0.0;
@@ -42,7 +36,7 @@ std::tuple<double, double, double, double, bool> parsePhysicalBoxElement(const X
         //std::istringstream iss(s);
         //std::vector<std::string> tokens{std::istream_iterator<std::string>{iss}, 
             //std::istream_iterator<std::string>{}};
-        std::vector<std::string> tokens = SpliteString(s);
+        std::vector<std::string> tokens = utils::SplitString(s);
 
         if ( tokens.size() != 4 ) {
             std::cout << "Error: tokens.size() != 4 " << s << std::endl;

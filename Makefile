@@ -2,10 +2,10 @@ OFDVIEWER=./build/bin/ofdviewer
 OFDTEST=./build/bin/ofdtest
 PDF2OFD=./build/bin/pdf2ofd
 
-.PHONY: build run
+.PHONY: build run 
 
 build:
-	mkdir -p build && cd build && cmake .. && make -j2
+	mkdir -p build && cd build && cmake .. && make 
 
 ${OFDVIEWER}: build
 ${OFDTEST}: build
@@ -22,6 +22,13 @@ pdf2ofd: ${PDF2OFD}
 	cat sample0/OFD.xml | xmllint --format -
 	cat sample0/Doc_0/Document.xml | xmllint --format -
 	cat sample0/Doc_0/Pages/Page_0/Content.xml | xmllint --format -
+
+sample0.ofd: ${PDF2OFD}
+	rm -fr sample0.ofd sample0
+	${PDF2OFD} ./data/sample0.pdf sample0.ofd && unzip -d sample0 sample0.ofd >> /dev/null 
+
+ofdtest: sample0.ofd ${OFDTEST} 
+	${OFDTEST} sample0.ofd
 
 check:
 	xmllint --noout --schema ./doc/GBT33190-2016/OFD.xsd ./sample0/OFD.xml

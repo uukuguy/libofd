@@ -49,6 +49,8 @@ namespace ofd{
         // 返回对象摘要信息字符串。
         std::string to_string() const;
 
+        std::tuple<std::string, bool> ReadZipFileString(const std::string &fileinzip) const;
+
     private:
         class ImplCls;
         std::unique_ptr<ImplCls> m_impl;

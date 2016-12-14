@@ -9,7 +9,6 @@
 namespace utils{
     class XMLWriter;
 };
-using namespace utils;
 
 namespace ofd{
 
@@ -42,11 +41,11 @@ namespace ofd{
         double       LineWidth;
         int          Alpha;
 
-        virtual void GenerateXML(XMLWriter &writer) const;
+        virtual void GenerateXML(utils::XMLWriter &writer) const;
 
     protected:
-        virtual void GenerateAttributesXML(XMLWriter &writer) const;
-        virtual void GenerateElementsXML(XMLWriter &writer) const;
+        virtual void GenerateAttributesXML(utils::XMLWriter &writer) const;
+        virtual void GenerateElementsXML(utils::XMLWriter &writer) const;
 
     }; // class OFDObject
 

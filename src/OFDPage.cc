@@ -4,6 +4,7 @@
 #include "utils/logger.h"
 #include "utils/xml.h"
 
+using namespace utils;
 using namespace ofd;
 
 // **************** class OFDPage::ImplCls ****************

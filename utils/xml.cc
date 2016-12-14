@@ -183,6 +183,8 @@ public:
     void BackParentElement();
     bool CheckElement(const std::string &name);
 
+    std::string GetElementName() const;
+
     bool ReadElement(std::string &value);
     bool ReadElement(uint64_t &value);
     bool ReadElement(double &value);
@@ -249,16 +251,24 @@ bool XMLReader::ImplCls::EnterChildElement(const std::string &name){
 }
 
 void XMLReader::ImplCls::BackParentElement(){
-    assert( m_nodeStack.size() > 0 );
-
-    m_currentNode = m_nodeStack.back();
-    m_nodeStack.pop_back();
+    if ( m_nodeStack.size() > 0 ){
+        m_currentNode = m_nodeStack.back();
+        m_nodeStack.pop_back();
+    }
 }
 
 bool XMLReader::ImplCls::CheckElement(const std::string &name){
     return m_currentNode!= nullptr && 
          m_currentNode->type == XML_ELEMENT_NODE &&
         std::string((const char *)m_currentNode->name) == name ;
+}
+
+std::string XMLReader::ImplCls::GetElementName() const {
+    if ( m_currentNode != nullptr ){
+        return std::string((const char *)m_currentNode->name);
+    } else {
+        return "";
+    }
 }
 
 bool XMLReader::ImplCls::ReadElement(std::string &value){
@@ -353,6 +363,10 @@ void XMLReader::BackParentElement(){
 
 bool XMLReader::CheckElement(const std::string &name){
     return m_impl->CheckElement(name);
+}
+
+std::string XMLReader::GetElementName() const{
+    return m_impl->GetElementName();
 }
 
 bool XMLReader::ReadElement(std::string &value){

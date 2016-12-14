@@ -47,6 +47,8 @@ public:
     void BackParentElement();
     bool CheckElement(const std::string &name);
 
+    std::string GetElementName() const;
+
     bool ReadElement(std::string &value);
     bool ReadElement(uint64_t &value);
     bool ReadElement(double &value);

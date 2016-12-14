@@ -29,6 +29,9 @@ public:
 
     OFDDocumentPtr AddNewDocument();
 
+    std::tuple<std::string, bool> ReadZipFileString(const std::string &fileinzip) const;
+    std::tuple<char*, size_t, bool> ReadZipFileBytes(const std::string &fileinzip) const;
+
 public:
     bool FromOFDXML(const std::string &strOFDXML);
 
@@ -74,7 +77,7 @@ std::string OFDFile::ImplCls::to_string() const{
 }
 
 std::tuple<std::string, bool> ReadZipFile(zip *archive, const std::string &fileinzip){
-    bool ok;
+    bool ok = false;
     std::string fileContent;
 
     struct zip_stat st;
@@ -103,6 +106,18 @@ std::tuple<std::string, bool> ReadZipFile(zip *archive, const std::string &filei
     return std::make_tuple(fileContent, ok);
 }
 
+std::tuple<std::string, bool> OFDFile::ImplCls::ReadZipFileString(const std::string &fileinzip) const{
+    return ReadZipFile(m_archive, fileinzip);
+}
+
+std::tuple<char*, size_t, bool> OFDFile::ImplCls::ReadZipFileBytes(const std::string &fileinzip) const{
+    char *buf = nullptr;
+    size_t buflen = 0;
+    bool ok = false;
+
+    return std::make_tuple(buf, buflen, ok);
+}
+
 bool OFDFile::ImplCls::Open(const std::string &filename){
     if ( m_opened ) return true;
 
@@ -119,7 +134,7 @@ bool OFDFile::ImplCls::Open(const std::string &filename){
     bool ok = false;
 
     std::string strOFDXML;
-    std::tie(strOFDXML, ok) = ReadZipFile(m_archive, "OFD.xml");
+    std::tie(strOFDXML, ok) = ReadZipFileString("OFD.xml");
 
     FromOFDXML(strOFDXML);
 
@@ -217,8 +232,12 @@ bool OFDFile::ImplCls::FromOFDXML(const std::string &strOFDXML){
                         ofdDoc->FromDocBodyXML(reader);
 
                         std::string docRoot = ofdDoc->GetDocRoot();
-                        std::string documentXML = docRoot + "/Document.xml";
-                        LOG(INFO) << "Document xml:" << documentXML;
+                        std::string docXMLFile = docRoot + "/Document.xml";
+                        LOG(INFO) << "Document xml:" << docXMLFile;
+
+                        std::string strDocumentXML;
+                        std::tie(strDocumentXML, ok) = ReadZipFileString(docXMLFile);
+                        ok = ofdDoc->FromDocumentXML(strDocumentXML);
                     }
 
                 } reader.BackParentElement();
@@ -370,14 +389,18 @@ bool OFDFile::ImplCls::Save(const std::string &filename){
 }
 
 const OFDDocumentPtr OFDFile::ImplCls::GetDefaultDocument() const{
-    assert( m_documents.size() > 0 );
-    const OFDDocumentPtr defaultDocument = m_documents[0];
+    OFDDocumentPtr defaultDocument = nullptr;
+    if ( m_documents.size() > 0 ){
+        defaultDocument = m_documents[0];
+    }
     return defaultDocument;
 }
 
 OFDDocumentPtr OFDFile::ImplCls::GetDefaultDocument(){
-    assert( m_documents.size() > 0 );
-    OFDDocumentPtr defaultDocument = m_documents[0];
+    OFDDocumentPtr defaultDocument = nullptr;
+    if ( m_documents.size() > 0 ){
+        defaultDocument = m_documents[0];
+    }
     return defaultDocument;
 }
 
@@ -458,3 +481,6 @@ std::string OFDFile::to_string() const{
     return m_impl->to_string();
 }
 
+std::tuple<std::string, bool> OFDFile::ReadZipFileString(const std::string &fileinzip) const{
+    return m_impl->ReadZipFileString(fileinzip);
+}

@@ -16,9 +16,7 @@ OFDOutputDev::OFDOutputDev(ofd::OFDFilePtr ofdFile) :
     m_textPage = new TextPage(rawOrder);
     m_actualText = new ActualText(m_textPage);
 
-    if ( ofdFile != nullptr ){
-        m_ofdDocument = ofdFile->GetDefaultDocument();
-    }
+    m_ofdDocument = ofdFile->AddNewDocument();
 }
 
 OFDOutputDev::~OFDOutputDev(){

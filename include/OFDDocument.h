@@ -148,6 +148,7 @@ namespace ofd{
         std::string GenerateDocumentXML() const;
 
         bool FromDocBodyXML(XMLReader &reader);
+        bool FromDocumentXML(const std::string &strDocumentXML);
 
         std::string to_string() const;
 

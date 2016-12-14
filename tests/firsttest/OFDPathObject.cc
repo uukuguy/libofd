@@ -2,7 +2,9 @@
 #include <vector>
 #include "OFDPathObject.h"
 #include "utils/tinyxml2.h"
+#include "utils/utils.h"
 
+using namespace utils;
 using namespace ofd;
 
 OFDPathObject::OFDPathObject() 
@@ -42,7 +44,7 @@ bool OFDPathObject::ParseFromXML(const XMLElement* xmlElement){
     const XMLElement *abbreviatedDataElement = xmlElement->FirstChildElement("ofd:AbbreviatedData");
     if ( abbreviatedDataElement != nullptr ) {
         std::string text = abbreviatedDataElement->GetText();
-        std::vector<std::string> tokens = SpliteString(text);
+        std::vector<std::string> tokens = SplitString(text);
         if ( tokens.size() == 6 ){
             this->AbbreviatedData.m0 = atof(tokens[1].c_str());
             this->AbbreviatedData.m1 = atof(tokens[2].c_str());

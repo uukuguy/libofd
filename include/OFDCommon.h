@@ -43,6 +43,15 @@ namespace ofd{
             Width(0.0), Height(0.0) {
         }
 
+        std::string to_string() const {
+            return std::string("[") +
+                   std::to_string(Left) + ", " +
+                   std::to_string(Top) + ", " +
+                   std::to_string(Width) + ", " +
+                   std::to_string(Height) +
+                   "]";
+        }
+
     } ST_Box_t;
 
     typedef std::string ST_TIME;
@@ -78,6 +87,15 @@ namespace ofd{
         void EnableApplicationBox(bool bEnable=true){m_bApplicationBox = bEnable;};
         void EnableContentBox(bool bEnable=true){m_bContentBox = bEnable;};
         void EnableBleedBox(bool bEnable=true){m_bBleedBox = bEnable;};
+
+        std::string to_string() const {
+            return std::string("(") + 
+                   PhysicalBox.to_string() + ", " +
+                   ApplicationBox.to_string() + ", " +
+                   ContentBox.to_string() + ", " +
+                   BleedBox.to_string() + 
+                   ")";
+        }
 
     private:
         bool m_bApplicationBox;

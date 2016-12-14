@@ -9,7 +9,6 @@ namespace tinyxml2{
 }
 
 extern std::string GetChildElements(const tinyxml2::XMLElement *element);
-extern std::vector<std::string> SpliteString(const std::string& content);
 extern std::tuple<double, double, double, double, bool> parsePhysicalBoxElement(const tinyxml2::XMLElement *physicalBoxElement);
 
 #define GetChildElementText(element, childname, variable) \
