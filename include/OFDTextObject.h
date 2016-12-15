@@ -128,6 +128,7 @@ namespace ofd{
         std::unique_ptr<ImplCls> m_impl;
 
     }; // class OFDTextObject
+    typedef std::shared_ptr<OFDTextObject> OFDTextObjectPtr;
 
 }; // namespace ofd
 

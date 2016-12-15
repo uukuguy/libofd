@@ -274,7 +274,6 @@ std::string XMLReader::ImplCls::GetElementName() const {
 bool XMLReader::ImplCls::ReadElement(std::string &value){
     if ( m_currentNode != nullptr ){
         value = std::string((const char *)xmlNodeGetContent(m_currentNode));
-
         return true;
     } 
     return false;

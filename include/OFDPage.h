@@ -55,6 +55,8 @@ namespace ofd{
 
         std::string GeneratePageXML() const;
 
+        bool FromPageXML(const std::string &strPageXML);
+
     private:
         class ImplCls;
         std::unique_ptr<ImplCls> m_impl;

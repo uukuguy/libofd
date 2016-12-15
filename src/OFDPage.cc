@@ -1,6 +1,7 @@
 #include <sstream>
 #include <assert.h>
 #include "OFDPage.h"
+#include "OFDTextObject.h"
 #include "utils/logger.h"
 #include "utils/xml.h"
 
@@ -29,8 +30,13 @@ public:
 
     std::string GeneratePageXML() const;
 
-    // -------- Private Attributes --------
+    bool FromPageXML(const std::string &strPageXML);
 
+private:
+    bool FromContentXML(XMLReader &reader, const std::string &tagName);
+
+    // -------- Private Attributes --------
+public:
     uint64_t    ID;
     CT_PageArea Area;
 
@@ -181,6 +187,181 @@ std::string OFDPage::ImplCls::GeneratePageXML() const{
     return writer.GetString();
 }
 
+// defined in OFDDocument.cc
+std::tuple<CT_PageArea,bool> FromPageAreaXML(XMLReader &reader, const std::string &tagName);
+
+// ======== OFDPage::ImplCls::FromPageXML() ========
+// OFD (section 7.7) P18. Page.xsd
+bool OFDPage::ImplCls::FromPageXML(const std::string &strPageXML){
+    bool ok = true;
+
+    XMLReader reader;
+    if ( reader.ParseXML(strPageXML) ){
+
+        if ( reader.CheckElement("Page") ){
+            if ( reader.EnterChildElement("Page") ){
+
+                while ( reader.HasElement() ){
+
+                    // TODO
+                    // -------- <Template>
+                    // Optional.
+                    if ( reader.CheckElement("Template") ) {
+
+
+                    // -------- <Area>
+                    // Optional.
+                    } else if ( reader.CheckElement("Area") ) {
+                        std::tie(Area, ok) = FromPageAreaXML(reader, "Area");
+
+                    // TODO
+                    // -------- <PageRes>
+                    // Optional.
+                    } else if ( reader.CheckElement("PageRes") ) {
+
+                    // -------- <Content>
+                    // Optional.
+                    } else if ( reader.CheckElement("Content") ) {
+                        FromContentXML(reader, "Content");
+
+
+                    // TODO
+                    // -------- <Actions>
+                    // OFD (section 14.1) P73. Document.xsd
+                    // Optional.
+                    /*} else if ( reader.CheckElement("Actions") ) {*/
+                        /*FromActionsXML(reader);*/
+
+                    }
+
+                    reader.NextElement();
+                };
+
+            } reader.BackParentElement();
+        }
+    }
+    
+    return ok;
+}
+
+OFDObjectPtr FromTextObjectXML(XMLReader &reader){
+
+    OFDTextObjectPtr textObject = std::make_shared<OFDTextObject>();
+
+    if ( reader.EndElement("TextObject") ){
+
+        // -------- <TextObject ID="">
+        // Required.
+        uint64_t objectId = 0;
+        reader.ReadAttribute("ID", objectId);
+        textObject->ID = objectId;
+
+        // -------- CT_GraphicUnit --------
+
+
+        // -------- CT_Text --------
+        
+    }; reader.BackParentElement();
+
+    return textObject;
+}
+
+// TODO
+OFDObjectPtr FromPathObjectXML(XMLReader &reader){
+    OFDObjectPtr object = nullptr;
+
+    return object;
+}
+
+// TODO
+OFDObjectPtr FromImageObjectXML(XMLReader &reader){
+    OFDObjectPtr object = nullptr;
+
+    return object;
+}
+
+// TODO
+OFDObjectPtr FromCompositeObjectXML(XMLReader &reader){
+    OFDObjectPtr object = nullptr;
+
+    return object;
+}
+
+OFDLayerPtr FromLayerXML(XMLReader &reader){
+    OFDLayerPtr layer = nullptr;
+
+    if ( reader.EnterChildElement("Layer") ){
+
+        layer = std::make_shared<OFDLayer>();
+
+        uint64_t layerID = 0;
+        uint64_t layerType = 0;
+        uint64_t drawParamID = 0;
+        reader.ReadAttribute("ID", layerID);
+        reader.ReadAttribute("Type", layerType);
+        reader.ReadAttribute("DrawParam", drawParamID);
+
+        layer->ID = layerID;
+        layer->Type = (Layer::Type)layerType;
+        // TODO
+        /*layer->drawParamID = drawParamID;*/
+
+        while ( reader.HasElement() ){
+
+            OFDObjectPtr object = nullptr;
+
+            if ( reader.CheckElement("TextObject") ){
+                object = FromTextObjectXML(reader); 
+
+
+            } else if ( reader.CheckElement("PathObject") ){
+                object = FromPathObjectXML(reader); 
+
+            } else if ( reader.CheckElement("ImageObject") ){
+                object = FromImageObjectXML(reader); 
+
+            } else if ( reader.CheckElement("CompositeObject") ){
+                object = FromCompositeObjectXML(reader); 
+
+            }
+
+            if ( object != nullptr ){
+                layer->Objects.push_back(object);
+            }
+
+            reader.NextElement();
+        };
+
+    } reader.BackParentElement();
+
+    return layer;
+}
+
+// ======== OFDPage::ImplCls::FromContentXML() ========
+// OFD (section 7.7) P20. Page.xsd
+bool OFDPage::ImplCls::FromContentXML(XMLReader &reader, const std::string &tagName){
+    bool ok = false;
+
+    if ( reader.EnterChildElement(tagName) ){
+    
+        while ( reader.HasElement() ){
+
+            if ( reader.CheckElement("Layer") ){
+                OFDLayerPtr layer = FromLayerXML(reader);
+                if ( layer != nullptr ){
+                    Layers.push_back(layer);
+                    ok = true;
+                }
+            }
+
+            reader.NextElement();
+        };
+
+    } reader.BackParentElement();
+
+    return ok;
+}
+
 // **************** class OFDPage ****************
 
 OFDPage::OFDPage(){
@@ -243,3 +424,8 @@ OFDLayerPtr OFDPage::GetBodyLayer(){
 std::string OFDPage::GeneratePageXML() const{
     return m_impl->GeneratePageXML();
 }
+
+bool OFDPage::FromPageXML(const std::string &strPageXML){
+    return m_impl->FromPageXML(strPageXML);
+}
+

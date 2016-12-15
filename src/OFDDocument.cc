@@ -415,6 +415,63 @@ bool OFDDocument::ImplCls::FromDocumentXML(const std::string &strDocumentXML){
                     // Required.
                     } else if ( reader.CheckElement("Pages") ) {
                         FromPagesXML(reader);
+
+                    // TODO
+                    // -------- <Outlines>
+                    // OFD (section 7.8) P22. Document.xsd
+                    // Optional.
+                    /*} else if ( reader.CheckElement("Outlines") ) {*/
+                        /*FromOutlinesXML(reader);*/
+
+                    // TODO
+                    // -------- <Permissions>
+                    // OFD (section 7.5) P13. Document.xsd
+                    // Optional.
+                    /*} else if ( reader.CheckElement("Permissions") ) {*/
+                        /*FromPermissionsXML(reader);*/
+
+                    // TODO
+                    // -------- <Actions>
+                    // OFD (section 14.1) P73. Document.xsd
+                    // Optional.
+                    /*} else if ( reader.CheckElement("Actions") ) {*/
+                        /*FromActionsXML(reader);*/
+
+                    // TODO
+                    // -------- <VPreferences>
+                    // OFD (section 7.5) P15. Document.xsd
+                    // Optional.
+                    /*} else if ( reader.CheckElement("VPreferences") ) {*/
+                        /*FromVPreferencesXML(reader);*/
+
+                    // TODO
+                    // -------- <Bookmarks>
+                    // OFD (section 7.5) P17. Document.xsd
+                    // Optional.
+                    /*} else if ( reader.CheckElement("Bookmarks") ) {*/
+                        /*FromBookmarksXML(reader);*/
+
+                    // TODO
+                    // -------- <Attachments>
+                    // OFD (section 20) P88. Document.xsd
+                    // Optional.
+                    /*} else if ( reader.CheckElement("Attachments") ) {*/
+                        /*FromAttachmentsXML(reader);*/
+
+                    // TODO
+                    // -------- <CustomTags>
+                    // OFD (section 16) P80. Document.xsd
+                    // Optional.
+                    /*} else if ( reader.CheckElement("CustomTags") ) {*/
+                        /*FromCustomTagsXML(reader);*/
+
+                    // TODO
+                    // -------- <Extensions>
+                    // OFD (section 17) P81. Document.xsd
+                    // Optional.
+                    /*} else if ( reader.CheckElement("Extensions") ) {*/
+                        /*FromExtensionsXML(reader);*/
+
                     }
 
                     reader.NextElement();
@@ -429,41 +486,64 @@ bool OFDDocument::ImplCls::FromDocumentXML(const std::string &strDocumentXML){
     return ok;
 }
 
+std::tuple<ST_Box, bool> ReadBoxFromXML(XMLReader &reader, const std::string &tagName){
+    ST_Box box;
+    bool ok = false;
+
+    if ( reader.EnterChildElement(tagName) ){
+        std::string boxString;
+        if ( reader.ReadElement(boxString) && !boxString.empty()){
+            std::vector<std::string> tokens = utils::SplitString(boxString);
+            if ( tokens.size() >= 4 ){
+                box.Left = atof(tokens[0].c_str());
+                box.Top = atof(tokens[1].c_str());
+                box.Width = atof(tokens[2].c_str());
+                box.Height = atof(tokens[3].c_str());
+                ok = true;
+            } else {
+                LOG(ERROR) << "Box String tokens size >= 4 failed. boxString:" << boxString;
+            }
+        }
+    } reader.BackParentElement();
+
+    return std::make_tuple(box, ok);
+}
+
 // OFD (section 7.5) P11. Definitions.xsd
-std::tuple<CT_PageArea,bool> FromPageAreaXML(XMLReader &reader){
+std::tuple<CT_PageArea,bool> FromPageAreaXML(XMLReader &reader, const std::string &tagName){
     bool ok = false;
     CT_PageArea pageArea;
 
-    if ( reader.EnterChildElement("PageArea") ){
+    if ( reader.EnterChildElement(tagName) ){
         while ( reader.HasElement() ){
-
 
             // -------- <PhysicalBox>
             if ( reader.CheckElement("PhysicalBox") ) {
-                if ( reader.EnterChildElement("PhysicalBox") ){
-                    std::string boxString;
-                    if ( reader.ReadElement(boxString) && !boxString.empty()){
-                        std::vector<std::string> tokens = utils::SplitString(boxString);
-                        if ( tokens.size() >= 4 ){
-                            pageArea.PhysicalBox.Left = atof(tokens[0].c_str());
-                            pageArea.PhysicalBox.Top = atof(tokens[1].c_str());
-                            pageArea.PhysicalBox.Width = atof(tokens[2].c_str());
-                            pageArea.PhysicalBox.Height = atof(tokens[3].c_str());
-                            ok = true;
-                        } else {
-                            LOG(ERROR) << "Box String tokens size >= 4 failed. boxString:" << boxString;
-                        }
-                    }
-                } reader.BackParentElement();
-
+                std::tie(pageArea.PhysicalBox, ok) = ReadBoxFromXML(reader, "PhysicalBox");
+                if ( !ok ) break;
             // -------- <ApplicationBox>
-            } else if ( reader.CheckElement("AppicationBox") ){
+            } else if ( reader.CheckElement("ApplicationBox") ){
+                bool ok1 = false;
+                std::tie(pageArea.ApplicationBox, ok1) = ReadBoxFromXML(reader, "ApplicationBox");
+                if ( ok1 ) {
+                    pageArea.EnableApplicationBox(true);
+                }
 
             // -------- <ContentBox>
             } else if ( reader.CheckElement("ContentBox") ){
+                bool ok1 = false;
+                std::tie(pageArea.ContentBox, ok1) = ReadBoxFromXML(reader, "ContentBox");
+                if ( ok1 ) {
+                    pageArea.EnableContentBox(true);
+                }
 
             // -------- <BleedBox>
             } else if ( reader.CheckElement("BleedBox") ){
+                bool ok1 = false;
+                std::tie(pageArea.BleedBox, ok1) = ReadBoxFromXML(reader, "BleedBox");
+                if ( ok1 ) {
+                    pageArea.EnableBleedBox(true);
+                }
 
             }
 
@@ -480,7 +560,6 @@ std::tuple<CT_PageArea,bool> FromPageAreaXML(XMLReader &reader){
 bool OFDDocument::ImplCls::FromCommonDataXML(XMLReader &reader){
     bool ok = true;
 
-    LOG(INFO) << "Enter FromCommonDataXML()";
     if ( reader.EnterChildElement("CommonData") ){
         while ( reader.HasElement() ){
 
@@ -492,8 +571,35 @@ bool OFDDocument::ImplCls::FromCommonDataXML(XMLReader &reader){
             // OFD (section 7.5) P11. Definitions.xsd
             // Required.
             } else if ( reader.CheckElement("PageArea") ){
-                std::tie(m_commonData.PageArea, ok) = FromPageAreaXML(reader);
+                std::tie(m_commonData.PageArea, ok) = FromPageAreaXML(reader, "PageArea");
                 LOG(INFO) << "CommonData.PageArea = " << m_commonData.PageArea.to_string();
+
+            // -------- <PublicRes>
+            // Optional.
+            } else if ( reader.CheckElement("PublicRes") ){
+                std::string res;
+                if ( reader.ReadElement(res) && !res.empty() ){
+                    m_commonData.PublicRes.push_back(res);
+                }
+
+            // -------- <DocumentRes>
+            // Optional.
+            } else if ( reader.CheckElement("DocumentRes") ){
+                std::string res;
+                if ( reader.ReadElement(res) && !res.empty() ){
+                    m_commonData.DocumentRes.push_back(res);
+                }
+
+            // TODO
+            // -------- <TemplatePage>
+            // Optional.
+            /*} else if ( reader.CheckElement("TemplatePage") ){*/
+
+            // TODO
+            // -------- <DefaultCS>
+            // Optional.
+            /*} else if ( reader.CheckElement("DefaultCS") ){*/
+
             }
 
             reader.NextElement();
