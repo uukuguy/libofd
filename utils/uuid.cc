@@ -6,7 +6,7 @@ static std::string UUID_FORMAT32 = "%X%X%X%X%X%X%X%X%X%X%X%X%X%X%X%X";
 
 std::string generate_uuid(const std::string &uuidFormat){
     uuid_t id;
-    uuid_generate_random(id); 
+    uuid_generate((unsigned char *)&id); 
 
     char buf[33];
     sprintf(buf, uuidFormat.c_str(), 
