@@ -4,6 +4,7 @@
 #include <libxml/xmlwriter.h>
 #include "xml.h"
 #include "utils/logger.h"
+#include "utils/utils.h"
 
 using namespace utils;
 
@@ -23,10 +24,10 @@ public:
 
     void WriteElement(const std::string &name, const std::string &value);
     void WriteElement(const std::string &name, uint64_t value);
-    void WriteElement(const std::string &name, double value);
+    void WriteElement(const std::string &name, double value, int precision);
     void WriteAttribute(const std::string &name, const std::string &value);
     void WriteAttribute(const std::string &name, uint64_t value);
-    void WriteAttribute(const std::string &name, double value);
+    void WriteAttribute(const std::string &name, double value, int precision);
     void WriteRaw(const std::string &text);
     void WriteString(const std::string &text);
     void EndDocument();
@@ -74,8 +75,11 @@ void XMLWriter::ImplCls::WriteElement(const std::string &name, uint64_t value){
     WriteElement(name, std::to_string(value));    
 }
 
-void XMLWriter::ImplCls::WriteElement(const std::string &name, double value){
-    WriteElement(name, std::to_string(value));    
+void XMLWriter::ImplCls::WriteElement(const std::string &name, double value, int precision){
+    std::stringstream ss;
+    utils::SetStringStreamPrecision(ss, precision);
+    ss << value;
+    WriteElement(name, ss.str());    
 }
 
 void XMLWriter::ImplCls::WriteAttribute(const std::string &name, const std::string &value){
@@ -86,8 +90,11 @@ void XMLWriter::ImplCls::WriteAttribute(const std::string &name, uint64_t value)
     WriteAttribute(name, std::to_string(value));    
 }
 
-void XMLWriter::ImplCls::WriteAttribute(const std::string &name, double value){
-    WriteAttribute(name, std::to_string(value));
+void XMLWriter::ImplCls::WriteAttribute(const std::string &name, double value, int precision){
+    std::stringstream ss;
+    utils::SetStringStreamPrecision(ss, precision);
+    ss << value;
+    WriteAttribute(name, ss.str());
 }
 
 void XMLWriter::ImplCls::WriteRaw(const std::string &text){
@@ -136,8 +143,8 @@ void XMLWriter::WriteElement(const std::string &name, uint64_t value){
     m_impl->WriteElement(name, value);
 }
 
-void XMLWriter::WriteElement(const std::string &name, double value){
-    m_impl->WriteElement(name, value);
+void XMLWriter::WriteElement(const std::string &name, double value, int precision){
+    m_impl->WriteElement(name, value, precision);
 }
 
 void XMLWriter::WriteAttribute(const std::string &name, const std::string &value){
@@ -148,8 +155,8 @@ void XMLWriter::WriteAttribute(const std::string &name, uint64_t value){
     m_impl->WriteAttribute(name, value);
 }
 
-void XMLWriter::WriteAttribute(const std::string &name, double value){
-    m_impl->WriteAttribute(name, value);
+void XMLWriter::WriteAttribute(const std::string &name, double value, int precision){
+    m_impl->WriteAttribute(name, value, precision);
 }
 
 void XMLWriter::WriteRaw(const std::string &text){

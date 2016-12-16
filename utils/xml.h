@@ -21,10 +21,10 @@ public:
     void EndElement();
     void WriteElement(const std::string &name, const std::string &value);
     void WriteElement(const std::string &name, uint64_t value);
-    void WriteElement(const std::string &name, double value);
+    void WriteElement(const std::string &name, double value, int precision=3);
     void WriteAttribute(const std::string &name, const std::string &value);
     void WriteAttribute(const std::string &name, uint64_t value);
-    void WriteAttribute(const std::string &name, double value);
+    void WriteAttribute(const std::string &name, double value, int precision=3);
     void WriteRaw(const std::string &text);
     void WriteString(const std::string &text);
     void EndDocument();

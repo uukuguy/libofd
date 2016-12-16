@@ -248,7 +248,7 @@ OFDObjectPtr FromTextObjectXML(XMLReader &reader){
 
     OFDTextObjectPtr textObject = std::make_shared<OFDTextObject>();
 
-    if ( reader.EndElement("TextObject") ){
+    if ( reader.EnterChildElement("TextObject") ){
 
         // -------- <TextObject ID="">
         // Required.
@@ -379,6 +379,14 @@ uint64_t OFDPage::GetID() const{
 
 void OFDPage::SetID(uint64_t id){
     m_impl->ID = id;
+}
+
+const CT_PageArea& OFDPage::GetPageArea() const{
+    return m_impl->Area;
+}
+
+void OFDPage::SetPageArea(const CT_PageArea &pageArea){
+    m_impl->Area = pageArea;
 }
 
 std::string OFDPage::to_string() const{

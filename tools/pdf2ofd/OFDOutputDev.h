@@ -85,6 +85,7 @@ public:
 
 private:
 
+    PDFDoc *m_pdfDoc;
     XRef *m_xref;
     TextPage *m_textPage;	    
     ActualText *m_actualText;

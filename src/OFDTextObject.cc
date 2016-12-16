@@ -92,7 +92,7 @@ void OFDTextObject::ImplCls::GenerateAttributesXML(XMLWriter &writer) const{
 
     // -------- <TextObject Size="">
     // Required.
-    writer.WriteAttribute("Size", std::to_string(FontSize));
+    writer.WriteAttribute("Size", FontSize, 1);
 
     // -------- <TextObject Stroke="">
     // Optional, default value: false.
@@ -109,7 +109,7 @@ void OFDTextObject::ImplCls::GenerateAttributesXML(XMLWriter &writer) const{
     // -------- <Textobject HScale="">
     // Optional, default value: 1.0
     if ( fabs(HScale - 1.0) > 0.0000001 ){
-        writer.WriteAttribute("HScale", std::to_string(HScale));
+        writer.WriteAttribute("HScale", HScale);
     }
 
 }
@@ -126,11 +126,11 @@ void OFDTextObject::ImplCls::GenerateElementsXML(XMLWriter &writer) const{
 
             // -------- <TextCode X="'>
             // Optional.
-            writer.WriteAttribute("X", std::to_string(textCode.X));
+            writer.WriteAttribute("X", textCode.X);
 
             // -------- <TextCode Y="'>
             // Optional.
-            writer.WriteAttribute("Y", std::to_string(textCode.Y));
+            writer.WriteAttribute("Y", textCode.Y);
 
             // -------- <TextCode DeltaX="'>
             // Optional.

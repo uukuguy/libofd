@@ -3,10 +3,13 @@
 
 #include <string>
 #include <vector>
+#include <sstream>
 
 namespace utils{
 
-std::vector<std::string> SplitString(const std::string& content);
+    std::vector<std::string> SplitString(const std::string& content);
+
+    void SetStringStreamPrecision(std::stringstream &ss, int precision);
 
 }
 

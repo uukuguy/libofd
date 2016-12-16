@@ -2,6 +2,8 @@
 #define __OFD_COMMON_H__
 
 #include <vector>
+#include <string>
+#include "utils/utils.h"
 
 namespace ofd{
 
@@ -43,6 +45,10 @@ namespace ofd{
             Width(0.0), Height(0.0) {
         }
 
+        ST_Box(double left, double top, double width, double height) :
+            Left(left), Top(top), Width(width), Height(height){
+            }
+
         std::string to_string() const {
             return std::string("[") +
                    std::to_string(Left) + ", " +
@@ -50,6 +56,13 @@ namespace ofd{
                    std::to_string(Width) + ", " +
                    std::to_string(Height) +
                    "]";
+        }
+
+        std::string to_xmlstring() const {
+            std::stringstream ss;
+            utils::SetStringStreamPrecision(ss, 3);
+            ss << Left << " " << Top << " " << Width << " " << Height; 
+            return ss.str();
         }
 
     } ST_Box_t;
@@ -61,10 +74,12 @@ namespace ofd{
     // 页面区域结构
     typedef struct CT_PageArea {
         // 页面物理区域，左上角的坐标为页面空间坐标系的原点。
+        // = CropBox in PDF.
         ST_Box PhysicalBox;
 
         // 显示区域，页面内容实际显示或打印输出的区域，
         // 位于页面物理区域内，包含页眉、页脚、版心等内容。
+        // = Media Box in PDF.
         ST_Box ApplicationBox;
 
         // 版心区域，即文件的正文区域，位于显示区域内，

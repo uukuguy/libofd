@@ -1,5 +1,6 @@
 #include <iostream>
 #include <iomanip>
+#include "OFDCommon.h"
 #include "OFDOutputDev.h"
 #include "OFDPage.h"
 #include "OFDTextObject.h"
@@ -10,6 +11,7 @@ using namespace ofd;
 GBool rawOrder = gFalse;
 
 OFDOutputDev::OFDOutputDev(ofd::OFDFilePtr ofdFile) : 
+    m_pdfDoc(nullptr),
     m_xref(nullptr), m_textPage(nullptr), m_actualText(nullptr),
     m_ofdFile(ofdFile), m_ofdDocument(nullptr), m_currentOFDPage(nullptr) {
 
@@ -31,6 +33,7 @@ OFDOutputDev::~OFDOutputDev(){
 
 void OFDOutputDev::ProcessDoc(PDFDoc *pdfDoc){
     if ( pdfDoc == nullptr ) return;
+    m_pdfDoc = pdfDoc;
 
     double resolution = 72.0;
     GBool useMediaBox = gTrue;
@@ -41,6 +44,8 @@ void OFDOutputDev::ProcessDoc(PDFDoc *pdfDoc){
     LOG(INFO) << "Total " << numPages << " pages in pdf file"; 
 
     for ( auto i = 0 ; i < numPages ; i++ ){
+
+
         pdfDoc->displayPage(this, i + 1, resolution, resolution, 0, useMediaBox, crop, printing);
     }
 }
@@ -77,7 +82,7 @@ TextPage *OFDOutputDev::TakeTextPage(){
     return textPage;
 }
 
-void OFDOutputDev::startPage(int /*pageNum*/, GfxState *state, XRef *xrefA) {
+void OFDOutputDev::startPage(int pageNum, GfxState *state, XRef *xrefA) {
     if ( m_textPage != nullptr ){
         delete m_actualText;
         m_textPage->decRefCnt();
@@ -92,6 +97,44 @@ void OFDOutputDev::startPage(int /*pageNum*/, GfxState *state, XRef *xrefA) {
 
     if ( m_ofdDocument != nullptr ){
         m_currentOFDPage = m_ofdDocument->AddNewPage();
+
+        Page *pdfPage = m_pdfDoc->getPage(pageNum);
+        PDFRectangle *mediaBox = pdfPage->getMediaBox();
+        LOG(INFO) << "mdeiaBox:(" << mediaBox->x1 << ", " << mediaBox->y1
+            << ", " << mediaBox->x2 << ", " << mediaBox->y2 << ")";
+        PDFRectangle *cropBox = pdfPage->getCropBox();
+        LOG(INFO) << "cropBox:(" << cropBox->x1 << ", " << cropBox->y1
+            << ", " << cropBox->x2 << ", " << cropBox->y2 << ")";
+        //pdfPage->isCroped();
+
+        double pageMediaWidth = pdfPage->getMediaWidth();
+        double pageMediaHeight = pdfPage->getMediaHeight();
+        double pageCropWidth = pdfPage->getCropWidth();
+        double pageCropHeight = pdfPage->getCropHeight();
+        int pageRotate = pdfPage->getRotate();
+
+        LOG(INFO) << "Page " << pageNum << " Media(" << pageMediaWidth << ", " << pageMediaHeight << ") " 
+            << "Crop(" << pageCropWidth << ", " << pageCropHeight << ") "
+            << "Rotate: " << pageRotate;
+
+
+        double pageCTM[6];
+        pdfPage->getDefaultCTM(&pageCTM[0], 72, 72, 0, false, false);
+        LOG(INFO) << "Default CTM(" << 
+            pageCTM[0] << ", " <<
+            pageCTM[1] << ", " <<
+            pageCTM[2] << ", " <<
+            pageCTM[3] << ", " <<
+            pageCTM[4] << ", " <<
+            pageCTM[5] << ") ";
+
+        LOG(INFO) << "Start pdfDoc->displayPage() Page:" << pageNum;
+
+        CT_PageArea pageArea;
+        pageArea.PhysicalBox = ST_Box(cropBox->x1, cropBox->y1, cropBox->x2, cropBox->y2);
+        pageArea.ApplicationBox = ST_Box(mediaBox->x1, mediaBox->y1, mediaBox->x2, mediaBox->y2);
+        pageArea.EnableApplicationBox(true);
+        m_currentOFDPage->SetPageArea(pageArea);
     }
 }
 
@@ -116,6 +159,11 @@ void printLine(TextLine *line, OFDLayerPtr bodyLayer){
 
         if ( bodyLayer != nullptr ){
             OFDTextObject *textObject = new OFDTextObject();
+
+            // OFDObject::Boundary
+            textObject->Boundary = ST_Box(xMin, yMin, xMax - xMin, yMax - yMin);
+
+            // OFDTextObject::TextCode
             Text::TextCode textCode;
             textCode.X = xMin;
             textCode.Y = yMax;

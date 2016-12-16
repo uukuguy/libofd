@@ -12,6 +12,10 @@ namespace utils{
         return tokens;
     }
 
+    void SetStringStreamPrecision(std::stringstream &ss, int precision){
+        ss.setf(std::ios::fixed, std::ios::floatfield); \
+            ss.precision(precision);
+    }
 }
 
 

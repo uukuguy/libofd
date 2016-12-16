@@ -53,14 +53,7 @@ void OFDObject::GenerateAttributesXML(XMLWriter &writer) const{
 
     // -------- <Object Boundary="">
     // Required.
-    const ST_Box &box = Boundary;
-    std::string strBoundary = 
-        std::to_string(box.Left) + " " +
-        std::to_string(box.Top) + " " +
-        std::to_string(box.Width) + " " +
-        std::to_string(box.Height);
-
-    writer.WriteAttribute("Boundary", strBoundary);
+    writer.WriteAttribute("Boundary", Boundary.to_xmlstring());
 
     // -------- <Object Name="">
     // Optional
@@ -81,7 +74,7 @@ void OFDObject::GenerateAttributesXML(XMLWriter &writer) const{
     // TODO
     // -------- <Object LineWidth="">
     if ( LineWidth > 0 ){
-        writer.WriteAttribute("LineWidth", std::to_string(LineWidth));
+        writer.WriteAttribute("LineWidth", LineWidth, 3);
     }
 
     // -------- <Object Alpha="">

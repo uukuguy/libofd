@@ -200,9 +200,11 @@ std::string OFDDocument::ImplCls::GenerateDocBodyXML() const{
 
 
 void writeBoxXML(XMLWriter &writer, const std::string &boxName, const ST_Box &box){
-    std::stringstream ssBox;
-    ssBox << std::setprecision(3) << box.Left << " " << box.Top << " " << box.Width << " " << box.Height; 
-    writer.WriteElement(boxName, ssBox.str());
+    /*std::stringstream ssBox;*/
+    /*utils::SetStringStreamPrecision(ssBox, 3);*/
+    /*ssBox << box.Left << " " << box.Top << " " << box.Width << " " << box.Height; */
+
+    writer.WriteElement(boxName, box.to_xmlstring());
 }
 
 // OFD (section 7.5) P11. Definitions.xsd
@@ -295,7 +297,7 @@ void OFDDocument::ImplCls::generatePagesXML(XMLWriter &writer) const{
 
                 // -------- <Page ID="">
                 // Required
-                writer.WriteAttribute("ID", std::to_string(pageID));
+                writer.WriteAttribute("ID", pageID);
 
                 // -------- <Page BaseLoc="">
                 // Required.

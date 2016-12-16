@@ -45,6 +45,8 @@ namespace ofd{
 
         uint64_t GetID() const;
         void SetID(uint64_t id);
+        const CT_PageArea& GetPageArea() const;
+        void SetPageArea(const CT_PageArea &pageArea);
 
         size_t GetLayersCount() const;
         const OFDLayerPtr GetLayer(size_t idx) const;

@@ -120,8 +120,8 @@ namespace ofd{
         void ClearTextCodes();
 
     protected:
-        virtual void GenerateAttributesXML(utils::XMLWriter &writer) const;
-        virtual void GenerateElementsXML(utils::XMLWriter &writer) const;
+        virtual void GenerateAttributesXML(utils::XMLWriter &writer) const override;
+        virtual void GenerateElementsXML(utils::XMLWriter &writer) const override;
 
     private:
         class ImplCls;
