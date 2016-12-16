@@ -7,11 +7,19 @@ October 13, 2016, the official release of the OFDnational standard, the standard
 
 The libofd is the first open-source C++ development library for OFD. It was established in October 20, 2016, only 1 week later than the standard release time. 
 
-## Objectives
+## Release Notes
 
 ### v0.5
 
+2016.12.16
+
+- Complete OFD format file package.
 - pdf2ofd can convernt PDF file into OFD file, include text only.
+- use command "pdf2ofd <pdffile> [ofdfile]" to translate a PDF file into OFD file.
+- Use command "make pdf2ofd" to build library(libofd) and tool(pdf2ofd)
+- Use command "make check" to check files in package is meet the OFD standard.
+
+## Objectives
 
 ### v1.0
 
