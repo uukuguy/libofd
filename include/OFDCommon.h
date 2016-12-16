@@ -50,11 +50,12 @@ namespace ofd{
             }
 
         std::string to_string() const {
+            std::stringstream ss;
+            utils::SetStringStreamPrecision(ss, 3);
+            ss << Left << ", " << Top << ", " << Width << ", " << Height; 
+
             return std::string("[") +
-                   std::to_string(Left) + ", " +
-                   std::to_string(Top) + ", " +
-                   std::to_string(Width) + ", " +
-                   std::to_string(Height) +
+                    ss.str() + 
                    "]";
         }
 

@@ -198,37 +198,29 @@ std::string OFDDocument::ImplCls::GenerateDocBodyXML() const{
     return writer.GetString();
 }
 
-
-void writeBoxXML(XMLWriter &writer, const std::string &boxName, const ST_Box &box){
-    /*std::stringstream ssBox;*/
-    /*utils::SetStringStreamPrecision(ssBox, 3);*/
-    /*ssBox << box.Left << " " << box.Top << " " << box.Width << " " << box.Height; */
-
-    writer.WriteElement(boxName, box.to_xmlstring());
-}
-
 // OFD (section 7.5) P11. Definitions.xsd
 void writePageAreaXML(XMLWriter &writer, const CT_PageArea &pageArea){
     // -------- <PhysicalBox> 
     // Required.
-    writeBoxXML(writer, "PhysicalBox", pageArea.PhysicalBox);
+    writer.WriteElement("PhysicalBox", pageArea.PhysicalBox.to_xmlstring());
+
    
     // -------- <ApplicationBox>
     // Optional.
     if ( pageArea.HasApplicationBox() ){
-        writeBoxXML(writer, "ApplicationBox", pageArea.ApplicationBox);
+        writer.WriteElement("ApplicationBox", pageArea.ApplicationBox.to_xmlstring());
     }
 
     // -------- <ContentBox>
     // Optional.
     if ( pageArea.HasContentBox() ){
-        writeBoxXML(writer, "ContentBox", pageArea.ContentBox);
+        writer.WriteElement("ContentBox", pageArea.ContentBox.to_xmlstring());
     }
     
     // -------- <BleedBox>
     // Optional.
     if ( pageArea.HasBleedBox() ){
-        writeBoxXML(writer, "BleedBox", pageArea.BleedBox);
+        writer.WriteElement("BleedBox", pageArea.BleedBox.to_xmlstring());
     }
 }
 
