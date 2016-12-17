@@ -1,5 +1,6 @@
 #include <iostream>
 #include <assert.h>
+#include <gflags/gflags.h>
 //#include "OFDPackage.h"
 //#include "OFDDocument.h"
 //#include "OFDPage.h"
@@ -106,15 +107,24 @@ void test_freetype(int argc, char *argv[]){
     hb_buffer_destroy(hb_buf);
 }
 
+DEFINE_int32(v, 0, "Logger level.");
+DEFINE_string(owner_password, "", "The owner password of PDF file.");
+DEFINE_string(user_password, "", "The user password of PDF file.");
+
 int main(int argc, char *argv[]){
+
+    TIMED_FUNC(timerMain);
+
+    gflags::SetVersionString("1.0.0");
+    gflags::SetUsageMessage("Usage: ofdtest <pdffile>");
+    gflags::ParseCommandLineFlags(&argc, &argv, true);
+
     if ( argc <= 1 ){
         std::cout << "Usage: " << argv[0] << " <filename>" << std::endl;
         return 0;
     }
 
-    TIMED_FUNC(timerMain);
-
-    Logger::Initialize(argc, argv);
+    Logger::Initialize(FLAGS_v);
 
     LOG(INFO) << "Start " << argv[0];
 

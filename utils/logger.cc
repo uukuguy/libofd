@@ -2,8 +2,10 @@
 
 INITIALIZE_EASYLOGGINGPP
 
-void Logger::Initialize(int argc, char *argv[]) {
-    START_EASYLOGGINGPP(argc, argv);
+//void Logger::Initialize(int argc, char *argv[]) {
+    //START_EASYLOGGINGPP(argc, argv);
+
+void Logger::Initialize(int loggerLevel) {
 
     //el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Format, 
     el::Loggers::reconfigureLogger("performance", el::ConfigurationType::Format, 
@@ -13,12 +15,15 @@ void Logger::Initialize(int argc, char *argv[]) {
     defaultConf.setToDefault();
 
     std::string enableDebug = "false";
-    if ( VLOG_IS_ON(1) ){
+
+    //if ( VLOG_IS_ON(1) ){
+    if ( loggerLevel >= 1 ){
         enableDebug = "true";
     }
     defaultConf.set(el::Level::Debug, el::ConfigurationType::Enabled, enableDebug);
 
-    if ( VLOG_IS_ON(5) ) {
+    //if ( VLOG_IS_ON(5) ) {
+    if ( loggerLevel >= 5 ) {
         defaultConf.set(el::Level::Global, el::ConfigurationType::Format, 
                 "%datetime %logger %level [%fbase:%line %func]: %msg");
     } else if ( VLOG_IS_ON(1) ) {

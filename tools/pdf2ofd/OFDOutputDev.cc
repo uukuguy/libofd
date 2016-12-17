@@ -96,6 +96,7 @@ void OFDOutputDev::startPage(int pageNum, GfxState *state, XRef *xrefA) {
     }
 
     if ( m_ofdDocument != nullptr ){
+        LOG(INFO) << "******** startPage(" << pageNum << ") ********";
         m_currentOFDPage = m_ofdDocument->AddNewPage();
 
         Page *pdfPage = m_pdfDoc->getPage(pageNum);
@@ -113,9 +114,10 @@ void OFDOutputDev::startPage(int pageNum, GfxState *state, XRef *xrefA) {
         double pageCropHeight = pdfPage->getCropHeight();
         int pageRotate = pdfPage->getRotate();
 
-        LOG(INFO) << "Page " << pageNum << " Media(" << pageMediaWidth << ", " << pageMediaHeight << ") " 
-            << "Crop(" << pageCropWidth << ", " << pageCropHeight << ") "
-            << "Rotate: " << pageRotate;
+        LOG(INFO) << "Page " << pageNum;
+        LOG(INFO) << " Media(" << pageMediaWidth << ", " << pageMediaHeight << ") ";
+        LOG(INFO) << "Crop(" << pageCropWidth << ", " << pageCropHeight << ") ";
+        LOG(INFO) << "Rotate: " << pageRotate;
 
 
         double pageCTM[6];
@@ -128,13 +130,14 @@ void OFDOutputDev::startPage(int pageNum, GfxState *state, XRef *xrefA) {
             pageCTM[4] << ", " <<
             pageCTM[5] << ") ";
 
-        LOG(INFO) << "Start pdfDoc->displayPage() Page:" << pageNum;
 
         CT_PageArea pageArea;
         pageArea.PhysicalBox = ST_Box(cropBox->x1, cropBox->y1, cropBox->x2, cropBox->y2);
         pageArea.ApplicationBox = ST_Box(mediaBox->x1, mediaBox->y1, mediaBox->x2, mediaBox->y2);
         pageArea.EnableApplicationBox(true);
         m_currentOFDPage->SetPageArea(pageArea);
+
+        LOG(INFO) << "\n";
     }
 }
 
@@ -174,7 +177,7 @@ void printLine(TextLine *line, OFDLayerPtr bodyLayer){
         }
     }
 
-    LOG(INFO) << wordXML.str();
+    LOG(DEBUG) << wordXML.str();
 }
 
 void processTextPage(TextPage *textPage, OFDPagePtr currentOFDPage){
@@ -264,20 +267,21 @@ void showGfxFont(GfxFont *gfxFont){
         fontTypeName = "(fontCIDType2)";
     }
 
-    LOG(INFO) << "fontID(num,gen):(" << ref->num << ", " << ref->gen << ") "
-        << "FontType: " << int(fontType) << fontTypeName << " "
-        << "FontFamily:" << fontFamily << " "
-        << "FontName:" << fontName << " "
-        << "FontEncodingName:" << fontEncodingName << " "
-        << "fontEmbeddedName:" << fontEmbeddedName << " "
-        << "embID(num,gen): (" << embID.num << ", " << embID.gen << ") "
-        << "FontStretch: " << fontStretch << " "
-        << "FontWeight: " << fontWeight << " "
-        << "isItalic: " << isItalic << " "
-        << "isBold: " << isBold << " "
+    LOG(INFO) << "UpdateFont() \n"
+        << "fontID(num,gen):(" << ref->num << ", " << ref->gen << ") \n"
+        << "FontType: " << int(fontType) << fontTypeName << " \n"
+        << "FontFamily:" << fontFamily << " \n"
+        << "FontName:" << fontName << " \n"
+        << "FontEncodingName:" << fontEncodingName << " \n"
+        << "fontEmbeddedName:" << fontEmbeddedName << " \n"
+        << "embID(num,gen): (" << embID.num << ", " << embID.gen << ") \n"
+        << "FontStretch: " << fontStretch << " \n"
+        << "FontWeight: " << fontWeight << " \n"
+        << "isItalic: " << isItalic << " \n"
+        << "isBold: " << isBold << " \n"
         << "fontMatrix: [" << fontMatrix[0] << ", " << fontMatrix[1] << ", " << fontMatrix[2] << ", "
-        << fontMatrix[3] << ", " <<  fontMatrix[4] << ", " << fontMatrix[5] << "] "
-        << "fontBBox: [" << fontBBox[0] << ", " << fontBBox[1] << ", " << fontBBox[2] << ", " << fontBBox[3] << "] "
+        << fontMatrix[3] << ", " <<  fontMatrix[4] << ", " << fontMatrix[5] << "] \n"
+        << "fontBBox: [" << fontBBox[0] << ", " << fontBBox[1] << ", " << fontBBox[2] << ", " << fontBBox[3] << "] \n"
         ;
 
 }
@@ -358,7 +362,6 @@ void OFDOutputDev::updateFont(GfxState *state){
 
             m_fonts.insert(std::map<int, std::shared_ptr<ofd::OFDFont> >::value_type(fontID, ofdFont));
 
-            LOG(INFO) << "******** UpdateFont() ********";
             showGfxFont(gfxFont);
 
             //PrintFonts();

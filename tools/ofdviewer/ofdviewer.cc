@@ -381,11 +381,18 @@ SDL_Texture *loadTexture(SDL_Renderer *renderer, const std::string &image_file){
     return texture;
 }
 
+#include <gflags/gflags.h>
+DEFINE_int32(v, 0, "Logger level.");
+DEFINE_string(owner_password, "", "The owner password of PDF file.");
+DEFINE_string(user_password, "", "The user password of PDF file.");
 int main(int argc, char *argv[]){
 
     TIMED_FUNC(timerMain);
 
-    Logger::Initialize(argc, argv);
+    gflags::SetVersionString("1.0.0");
+    gflags::SetUsageMessage("Usage: ofdviewer <pdffile>");
+    gflags::ParseCommandLineFlags(&argc, &argv, true);
+    Logger::Initialize(FLAGS_v);
 
     LOG(INFO) << "Start " << argv[0];
 

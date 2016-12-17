@@ -42,9 +42,15 @@ void test_libofd(int argc, char *argv[]){
     }
 }
 
+#include <gflags/gflags.h>
+DEFINE_int32(v, 0, "Logger level.");
 int main(int argc, char *argv[]){
+    TIMED_FUNC(timerMain);
 
-    Logger::Initialize(argc, argv);
+    gflags::SetVersionString("1.0.0");
+    gflags::SetUsageMessage("Usage: firsttest <pdffile>");
+    gflags::ParseCommandLineFlags(&argc, &argv, true);
+    Logger::Initialize(FLAGS_v);
 
     test_libofd(argc, argv);
 

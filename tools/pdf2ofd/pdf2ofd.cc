@@ -52,17 +52,20 @@ PDFDoc* OpenPDFFile(const std::string &pdfFilename, const std::string &ownerPass
     return pdfDoc;
 }
 
-DEFINE_string(pdffile, "", "The PDF file to translated.");
+DEFINE_int32(v, 0, "Logger level.");
+//DEFINE_string(pdffile, "", "The PDF file to translated.");
 DEFINE_string(owner_password, "", "The owner password of PDF file.");
 DEFINE_string(user_password, "", "The user password of PDF file.");
 
 int main(int argc, char *argv[]){
 
-    Logger::Initialize(argc, argv);
+    TIMED_FUNC(timerMain);
 
     gflags::SetVersionString("1.0.0");
     gflags::SetUsageMessage("Usage: ./pdf2ofd <pdffile> [ofdfile]");
     gflags::ParseCommandLineFlags(&argc, &argv, true);
+
+    Logger::Initialize(FLAGS_v);
 
     // pdf filename
     if ( argc < 2 ){
