@@ -106,10 +106,10 @@ namespace ofd{
 
         std::string to_string() const {
             return std::string("(") + 
-                   PhysicalBox.to_string() + ", " +
-                   ApplicationBox.to_string() + ", " +
-                   ContentBox.to_string() + ", " +
-                   BleedBox.to_string() + 
+                   PhysicalBox.to_string() + 
+                   ", " + ApplicationBox.to_string() + 
+                   ", " + ContentBox.to_string() + 
+                   ", " + BleedBox.to_string() + 
                    ")";
         }
 

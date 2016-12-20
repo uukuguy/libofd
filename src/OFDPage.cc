@@ -1,5 +1,7 @@
 #include <sstream>
 #include <assert.h>
+#include "OFDFile.h"
+#include "OFDDocument.h"
 #include "OFDPage.h"
 #include "OFDTextObject.h"
 #include "utils/logger.h"
@@ -12,7 +14,7 @@ using namespace ofd;
 
 class OFDPage::ImplCls{
 public:
-    ImplCls();
+    ImplCls(OFDDocument *ofdDocument);
     ~ImplCls();
 
     std::string to_string() const;
@@ -37,7 +39,11 @@ private:
 
     // -------- Private Attributes --------
 public:
+    
+    OFDDocument *m_ofdDocument;
+    std::string BaseLoc;
     uint64_t    ID;
+
     CT_PageArea Area;
 
     std::vector<OFDLayerPtr> Layers;
@@ -50,7 +56,9 @@ private:
 
 }; // class OFDPage::ImplCls
 
-OFDPage::ImplCls::ImplCls() : ID(0), m_opened(false){
+OFDPage::ImplCls::ImplCls(OFDDocument *ofdDocument) : 
+    m_ofdDocument(ofdDocument),
+    ID(0), m_opened(false){
 }
 
 OFDPage::ImplCls::~ImplCls(){
@@ -59,12 +67,48 @@ OFDPage::ImplCls::~ImplCls(){
 std::string OFDPage::ImplCls::to_string() const{
     std::ostringstream ss;
     ss << "\n======== ofd::OFDPage ========\n";
+    ss << " ID: " << ID << "\n";
+    ss << " BaseLoc: " << BaseLoc << "\n";
+    ss << " Layers: " << Layers.size() << "\n";
+    if ( Layers.size() > 0 ){
+        // FIXME
+        OFDLayerPtr bodyLayer = Layers[0];
+        assert(bodyLayer != nullptr);
+    }
+    ss << " Area: " << Area.to_string() << "\n";
+
     ss << std::endl;
     return ss.str();
 }
 
 bool OFDPage::ImplCls::Open(){
     if ( m_opened ) return true;
+    if ( BaseLoc.empty() ) return false;
+    if ( m_ofdDocument == nullptr ) return false;
+
+    const OFDFile * ofdFile = m_ofdDocument->GetOFDFile();     
+    if ( ofdFile == nullptr ) return false;
+
+    std::string docRoot = m_ofdDocument->GetDocRoot();
+    std::string pageXMLFile = docRoot + "/" + BaseLoc + "/Content.xml";
+    LOG(INFO) << "Try to open zipfile " << pageXMLFile;
+
+    bool ok = false;
+    std::string strPageXML;
+    std::tie(strPageXML, ok) = ofdFile->ReadZipFileString(pageXMLFile);
+
+    if ( ok ) {
+        m_opened = FromPageXML(strPageXML);
+
+        if ( m_opened ){
+            LOG(INFO) << "Open page success.";
+            LOG(INFO) << to_string();
+        } else {
+            LOG(ERROR) << "Open page failed. ID: " << ID << " BaseLoc: " << BaseLoc;
+        }
+    } else {
+        LOG(ERROR) << "OFDPage::Open() ReadZipFileString() failed. " << pageXMLFile;
+    }
 
     return m_opened;
 }
@@ -236,8 +280,8 @@ bool OFDPage::ImplCls::FromPageXML(const std::string &strPageXML){
 
                     reader.NextElement();
                 };
-
-            } reader.BackParentElement();
+                reader.BackParentElement();
+            } 
         }
     }
     
@@ -260,8 +304,9 @@ OFDObjectPtr FromTextObjectXML(XMLReader &reader){
 
 
         // -------- CT_Text --------
-        
-    }; reader.BackParentElement();
+
+        reader.BackParentElement(); 
+    }; 
 
     return textObject;
 }
@@ -332,8 +377,8 @@ OFDLayerPtr FromLayerXML(XMLReader &reader){
             reader.NextElement();
         };
 
-    } reader.BackParentElement();
-
+        reader.BackParentElement();
+    } 
     return layer;
 }
 
@@ -356,21 +401,25 @@ bool OFDPage::ImplCls::FromContentXML(XMLReader &reader, const std::string &tagN
 
             reader.NextElement();
         };
-
-    } reader.BackParentElement();
+        reader.BackParentElement();
+    } 
 
     return ok;
 }
 
 // **************** class OFDPage ****************
 
-OFDPage::OFDPage(){
-    m_impl = std::unique_ptr<ImplCls>(new ImplCls());
+OFDPage::OFDPage(OFDDocument *ofdDocument){
+    m_impl = std::unique_ptr<ImplCls>(new ImplCls(ofdDocument));
 
     AddNewLayer(Layer::Type::BODY);
 }
 
 OFDPage::~OFDPage(){
+}
+
+const OFDDocument *OFDPage::GetOFDDocument() const{
+    return m_impl->m_ofdDocument;
 }
 
 uint64_t OFDPage::GetID() const{
@@ -379,6 +428,14 @@ uint64_t OFDPage::GetID() const{
 
 void OFDPage::SetID(uint64_t id){
     m_impl->ID = id;
+}
+
+std::string OFDPage::GetBaseLoc() const {
+    return m_impl->BaseLoc;
+}
+
+void OFDPage::SetBaseLoc(const std::string &baseLoc){
+    m_impl->BaseLoc = baseLoc;
 }
 
 const CT_PageArea& OFDPage::GetPageArea() const{

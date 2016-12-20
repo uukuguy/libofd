@@ -14,7 +14,7 @@ using namespace ofd;
 
 class OFDFile::ImplCls{
 public:
-    ImplCls();
+    ImplCls(OFDFile *ofdFile);
     ImplCls(const std::string &filename);
     ~ImplCls();
 
@@ -37,6 +37,7 @@ public:
 
     // -------- Private Attributes --------
 public:
+    OFDFile *m_ofdFile;
     std::string   Version;   // 文件格式的版本号，取值为”1.0“
     std::string   DocType;   // 文件格式子集类型，取值为”OFD“，表明此文件符合本标准
                              // 取值为”OFD-A“，表明此文件符合OFD存档规范
@@ -52,7 +53,8 @@ private:
 
 }; // class OFDFile::ImplCls
 
-OFDFile::ImplCls::ImplCls() :
+OFDFile::ImplCls::ImplCls(OFDFile *ofdFile) :
+    m_ofdFile(ofdFile),
     Version("1.0"), DocType("OFD"),
     m_opened(false), m_archive(nullptr){
 }
@@ -83,7 +85,7 @@ std::tuple<std::string, bool> ReadZipFile(zip *archive, const std::string &filei
     struct zip_stat st;
     zip_stat_init(&st);
     zip_stat(archive, fileinzip.c_str(), ZIP_FL_NOCASE, &st);
-    LOG(INFO) << "zip_stat:" << st.valid;
+    LOG(DEBUG) << "zip_stat:" << st.valid;
 
     size_t filesize = st.size;
     __attribute__((unused)) size_t compsize = st.comp_size;
@@ -132,11 +134,12 @@ bool OFDFile::ImplCls::Open(const std::string &filename){
     }
 
     bool ok = false;
-
     std::string strOFDXML;
     std::tie(strOFDXML, ok) = ReadZipFileString("OFD.xml");
 
-    FromOFDXML(strOFDXML);
+    if ( ok ) {
+        m_opened = FromOFDXML(strOFDXML);
+    }
 
     return m_opened;
 }
@@ -239,8 +242,8 @@ bool OFDFile::ImplCls::FromOFDXML(const std::string &strOFDXML){
                         std::tie(strDocumentXML, ok) = ReadZipFileString(docXMLFile);
                         ok = ofdDoc->FromDocumentXML(strDocumentXML);
                     }
-
-                } reader.BackParentElement();
+                    reader.BackParentElement();
+                } 
             }
 
             reader.NextElement();
@@ -408,7 +411,7 @@ OFDDocumentPtr OFDFile::ImplCls::AddNewDocument(){
     size_t idx = m_documents.size();
     std::string docRoot = std::string("Doc_") + std::to_string(idx);
 
-    OFDDocumentPtr document = std::make_shared<OFDDocument>(docRoot);
+    OFDDocumentPtr document = std::make_shared<OFDDocument>(m_ofdFile, docRoot);
     m_documents.push_back(document);
 
     return document;
@@ -417,9 +420,10 @@ OFDDocumentPtr OFDFile::ImplCls::AddNewDocument(){
 // **************** class OFDFile ****************
 
 OFDFile::OFDFile() {
-    m_impl = std::unique_ptr<ImplCls>(new ImplCls());
+    m_impl = std::unique_ptr<ImplCls>(new ImplCls(this));
 
-    /*AddNewDocument();*/
+    // FIXME
+    // AddNewDocument();
 }
 
 OFDFile::OFDFile(const std::string &filename){

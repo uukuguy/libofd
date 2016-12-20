@@ -244,7 +244,7 @@ void XMLReader::ImplCls::NextElement(){
 }
 
 bool XMLReader::ImplCls::EnterChildElement(const std::string &name){
-    assert(m_currentNode != nullptr &&
+    assert(m_currentNode != nullptr && m_currentNode->type == XML_ELEMENT_NODE && 
             std::string((const char *)m_currentNode->name) == name);
 
     xmlNodePtr childNode = xmlFirstElementChild(m_currentNode);
@@ -265,8 +265,7 @@ void XMLReader::ImplCls::BackParentElement(){
 }
 
 bool XMLReader::ImplCls::CheckElement(const std::string &name){
-    return m_currentNode!= nullptr && 
-         m_currentNode->type == XML_ELEMENT_NODE &&
+    return m_currentNode!= nullptr && m_currentNode->type == XML_ELEMENT_NODE &&
         std::string((const char *)m_currentNode->name) == name ;
 }
 

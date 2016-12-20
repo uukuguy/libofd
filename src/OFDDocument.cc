@@ -1,6 +1,7 @@
 #include <sstream>
 #include <iomanip>
 #include <tuple>
+#include "OFDFile.h"
 #include "OFDDocument.h"
 #include "OFDPage.h"
 #include "utils/logger.h"
@@ -18,7 +19,7 @@ CT_DocInfo::CT_DocInfo() : DocUsage(DocInfo::Usage::Normal){
 
 class OFDDocument::ImplCls{
 public:
-    ImplCls(const std::string &docRoot);
+    ImplCls(OFDFile *ofdFile, OFDDocument *ofdDocument, const std::string &docRoot);
     ~ImplCls();
 
     std::string to_string() const;
@@ -41,6 +42,8 @@ private:
 
     // -------- Private Attributes --------
 public:
+    OFDFile *m_ofdFile;
+    OFDDocument *m_ofdDocument;
     bool m_opened;
 
     DocBody    m_docBody;
@@ -54,7 +57,8 @@ private:
 
 }; // class OFDDocument::ImplCls
 
-OFDDocument::ImplCls::ImplCls(const std::string &docRoot) : m_opened(false) {
+OFDDocument::ImplCls::ImplCls(OFDFile *ofdFile, OFDDocument *ofdDocument, const std::string &docRoot) : 
+    m_ofdFile(ofdFile), m_ofdDocument(ofdDocument), m_opened(false){
     m_docBody.DocRoot = docRoot;
     m_commonData.PublicRes.push_back("PublicRes.xml");
     m_commonData.DocumentRes.push_back("DocumentRes.xml");
@@ -82,7 +86,7 @@ void OFDDocument::ImplCls::Close(){
 }
 
 OFDPagePtr OFDDocument::ImplCls::AddNewPage(){
-    OFDPagePtr page = std::make_shared<OFDPage>();
+    OFDPagePtr page = std::make_shared<OFDPage>(m_ofdDocument);
     page->SetID(m_pages.size());
     m_pages.push_back(page);
     return page;
@@ -339,18 +343,19 @@ bool OFDDocument::ImplCls::FromDocInfoXML(XMLReader &reader){
             if ( reader.CheckElement("DocID") ){
                 std::string docID;
                 reader.ReadElement(docID);
-                LOG(INFO) << "DocID: " << docID;
+                LOG(DEBUG) << "DocID: " << docID;
 
             // -------- <DocRoot>
             } else if ( reader.CheckElement("Title") ){
                 std::string title;
                 reader.ReadElement(title);
-                LOG(INFO) << "Title: " << title;
+                LOG(DEBUG) << "Title: " << title;
             }
 
             reader.NextElement();
         };
-    } reader.BackParentElement();
+        reader.BackParentElement();
+    } 
 
     return ok;
 }
@@ -360,7 +365,6 @@ bool OFDDocument::ImplCls::FromDocBodyXML(XMLReader &reader){
 
     if ( reader.EnterChildElement("DocBody") ){
         while ( reader.HasElement() ){
-
             // -------- <DocInfo>
             if ( reader.CheckElement("DocInfo") ){
                 FromDocInfoXML(reader);
@@ -369,7 +373,7 @@ bool OFDDocument::ImplCls::FromDocBodyXML(XMLReader &reader){
             } else if ( reader.CheckElement("DocRoot") ){
                 std::string content;
                 reader.ReadElement(content);
-                LOG(INFO) << "DocRoot: " << content;
+                LOG(DEBUG) << "DocRoot: " << content;
 
             // -------- <Versions>
             } else if ( reader.CheckElement("Versions") ){
@@ -380,7 +384,8 @@ bool OFDDocument::ImplCls::FromDocBodyXML(XMLReader &reader){
 
             reader.NextElement();
         };
-    } reader.BackParentElement();
+        reader.BackParentElement();
+    } 
 
     return ok;
 }
@@ -469,9 +474,14 @@ bool OFDDocument::ImplCls::FromDocumentXML(const std::string &strDocumentXML){
                     }
 
                     reader.NextElement();
+                    //if ( reader.HasElement() ){
+                        //LOG(DEBUG) << "***NextElement: " <<  reader.GetElementName();
+                    //} else {
+                        //LOG(WARNING) << "***NextElement == nullptr";
+                    //}
                 }
-
-            } reader.BackParentElement();
+                reader.BackParentElement();
+            } 
         }
 
         ok = true;
@@ -484,28 +494,27 @@ std::tuple<ST_Box, bool> ReadBoxFromXML(XMLReader &reader, const std::string &ta
     ST_Box box;
     bool ok = false;
 
-    if ( reader.EnterChildElement(tagName) ){
-        std::string boxString;
-        if ( reader.ReadElement(boxString) && !boxString.empty()){
-            std::vector<std::string> tokens = utils::SplitString(boxString);
-            if ( tokens.size() >= 4 ){
-                box.Left = atof(tokens[0].c_str());
-                box.Top = atof(tokens[1].c_str());
-                box.Width = atof(tokens[2].c_str());
-                box.Height = atof(tokens[3].c_str());
-                ok = true;
-            } else {
-                LOG(ERROR) << "Box String tokens size >= 4 failed. boxString:" << boxString;
-            }
+    std::string boxString;
+    reader.ReadElement(boxString);
+    if ( reader.ReadElement(boxString) && !boxString.empty()){
+        std::vector<std::string> tokens = utils::SplitString(boxString);
+        if ( tokens.size() >= 4 ){
+            box.Left = atof(tokens[0].c_str());
+            box.Top = atof(tokens[1].c_str());
+            box.Width = atof(tokens[2].c_str());
+            box.Height = atof(tokens[3].c_str());
+            ok = true;
+        } else {
+            LOG(ERROR) << "Box String tokens size >= 4 failed. boxString:" << boxString;
         }
-    } reader.BackParentElement();
+    }
 
     return std::make_tuple(box, ok);
 }
 
 // OFD (section 7.5) P11. Definitions.xsd
 std::tuple<CT_PageArea,bool> FromPageAreaXML(XMLReader &reader, const std::string &tagName){
-    bool ok = false;
+    bool ok = true;
     CT_PageArea pageArea;
 
     if ( reader.EnterChildElement(tagName) ){
@@ -513,8 +522,13 @@ std::tuple<CT_PageArea,bool> FromPageAreaXML(XMLReader &reader, const std::strin
 
             // -------- <PhysicalBox>
             if ( reader.CheckElement("PhysicalBox") ) {
-                std::tie(pageArea.PhysicalBox, ok) = ReadBoxFromXML(reader, "PhysicalBox");
-                if ( !ok ) break;
+
+                bool ok1 = false;
+                std::tie(pageArea.PhysicalBox, ok1) = ReadBoxFromXML(reader, "PhysicalBox");
+                if ( !ok1 ) {
+                    LOG(WARNING) << "ReadBoxFromXML() failed. <Page><Area><PhysicalBox>";
+                    break;
+                }
             // -------- <ApplicationBox>
             } else if ( reader.CheckElement("ApplicationBox") ){
                 bool ok1 = false;
@@ -543,7 +557,8 @@ std::tuple<CT_PageArea,bool> FromPageAreaXML(XMLReader &reader, const std::strin
 
             reader.NextElement();
         };
-    } reader.BackParentElement();
+        reader.BackParentElement();
+    } 
 
     return std::make_tuple(pageArea, ok);
 }
@@ -566,7 +581,7 @@ bool OFDDocument::ImplCls::FromCommonDataXML(XMLReader &reader){
             // Required.
             } else if ( reader.CheckElement("PageArea") ){
                 std::tie(m_commonData.PageArea, ok) = FromPageAreaXML(reader, "PageArea");
-                LOG(INFO) << "CommonData.PageArea = " << m_commonData.PageArea.to_string();
+                LOG(DEBUG) << "CommonData.PageArea = " << m_commonData.PageArea.to_string();
 
             // -------- <PublicRes>
             // Optional.
@@ -597,9 +612,14 @@ bool OFDDocument::ImplCls::FromCommonDataXML(XMLReader &reader){
             }
 
             reader.NextElement();
+            //if ( reader.HasElement() ){
+                //LOG(DEBUG) << "***NextElement: " <<  reader.GetElementName();
+            //} else {
+                //LOG(WARNING) << "***NextElement == nullptr";
+            //}
         };
-    } reader.BackParentElement();
-
+        reader.BackParentElement();
+    }
     return ok;
 }
 
@@ -610,35 +630,43 @@ bool OFDDocument::ImplCls::FromPagesXML(XMLReader &reader){
     bool ok = true;
 
     if ( reader.EnterChildElement("Pages") ){
-        uint64_t pageID = 0;
-        reader.ReadAttribute("ID", pageID);
-        std::string baseLoc;
-        reader.ReadAttribute("BaseLoc", baseLoc);
-        LOG(INFO) << "PageID: " << pageID << " BaseLoc: " << baseLoc;
-
         while ( reader.HasElement() ){
 
             // -------- <Page>
             // OFD (section 7.7) P18. Page.xsd
             // Required.
             if ( reader.CheckElement("Page") ){
+                uint64_t pageID = 0;
+                reader.ReadAttribute("ID", pageID);
+                std::string baseLoc;
+                reader.ReadAttribute("BaseLoc", baseLoc);
+                LOG(DEBUG) << "PageID: " << pageID << " BaseLoc: " << baseLoc;
 
+                OFDPagePtr page = AddNewPage();
+                page->SetID(pageID);
+                page->SetBaseLoc(baseLoc);
             }
 
             reader.NextElement();
         };
-    } reader.BackParentElement();
+
+        reader.BackParentElement();
+    } 
 
     return ok;
 }
 
 // **************** class OFDDocument ****************
 
-OFDDocument::OFDDocument(const std::string &docRoot){
-    m_impl = std::unique_ptr<ImplCls>(new ImplCls(docRoot));
+OFDDocument::OFDDocument(OFDFile *ofdFile, const std::string &docRoot){
+    m_impl = std::unique_ptr<ImplCls>(new ImplCls(ofdFile, this, docRoot));
 }
 
 OFDDocument::~OFDDocument(){
+}
+
+const OFDFile *OFDDocument::GetOFDFile() const{
+    return m_impl->m_ofdFile;
 }
 
 const DocBody& OFDDocument::GetDocBody() const{
@@ -652,6 +680,11 @@ DocBody& OFDDocument::GetDocBody(){
 std::string OFDDocument::GetDocRoot() const {
     const DocBody& docBody = GetDocBody();
     return docBody.DocRoot;
+}
+
+void OFDDocument::SetDocRoot(const std::string &docRoot){
+    DocBody& docBody = GetDocBody();
+    docBody.DocRoot = docRoot;
 }
 
 const OFDDocument::CommonData& OFDDocument::GetCommonData() const{

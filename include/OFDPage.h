@@ -7,6 +7,8 @@
 
 namespace ofd{
 
+    class OFDDocument;
+
     namespace Layer{
 
         enum class Type{
@@ -34,8 +36,10 @@ namespace ofd{
 
     class OFDPage{
     public:
-        OFDPage();
+        OFDPage(OFDDocument *ofdDocument);
         virtual ~OFDPage();
+
+        const OFDDocument *GetOFDDocument() const;
 
         std::string to_string() const;
 
@@ -45,6 +49,8 @@ namespace ofd{
 
         uint64_t GetID() const;
         void SetID(uint64_t id);
+        std::string GetBaseLoc() const;
+        void SetBaseLoc(const std::string &baseLoc);
         const CT_PageArea& GetPageArea() const;
         void SetPageArea(const CT_PageArea &pageArea);
 

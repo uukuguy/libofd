@@ -19,7 +19,7 @@ pdf2ofd: ${PDF2OFD}
 
 sample0.ofd: ${PDF2OFD}
 	rm -fr sample0.ofd sample0
-	${PDF2OFD} ./data/sample0.pdf ./data/sample0.ofd && unzip -d sample0 sample0.ofd >> /dev/null 
+	${PDF2OFD} ./data/sample0.pdf sample0.ofd && unzip -d sample0 sample0.ofd >> /dev/null 
 
 ofdtest: sample0.ofd ${OFDTEST} 
 	${OFDTEST} --v=1 sample0.ofd

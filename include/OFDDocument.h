@@ -14,6 +14,7 @@ using namespace utils;
 
 namespace ofd{
 
+    class OFDFile;
     class OFDPage;
     typedef std::shared_ptr<OFDPage> OFDPagePtr;
 
@@ -93,8 +94,10 @@ namespace ofd{
     // ======== class OFDDocument ========
     class OFDDocument{
     public:
-        OFDDocument(const std::string &docRoot);
+        OFDDocument(OFDFile *ofdFile, const std::string &docRoot);
         virtual ~OFDDocument();
+
+        const OFDFile *GetOFDFile() const;
 
         bool Open();
         void Close();
@@ -104,6 +107,7 @@ namespace ofd{
         DocBody& GetDocBody();
 
         std::string GetDocRoot() const;
+        void SetDocRoot(const std::string &docRoot);
 
         // -------- CommonData --------
         // 文档公共数据，定义了页面区域、公共资源等数据。
