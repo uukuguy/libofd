@@ -6,6 +6,11 @@
 #include "OFDObject.h"
 #include "OFDFont.h"
 
+namespace utils{
+    class XMLReader;
+    class XMLWriter;
+}
+
 namespace ofd{
 
     namespace Text {
@@ -122,6 +127,8 @@ namespace ofd{
     protected:
         virtual void GenerateAttributesXML(utils::XMLWriter &writer) const override;
         virtual void GenerateElementsXML(utils::XMLWriter &writer) const override;
+        virtual bool FromAttributesXML(utils::XMLReader &reader) override;
+        virtual bool CheckElementsXML(utils::XMLReader &reader) override;
 
     private:
         class ImplCls;

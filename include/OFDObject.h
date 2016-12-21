@@ -8,6 +8,7 @@
 
 namespace utils{
     class XMLWriter;
+    class XMLReader;
 };
 
 namespace ofd{
@@ -41,11 +42,18 @@ namespace ofd{
         double       LineWidth;
         int          Alpha;
 
-        virtual void GenerateXML(utils::XMLWriter &writer) const;
+        void GenerateXML(utils::XMLWriter &writer) const;
+        bool FromXML(utils::XMLReader &reader, const std::string &tagName);
 
     protected:
         virtual void GenerateAttributesXML(utils::XMLWriter &writer) const;
         virtual void GenerateElementsXML(utils::XMLWriter &writer) const;
+
+        virtual bool FromAttributesXML(utils::XMLReader &reader);
+        virtual bool CheckElementsXML(utils::XMLReader &reader);
+
+    private:
+        bool FromElementsXML(utils::XMLReader &reader);
 
     }; // class OFDObject
 

@@ -288,25 +288,12 @@ bool OFDPage::ImplCls::FromPageXML(const std::string &strPageXML){
     return ok;
 }
 
+// OFD (section 11.2) P63. Page.xsd 
 OFDObjectPtr FromTextObjectXML(XMLReader &reader){
 
     OFDTextObjectPtr textObject = std::make_shared<OFDTextObject>();
-
-    if ( reader.EnterChildElement("TextObject") ){
-
-        // -------- <TextObject ID="">
-        // Required.
-        uint64_t objectId = 0;
-        reader.ReadAttribute("ID", objectId);
-        textObject->ID = objectId;
-
-        // -------- CT_GraphicUnit --------
-
-
-        // -------- CT_Text --------
-
-        reader.BackParentElement(); 
-    }; 
+    // FIXME
+    textObject->FromXML(reader, "TextObject");
 
     return textObject;
 }
@@ -357,7 +344,7 @@ OFDLayerPtr FromLayerXML(XMLReader &reader){
 
             if ( reader.CheckElement("TextObject") ){
                 object = FromTextObjectXML(reader); 
-
+                LOG(DEBUG) << "Load text object. total: " << layer->Objects.size() << " GetObjectsCount() = " << layer->GetObjectsCount();
 
             } else if ( reader.CheckElement("PathObject") ){
                 object = FromPathObjectXML(reader); 
@@ -395,6 +382,7 @@ bool OFDPage::ImplCls::FromContentXML(XMLReader &reader, const std::string &tagN
                 OFDLayerPtr layer = FromLayerXML(reader);
                 if ( layer != nullptr ){
                     Layers.push_back(layer);
+                    LOG(INFO) << "layer added. GetObjectsCount() = " << layer->GetObjectsCount();
                     ok = true;
                 }
             }
@@ -412,7 +400,7 @@ bool OFDPage::ImplCls::FromContentXML(XMLReader &reader, const std::string &tagN
 OFDPage::OFDPage(OFDDocument *ofdDocument){
     m_impl = std::unique_ptr<ImplCls>(new ImplCls(ofdDocument));
 
-    AddNewLayer(Layer::Type::BODY);
+    //AddNewLayer(Layer::Type::BODY);
 }
 
 OFDPage::~OFDPage(){

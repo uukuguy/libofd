@@ -98,6 +98,7 @@ void OFDOutputDev::startPage(int pageNum, GfxState *state, XRef *xrefA) {
     if ( m_ofdDocument != nullptr ){
         LOG(INFO) << "******** startPage(" << pageNum << ") ********";
         m_currentOFDPage = m_ofdDocument->AddNewPage();
+        m_currentOFDPage->AddNewLayer(ofd::Layer::Type::BODY);
 
         Page *pdfPage = m_pdfDoc->getPage(pageNum);
         PDFRectangle *mediaBox = pdfPage->getMediaBox();

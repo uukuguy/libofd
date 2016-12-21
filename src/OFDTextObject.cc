@@ -21,6 +21,9 @@ public:
     void AddTextCode(const Text::TextCode &textCode);
     void ClearTextCodes();
 
+    bool FromAttributesXML(XMLReader &reader);
+    bool CheckElementsXML(XMLReader &reader);
+
     void GenerateAttributesXML(XMLWriter &writer) const;
     void GenerateElementsXML(XMLWriter &writer) const;
 
@@ -154,11 +157,58 @@ void OFDTextObject::ImplCls::GenerateElementsXML(XMLWriter &writer) const{
     }
 }
 
+// -------- TextObject --------
+// OFD (section 11.2) P63
+bool OFDTextObject::ImplCls::FromAttributesXML(XMLReader &reader){
+    bool ok = true;
+
+
+    // -------- <TextObject Font="">
+    // Required.
+    uint64_t fontID = 0;
+    reader.ReadAttribute("Font", fontID);
+
+    // -------- <TextObject Size="">
+    // Required.
+    reader.ReadAttribute("Size", FontSize);
+
+    return ok;
+}
+
+// -------- TextObject --------
+// OFD (section 11.2) P63
+bool OFDTextObject::ImplCls::CheckElementsXML(XMLReader &reader){
+    bool ok = false;
+
+    if (reader.CheckElement("TextCode") ){
+
+        Text::TextCode textCode;
+        reader.ReadAttribute("X", textCode.X);
+        reader.ReadAttribute("Y", textCode.Y);
+        // TODO
+        //std::string strDeltaX;
+        //reader.ReadAttribute("DeltaX", strDeltaX);
+        //std::string strDeltaY;
+        //reader.ReadAttribute("DeltaY", strDeltaY);
+
+        reader.ReadElement(textCode.Text);
+
+        LOG(DEBUG) << "X: " << textCode.X << " Y: " << textCode.Y << " Text: " << textCode.Text;
+        TextCodes.push_back(textCode);
+
+        ok = true;
+
+    }
+
+    return ok;
+}
+
 // **************** class OFDTextObject ****************
 
-OFDTextObject::OFDTextObject(){
-    m_impl = std::unique_ptr<ImplCls>(new ImplCls());
+OFDTextObject::OFDTextObject() {
+    Type = Object::Type::TEXT;
     ObjectLabel = "TextObject";
+    m_impl = std::unique_ptr<ImplCls>(new ImplCls());
 
 }
 
@@ -296,4 +346,18 @@ void OFDTextObject::GenerateElementsXML(XMLWriter &writer) const{
     m_impl->GenerateElementsXML(writer);
 }
 
+
+bool OFDTextObject::FromAttributesXML(XMLReader &reader){
+    if ( OFDObject::FromAttributesXML(reader) ){
+        return m_impl->FromAttributesXML(reader);
+    }
+    return false;
+}
+
+bool OFDTextObject::CheckElementsXML(XMLReader &reader){
+    if ( !OFDObject::CheckElementsXML(reader) ){
+        return m_impl->CheckElementsXML(reader);
+    }
+    return false;
+}
 

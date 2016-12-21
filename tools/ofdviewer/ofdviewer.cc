@@ -323,6 +323,7 @@ void MySDLApp::OnEvent(SDL_Event event, bool &done){
                         m_pageIndex--;
                     }
                 }
+                LOG(DEBUG) << "Page " << m_pageIndex << "/" << totalPages;
             }
             break;
         } else if (event.key.keysym.sym == SDLK_DOWN) {
@@ -335,6 +336,7 @@ void MySDLApp::OnEvent(SDL_Event event, bool &done){
                         m_pageIndex = 0;
                     }
                 }
+                LOG(DEBUG) << "Page " << m_pageIndex << "/" << totalPages;
             }
             break;
         } else if (event.key.keysym.sym == SDLK_RETURN) {
