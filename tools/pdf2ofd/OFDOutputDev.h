@@ -80,8 +80,8 @@ public:
             double originX, double originY,
             CharCode code, int nBytes, Unicode *u, int uLen);
     virtual void incCharCount(int nChars);
-    virtual void beginActualText(GfxState *state, GooString *text);
-    virtual void endActualText(GfxState *state);
+    //virtual void beginActualText(GfxState *state, GooString *text);
+    //virtual void endActualText(GfxState *state);
 
 private:
 
@@ -93,7 +93,10 @@ private:
     ofd::OFDFilePtr m_ofdFile;
     ofd::OFDDocumentPtr m_ofdDocument;
     ofd::OFDPagePtr m_currentOFDPage;
+    double m_currentFontSize;
+    double *m_currentCTM;
     std::map<int, std::shared_ptr<ofd::OFDFont> > m_fonts;
+
 
 
 }; // class OFDOutputDev

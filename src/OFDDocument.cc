@@ -31,14 +31,14 @@ public:
     std::string GenerateDocBodyXML() const;
     std::string GenerateDocumentXML() const;
 
-    bool FromDocBodyXML(XMLReader &reader);
+    bool FromDocBodyXML(XMLElementPtr docBodyElement);
     bool FromDocumentXML(const std::string &strDocumentXML);
 
 private:
-    bool FromDocInfoXML(XMLReader &reader);
+    bool FromDocInfoXML(XMLElementPtr docInfoElement);
 
-    bool FromCommonDataXML(XMLReader &reader);
-    bool FromPagesXML(XMLReader &reader);
+    bool FromCommonDataXML(XMLElementPtr commonDataElement);
+    bool FromPagesXML(XMLElementPtr pagesElement);
 
     // -------- Private Attributes --------
 public:
@@ -333,59 +333,200 @@ std::string OFDDocument::ImplCls::GenerateDocumentXML() const{
 }
 
 
-bool OFDDocument::ImplCls::FromDocInfoXML(XMLReader &reader){
+// OFD (section 7.4) P7. OFD.xsd
+bool OFDDocument::ImplCls::FromDocInfoXML(XMLElementPtr docInfoElement){
     bool ok = true;
+    
+    CT_DocInfo &docInfo = m_docBody.DocInfo;
 
-    if ( reader.EnterChildElement("DocInfo") ){
-        while ( reader.HasElement() ){
+    XMLElementPtr childElement = docInfoElement->GetFirstChildElement();
+    while ( childElement != nullptr ){
+        std::string childName = childElement->GetName();
 
-            // -------- <DocID>
-            if ( reader.CheckElement("DocID") ){
-                std::string docID;
-                reader.ReadElement(docID);
-                LOG(DEBUG) << "DocID: " << docID;
+        // -------- <DocID>
+        // Optional.
+        if ( childName == "DocID" ){
+            std::tie(docInfo.DocID, std::ignore) = childElement->GetStringValue();
+            LOG(DEBUG) << "DocID: " << docInfo.DocID;
 
-            // -------- <DocRoot>
-            } else if ( reader.CheckElement("Title") ){
-                std::string title;
-                reader.ReadElement(title);
-                LOG(DEBUG) << "Title: " << title;
+        // -------- <Title>
+        // Optional.
+        } else if ( childName == "Title" ){
+            std::tie(docInfo.Title, std::ignore) = childElement->GetStringValue();
+            LOG(DEBUG) << "Title: " << docInfo.Title;
+
+        // -------- <Author>
+        // Optional.
+        } else if ( childName == "Author" ){
+            std::tie(docInfo.Author, std::ignore) = childElement->GetStringValue();
+
+        // -------- <Subject>
+        // Optional.
+        } else if ( childName == "Subject" ){
+            std::tie(docInfo.Subject, std::ignore) = childElement->GetStringValue();
+
+        // -------- <Abstract>
+        // Optional.
+        } else if ( childName == "Abstract" ){
+            std::tie(docInfo.Abstract, std::ignore) = childElement->GetStringValue();
+
+        // -------- <CreationDate>
+        // Optional.
+        } else if ( childName == "CreationDate" ){
+            std::tie(docInfo.CreationDate, std::ignore) = childElement->GetStringValue();
+
+        // -------- <ModDate>
+        // Optional.
+        } else if ( childName == "ModDate" ){
+            std::tie(docInfo.ModDate, std::ignore) = childElement->GetStringValue();
+
+        // FIXME
+        // -------- <DocUsage>
+        // Optional
+        //} else if ( childName == "DocUsage" ){
+        //
+
+        // -------- <Cover>
+        // Optional
+        } else if ( childName == "Cover" ){
+            std::tie(docInfo.Cover, std::ignore) = childElement->GetStringValue();
+
+        // -------- <Keywords>
+        // Optional.
+        } else if ( childName == "Keywords" ){ 
+            docInfo.Keywords.clear();
+            XMLElementPtr keyWordElement = childElement->GetFirstChildElement();
+            while ( keyWordElement != nullptr ){
+                std::string keyword;
+                std::tie(keyword, std::ignore) = keyWordElement->GetStringValue();
+                keyWordElement = keyWordElement->GetNextSiblingElement();
+                docInfo.Keywords.push_back(keyword);
             }
 
-            reader.NextElement();
-        };
-        reader.BackParentElement();
-    } 
+        // -------- <Creator>
+        // Optional.
+        } else if ( childName == "Creator" ){ 
+            std::tie(docInfo.Creator, std::ignore) = childElement->GetStringValue();
+
+        // -------- <CreatorVersion>
+        // Optional
+        } else if ( childName == "CreatorVersion" ){ 
+            std::tie(docInfo.CreatorVersion, std::ignore) = childElement->GetStringValue();
+
+        // -------- <CustomDatas>
+        // Optional
+        } else if ( childName == "CustomDatas" ){ 
+            docInfo.CustomDatas.clear();
+            XMLElementPtr customDataElement = childElement->GetFirstChildElement();
+            while ( customDataElement != nullptr ){
+                bool exist = false;
+                std::string name;
+                std::tie(name, exist) = customDataElement->GetStringAttribute("Name");
+                if ( exist ){
+                    std::string value;
+                    std::tie(value, std::ignore) = customDataElement->GetStringValue();
+                    docInfo.CustomDatas[name] = value;
+                }
+
+                customDataElement = customDataElement->GetNextSiblingElement();
+            }
+
+        }
+
+        childElement = childElement->GetNextSiblingElement();
+    }
+
+    return ok;
+
+
+    //if ( reader.EnterChildElement("DocInfo") ){
+        //while ( reader.HasElement() ){
+
+            //// -------- <DocID>
+            //if ( reader.CheckElement("DocID") ){
+                //std::string docID;
+                //reader.ReadElement(docID);
+                //LOG(DEBUG) << "DocID: " << docID;
+
+            //// -------- <DocRoot>
+            //} else if ( reader.CheckElement("Title") ){
+                //std::string title;
+                //reader.ReadElement(title);
+                //LOG(DEBUG) << "Title: " << title;
+            //}
+
+            //reader.NextElement();
+        //};
+        //reader.BackParentElement();
+    //} 
 
     return ok;
 }
 
-bool OFDDocument::ImplCls::FromDocBodyXML(XMLReader &reader){
+// OFD (section 7.4) P7. OFD.xsd.
+bool OFDDocument::ImplCls::FromDocBodyXML(XMLElementPtr docBodyElement){
     bool ok = true;
 
-    if ( reader.EnterChildElement("DocBody") ){
-        while ( reader.HasElement() ){
-            // -------- <DocInfo>
-            if ( reader.CheckElement("DocInfo") ){
-                FromDocInfoXML(reader);
+    XMLElementPtr childElement = docBodyElement->GetFirstChildElement();
+    bool hasDocInfo = false;
+    while ( childElement != nullptr ){
+        std::string childName = childElement->GetName();
 
-            // -------- <DocRoot>
-            } else if ( reader.CheckElement("DocRoot") ){
-                std::string content;
-                reader.ReadElement(content);
-                LOG(DEBUG) << "DocRoot: " << content;
+        // -------- <DocInfo>
+        // Required.
+        if ( childName == "DocInfo"){
+            hasDocInfo = true;
+            FromDocInfoXML(childElement);
 
-            // -------- <Versions>
-            } else if ( reader.CheckElement("Versions") ){
+        // -------- <DocRoot>
+        // Optional.
+        } else if ( childName == "DocRoot" ){
+            std::string docRoot;
+            std::tie(docRoot, std::ignore) = childElement->GetStringValue();
+            LOG(DEBUG) << "DocRoot: " << docRoot;
 
-            // -------- <Signatures>
-            } else if ( reader.CheckElement("Signatures") ){
-            }
+        // TODO
+        // -------- <Versions>
+        // Optional.
+        //} else if ( childName == "Versions" ){
 
-            reader.NextElement();
-        };
-        reader.BackParentElement();
-    } 
+        // TODO
+        // -------- <Signatures>
+        // Optional.
+        //} else if ( childName == "Signatures" ){
+
+        }
+
+        childElement = childElement->GetNextSiblingElement();
+    }
+
+    if ( !hasDocInfo ){
+        LOG(ERROR) << "No DocInfo element in DocBody.";
+    }
+
+    //if ( reader.EnterChildElement("DocBody") ){
+        //while ( reader.HasElement() ){
+            //// -------- <DocInfo>
+            //if ( reader.CheckElement("DocInfo") ){
+                //FromDocInfoXML(reader);
+
+            //// -------- <DocRoot>
+            //} else if ( reader.CheckElement("DocRoot") ){
+                //std::string content;
+                //reader.ReadElement(content);
+                //LOG(DEBUG) << "DocRoot: " << content;
+
+            //// -------- <Versions>
+            //} else if ( reader.CheckElement("Versions") ){
+
+            //// -------- <Signatures>
+            //} else if ( reader.CheckElement("Signatures") ){
+            //}
+
+            //reader.NextElement();
+        //};
+        //reader.BackParentElement();
+    //} 
 
     return ok;
 }
@@ -395,263 +536,195 @@ bool OFDDocument::ImplCls::FromDocBodyXML(XMLReader &reader){
 bool OFDDocument::ImplCls::FromDocumentXML(const std::string &strDocumentXML){
     bool ok = true;
 
-    XMLReader reader;
-    if ( reader.ParseXML(strDocumentXML) ){
+    XMLElementPtr rootElement = XMLElement::ParseRootElement(strDocumentXML);
+    if ( rootElement != nullptr ){
+        std::string rootName = rootElement->GetName();
+        if ( rootName == "Document" ){
+            XMLElementPtr childElement = rootElement->GetFirstChildElement();
+            while ( childElement != nullptr ){
+                std::string childName = childElement->GetName();
 
-        if ( reader.CheckElement("Document") ){
-            if ( reader.EnterChildElement("Document") ){
+                // -------- <CommonData>
+                // OFD (section 7.5) P10. Document.xsd
+                // Required.
+                if ( childName == "CommonData" ) {
+                    FromCommonDataXML(childElement);
 
-                while ( reader.HasElement() ){
+                // -------- <Pages>
+                // OFD (section 7.6) P17. Document.xsd
+                // Required.
+                } else if ( childName == "Pages" ) {
+                    FromPagesXML(childElement);
 
-                    // -------- <CommonData>
-                    // OFD (section 7.5) P10. Document.xsd
-                    // Required.
-                    if ( reader.CheckElement("CommonData") ) {
-                        FromCommonDataXML(reader);
+                //// TODO
+                //// -------- <Outlines>
+                //// OFD (section 7.8) P22. Document.xsd
+                //// Optional.
+                //} else if ( childName == "Outlines" ) {
+                    //FromOutlinesXML(childElement);
 
-                    // -------- <Pages>
-                    // OFD (section 7.6) P17. Document.xsd
-                    // Required.
-                    } else if ( reader.CheckElement("Pages") ) {
-                        FromPagesXML(reader);
+                // TODO
+                // -------- <Permissions>
+                // OFD (section 7.5) P13. Document.xsd
+                // Optional.
+                /*} else if ( childName == "Permissions" ) {*/
+                /*FromPermissionsXML(childElement);*/
 
-                    // TODO
-                    // -------- <Outlines>
-                    // OFD (section 7.8) P22. Document.xsd
-                    // Optional.
-                    /*} else if ( reader.CheckElement("Outlines") ) {*/
-                        /*FromOutlinesXML(reader);*/
+                // TODO
+                // -------- <Actions>
+                // OFD (section 14.1) P73. Document.xsd
+                // Optional.
+                /*} else if ( childName == "Actions" ) {*/
+                /*FromActionsXML(childElement);*/
 
-                    // TODO
-                    // -------- <Permissions>
-                    // OFD (section 7.5) P13. Document.xsd
-                    // Optional.
-                    /*} else if ( reader.CheckElement("Permissions") ) {*/
-                        /*FromPermissionsXML(reader);*/
+                // TODO
+                // -------- <VPreferences>
+                // OFD (section 7.5) P15. Document.xsd
+                // Optional.
+                /*} else if ( childName == "VPreferences" ) {*/
+                /*FromVPreferencesXML(childElement);*/
 
-                    // TODO
-                    // -------- <Actions>
-                    // OFD (section 14.1) P73. Document.xsd
-                    // Optional.
-                    /*} else if ( reader.CheckElement("Actions") ) {*/
-                        /*FromActionsXML(reader);*/
+                // TODO
+                // -------- <Bookmarks>
+                // OFD (section 7.5) P17. Document.xsd
+                // Optional.
+                /*} else if ( childName == "Bookmarks" ) {*/
+                /*FromBookmarksXML(childElement);*/
 
-                    // TODO
-                    // -------- <VPreferences>
-                    // OFD (section 7.5) P15. Document.xsd
-                    // Optional.
-                    /*} else if ( reader.CheckElement("VPreferences") ) {*/
-                        /*FromVPreferencesXML(reader);*/
+                // TODO
+                // -------- <Attachments>
+                // OFD (section 20) P88. Document.xsd
+                // Optional.
+                /*} else if ( childName == "Attachments" ) {*/
+                /*FromAttachmentsXML(childElement);*/
 
-                    // TODO
-                    // -------- <Bookmarks>
-                    // OFD (section 7.5) P17. Document.xsd
-                    // Optional.
-                    /*} else if ( reader.CheckElement("Bookmarks") ) {*/
-                        /*FromBookmarksXML(reader);*/
+                // TODO
+                // -------- <CustomTags>
+                // OFD (section 16) P80. Document.xsd
+                // Optional.
+                /*} else if ( childName == "CustomTags" ) {*/
+                /*FromCustomTagsXML(childElement);*/
 
-                    // TODO
-                    // -------- <Attachments>
-                    // OFD (section 20) P88. Document.xsd
-                    // Optional.
-                    /*} else if ( reader.CheckElement("Attachments") ) {*/
-                        /*FromAttachmentsXML(reader);*/
+                // TODO
+                // -------- <Extensions>
+                // OFD (section 17) P81. Document.xsd
+                // Optional.
+                /*} else if ( childName == "Extensions" ) {*/
+                /*FromExtensionsXML(childElement);*/
 
-                    // TODO
-                    // -------- <CustomTags>
-                    // OFD (section 16) P80. Document.xsd
-                    // Optional.
-                    /*} else if ( reader.CheckElement("CustomTags") ) {*/
-                        /*FromCustomTagsXML(reader);*/
-
-                    // TODO
-                    // -------- <Extensions>
-                    // OFD (section 17) P81. Document.xsd
-                    // Optional.
-                    /*} else if ( reader.CheckElement("Extensions") ) {*/
-                        /*FromExtensionsXML(reader);*/
-
-                    }
-
-                    reader.NextElement();
-                    //if ( reader.HasElement() ){
-                        //LOG(DEBUG) << "***NextElement: " <<  reader.GetElementName();
-                    //} else {
-                        //LOG(WARNING) << "***NextElement == nullptr";
-                    //}
                 }
-                reader.BackParentElement();
-            } 
-        }
 
-        ok = true;
+                childElement = childElement->GetNextSiblingElement();
+            }
+        } else {
+            LOG(ERROR) << "Root element in Document Content.xml is not named 'Document'";
+        }
+    } else {
+        LOG(ERROR) << "No root element in Document Content.xml";
     }
 
     return ok;
 }
 
-std::tuple<ST_Box, bool> ReadBoxFromXML(XMLReader &reader, const std::string &tagName){
-    ST_Box box;
-    bool ok = false;
-
-    std::string boxString;
-    reader.ReadElement(boxString);
-    if ( reader.ReadElement(boxString) && !boxString.empty()){
-        std::vector<std::string> tokens = utils::SplitString(boxString);
-        if ( tokens.size() >= 4 ){
-            box.Left = atof(tokens[0].c_str());
-            box.Top = atof(tokens[1].c_str());
-            box.Width = atof(tokens[2].c_str());
-            box.Height = atof(tokens[3].c_str());
-            ok = true;
-        } else {
-            LOG(ERROR) << "Box String tokens size >= 4 failed. boxString:" << boxString;
-        }
-    }
-
-    return std::make_tuple(box, ok);
-}
-
-// OFD (section 7.5) P11. Definitions.xsd
-std::tuple<CT_PageArea,bool> FromPageAreaXML(XMLReader &reader, const std::string &tagName){
-    bool ok = true;
-    CT_PageArea pageArea;
-
-    if ( reader.EnterChildElement(tagName) ){
-        while ( reader.HasElement() ){
-
-            // -------- <PhysicalBox>
-            if ( reader.CheckElement("PhysicalBox") ) {
-
-                bool ok1 = false;
-                std::tie(pageArea.PhysicalBox, ok1) = ReadBoxFromXML(reader, "PhysicalBox");
-                if ( !ok1 ) {
-                    LOG(WARNING) << "ReadBoxFromXML() failed. <Page><Area><PhysicalBox>";
-                    break;
-                }
-            // -------- <ApplicationBox>
-            } else if ( reader.CheckElement("ApplicationBox") ){
-                bool ok1 = false;
-                std::tie(pageArea.ApplicationBox, ok1) = ReadBoxFromXML(reader, "ApplicationBox");
-                if ( ok1 ) {
-                    pageArea.EnableApplicationBox(true);
-                }
-
-            // -------- <ContentBox>
-            } else if ( reader.CheckElement("ContentBox") ){
-                bool ok1 = false;
-                std::tie(pageArea.ContentBox, ok1) = ReadBoxFromXML(reader, "ContentBox");
-                if ( ok1 ) {
-                    pageArea.EnableContentBox(true);
-                }
-
-            // -------- <BleedBox>
-            } else if ( reader.CheckElement("BleedBox") ){
-                bool ok1 = false;
-                std::tie(pageArea.BleedBox, ok1) = ReadBoxFromXML(reader, "BleedBox");
-                if ( ok1 ) {
-                    pageArea.EnableBleedBox(true);
-                }
-
-            }
-
-            reader.NextElement();
-        };
-        reader.BackParentElement();
-    } 
-
-    return std::make_tuple(pageArea, ok);
-}
+// Defined in OFDPage.cc
+std::tuple<CT_PageArea,bool> FromPageAreaXML(XMLElementPtr pageAreaElement);
 
 // -------- <CommonData>
 // OFD (section 7.5) P10. Document.xsd
 // Required.
-bool OFDDocument::ImplCls::FromCommonDataXML(XMLReader &reader){
+bool OFDDocument::ImplCls::FromCommonDataXML(XMLElementPtr commonDataElement){
     bool ok = true;
 
-    if ( reader.EnterChildElement("CommonData") ){
-        while ( reader.HasElement() ){
+    XMLElementPtr childElement = commonDataElement->GetFirstChildElement();
+    while ( childElement != nullptr ){
+        std::string childName = childElement->GetName();
 
+        if ( childName == "MaxUnitID" ){
             // -------- <MaxUnitID>
             // Required.
-            if ( reader.CheckElement("MaxUnitID") ){
 
+        } else if ( childName == "PageArea" ){
             // -------- <PageArea>
             // OFD (section 7.5) P11. Definitions.xsd
             // Required.
-            } else if ( reader.CheckElement("PageArea") ){
-                std::tie(m_commonData.PageArea, ok) = FromPageAreaXML(reader, "PageArea");
-                LOG(DEBUG) << "CommonData.PageArea = " << m_commonData.PageArea.to_string();
+            std::tie(m_commonData.PageArea, ok) = FromPageAreaXML(childElement);
+            LOG(DEBUG) << "CommonData.PageArea = " << m_commonData.PageArea.to_string();
 
+        } else if ( childName == "PublicRes" ){
             // -------- <PublicRes>
             // Optional.
-            } else if ( reader.CheckElement("PublicRes") ){
-                std::string res;
-                if ( reader.ReadElement(res) && !res.empty() ){
-                    m_commonData.PublicRes.push_back(res);
-                }
-
-            // -------- <DocumentRes>
-            // Optional.
-            } else if ( reader.CheckElement("DocumentRes") ){
-                std::string res;
-                if ( reader.ReadElement(res) && !res.empty() ){
-                    m_commonData.DocumentRes.push_back(res);
-                }
-
-            // TODO
-            // -------- <TemplatePage>
-            // Optional.
-            /*} else if ( reader.CheckElement("TemplatePage") ){*/
-
-            // TODO
-            // -------- <DefaultCS>
-            // Optional.
-            /*} else if ( reader.CheckElement("DefaultCS") ){*/
-
+            std::string res;
+            std::tie(res, std::ignore) = childElement->GetStringValue();
+            if ( !res.empty() ){
+                m_commonData.PublicRes.push_back(res);
             }
 
-            reader.NextElement();
-            //if ( reader.HasElement() ){
-                //LOG(DEBUG) << "***NextElement: " <<  reader.GetElementName();
-            //} else {
-                //LOG(WARNING) << "***NextElement == nullptr";
-            //}
-        };
-        reader.BackParentElement();
+        } else if ( childName == "DocumentRes" ){
+            // -------- <DocumentRes>
+            // Optional.
+            std::string res;
+            std::tie(res, std::ignore) = childElement->GetStringValue();
+            if ( !res.empty() ){
+                m_commonData.DocumentRes.push_back(res);
+            }
+
+        //} else if ( childName == "TemplatePage" ){
+            //// TODO
+            //// -------- <TemplatePage>
+            //// Optional.
+
+        //} else if ( childName == "DefaultCS" ){
+            //// TODO
+            //// -------- <DefaultCS>
+            //// Optional.
+
+        }
+
+        childElement = childElement->GetNextSiblingElement();
     }
+
     return ok;
 }
 
 // -------- <Pages>
 // OFD (section 7.6) P17. Document.xsd
 // Required.
-bool OFDDocument::ImplCls::FromPagesXML(XMLReader &reader){
+bool OFDDocument::ImplCls::FromPagesXML(XMLElementPtr pagesElement){
     bool ok = true;
 
-    if ( reader.EnterChildElement("Pages") ){
-        while ( reader.HasElement() ){
 
+    XMLElementPtr childElement = pagesElement->GetFirstChildElement();
+    while ( childElement != nullptr ){
+        std::string childName = childElement->GetName();
+
+        if ( childName == "Page" ){
             // -------- <Page>
             // OFD (section 7.7) P18. Page.xsd
             // Required.
-            if ( reader.CheckElement("Page") ){
-                uint64_t pageID = 0;
-                reader.ReadAttribute("ID", pageID);
-                std::string baseLoc;
-                reader.ReadAttribute("BaseLoc", baseLoc);
-                LOG(DEBUG) << "PageID: " << pageID << " BaseLoc: " << baseLoc;
-
-                OFDPagePtr page = AddNewPage();
-                page->SetID(pageID);
-                page->SetBaseLoc(baseLoc);
+            uint64_t pageID = 0;
+            bool exist = false;
+            std::tie(pageID, exist) = childElement->GetIntAttribute("ID");
+            if ( !exist ){
+                LOG(ERROR) << "Attribute ID is required in Document.xsd";
+                return false;
             }
 
-            reader.NextElement();
-        };
+            std::string baseLoc;
+            std::tie(baseLoc, exist) = childElement->GetStringAttribute("BaseLoc");
+            if ( !exist ){
+                LOG(ERROR) << "Attribute BaseLoc is required in Document.xsd";
+                return false;
+            }
 
-        reader.BackParentElement();
-    } 
+            LOG(DEBUG) << "PageID: " << pageID << " BaseLoc: " << baseLoc;
+
+            OFDPagePtr page = AddNewPage();
+            page->SetID(pageID);
+            page->SetBaseLoc(baseLoc);
+        }
+
+        childElement = childElement->GetNextSiblingElement();
+    }
 
     return ok;
 }
@@ -719,8 +792,8 @@ std::string OFDDocument::GenerateDocumentXML() const{
     return m_impl->GenerateDocumentXML();
 }
 
-bool OFDDocument::FromDocBodyXML(XMLReader &reader){
-    return m_impl->FromDocBodyXML(reader);
+bool OFDDocument::FromDocBodyXML(XMLElementPtr docBodyElement){
+    return m_impl->FromDocBodyXML(docBodyElement);
 }
 
 bool OFDDocument::FromDocumentXML(const std::string &strDocumentXML){

@@ -35,7 +35,7 @@ public:
     bool FromPageXML(const std::string &strPageXML);
 
 private:
-    bool FromContentXML(XMLReader &reader, const std::string &tagName);
+    bool FromContentXML(XMLElementPtr contentElement);
 
     // -------- Private Attributes --------
 public:
@@ -137,15 +137,21 @@ OFDLayerPtr OFDPage::ImplCls::AddNewLayer(Layer::Type layerType){
 }
 
 const OFDLayerPtr OFDPage::ImplCls::GetBodyLayer() const{
-    assert( Layers.size() > 0 );
-    const OFDLayerPtr bodyLayer = Layers[0]; 
-    return bodyLayer;
+    if ( Layers.size() > 0 ){
+        const OFDLayerPtr bodyLayer = Layers[0]; 
+        return bodyLayer;
+    } else {
+        return nullptr;
+    }
 }
 
 OFDLayerPtr OFDPage::ImplCls::GetBodyLayer(){
-    assert( Layers.size() > 0 );
-    OFDLayerPtr bodyLayer = Layers[0]; 
-    return bodyLayer;
+    if ( Layers.size() > 0 ){
+        OFDLayerPtr bodyLayer = Layers[0]; 
+        return bodyLayer;
+    } else {
+        return nullptr;
+    }
 }
 
 // Called by OFDPage::ImplCls::GeneratePageXML()
@@ -231,166 +237,244 @@ std::string OFDPage::ImplCls::GeneratePageXML() const{
     return writer.GetString();
 }
 
-// defined in OFDDocument.cc
-std::tuple<CT_PageArea,bool> FromPageAreaXML(XMLReader &reader, const std::string &tagName);
+std::tuple<ST_Box, bool> ReadBoxFromXML(XMLElementPtr boxElement){
+    ST_Box box;
+    bool exist = false;
+
+    std::string boxString;
+    std::tie(boxString, exist) = boxElement->GetStringValue();
+    LOG(INFO) << "Box String: " << boxString;
+    if ( exist ){
+        std::vector<std::string> tokens = utils::SplitString(boxString);
+        if ( tokens.size() >= 4 ){
+            box.Left = atof(tokens[0].c_str());
+            box.Top = atof(tokens[1].c_str());
+            box.Width = atof(tokens[2].c_str());
+            box.Height = atof(tokens[3].c_str());
+        } else {
+            LOG(ERROR) << "Box String tokens size >= 4 failed. boxString:" << boxString;
+            exist = false;
+        }
+    }
+
+    return std::make_tuple(box, exist);
+}
+
+// OFD (section 7.5) P11. Definitions.xsd
+std::tuple<CT_PageArea,bool> FromPageAreaXML(XMLElementPtr pageAreaElement){
+    bool ok = true;
+    CT_PageArea pageArea;
+
+    LOG(INFO) << "******** FromPagAreaXML()";
+
+    XMLElementPtr childElement = pageAreaElement->GetFirstChildElement();
+    while ( childElement != nullptr ){
+
+        std::string childName = childElement->GetName();
+        LOG(INFO) << "PageArea child name: " << childName;
+        bool exist = false;
+
+        // -------- <PhysicalBox>
+        // Required
+        if ( childName == "PhysicalBox" ){
+            std::tie(pageArea.PhysicalBox, exist) = ReadBoxFromXML(childElement);
+            if ( !exist ){
+                LOG(ERROR) << "Attribute PhysicalBox is requred in PageArea XML";
+                break;
+            } else {
+                ok = true;
+            }
+
+        // -------- <ApplicationBox>
+        } else if ( childName == "ApplicationBox" ){
+            std::tie(pageArea.ApplicationBox, exist) = ReadBoxFromXML(childElement);
+            if ( exist ){
+                pageArea.EnableApplicationBox(true);
+            }
+
+        // -------- <ContentBox>
+        } else if ( childName == "ContentBox" ){
+            std::tie(pageArea.ContentBox, exist) = ReadBoxFromXML(childElement);
+            if ( exist ){
+                pageArea.EnableContentBox(true);
+            }
+
+        // -------- <BleedBox>
+        } else if ( childName == "BleedBox" ){
+            std::tie(pageArea.BleedBox, exist) = ReadBoxFromXML(childElement);
+            if ( exist ){
+                pageArea.EnableBleedBox(true);
+            }
+        }
+
+        childElement = childElement->GetNextSiblingElement();
+    }
+
+    return std::make_tuple(pageArea, ok);
+}
 
 // ======== OFDPage::ImplCls::FromPageXML() ========
 // OFD (section 7.7) P18. Page.xsd
 bool OFDPage::ImplCls::FromPageXML(const std::string &strPageXML){
-    bool ok = true;
+    bool ok = false;
 
-    XMLReader reader;
-    if ( reader.ParseXML(strPageXML) ){
+    XMLElementPtr pageElement = XMLElement::ParseRootElement(strPageXML);
+    if ( pageElement != nullptr ){
+        std::string elementName = pageElement->GetName();
+        if ( elementName == "Page" ){
 
-        if ( reader.CheckElement("Page") ){
-            if ( reader.EnterChildElement("Page") ){
+            XMLElementPtr childElement = pageElement->GetFirstChildElement();
+            while ( childElement != nullptr ){
+                std::string childName = childElement->GetName();
 
-                while ( reader.HasElement() ){
-
-                    // TODO
-                    // -------- <Template>
-                    // Optional.
-                    if ( reader.CheckElement("Template") ) {
-
-
+                if ( childName == "Area" ){
                     // -------- <Area>
                     // Optional.
-                    } else if ( reader.CheckElement("Area") ) {
-                        std::tie(Area, ok) = FromPageAreaXML(reader, "Area");
+                    std::tie(Area, ok) = FromPageAreaXML(childElement);
+                    LOG(INFO) << "Area done.";
 
-                    // TODO
-                    // -------- <PageRes>
-                    // Optional.
-                    } else if ( reader.CheckElement("PageRes") ) {
-
+                } else if ( childName == "Content" ) {
                     // -------- <Content>
                     // Optional.
-                    } else if ( reader.CheckElement("Content") ) {
-                        FromContentXML(reader, "Content");
+                    FromContentXML(childElement);
 
 
-                    // TODO
-                    // -------- <Actions>
-                    // OFD (section 14.1) P73. Document.xsd
-                    // Optional.
-                    /*} else if ( reader.CheckElement("Actions") ) {*/
-                        /*FromActionsXML(reader);*/
+                //if ( childName == "Template" ) {
+                    //// TODO
+                    //// -------- <Template>
+                    //// Optional.
 
-                    }
+                //} else if ( childName == "PageRes" ) {
+                    //// TODO
+                    //// -------- <PageRes>
+                    //// Optional.
 
-                    reader.NextElement();
-                };
-                reader.BackParentElement();
-            } 
+                //} else if ( childName == "Actions" ) {
+                        // TODO
+                        // -------- <Actions>
+                        // OFD (section 14.1) P73. Document.xsd
+                        // Optional.
+                        //FromActionsXML(childElement);
+
+                    //}
+
+                }
+
+                childElement = childElement->GetNextSiblingElement();
+            }
         }
+    } else {
+        LOG(ERROR) << "No root element in Content.xml";
     }
-    
+
     return ok;
 }
 
 // OFD (section 11.2) P63. Page.xsd 
-OFDObjectPtr FromTextObjectXML(XMLReader &reader){
+OFDObjectPtr FromTextObjectXML(XMLElementPtr textObjectElement){
 
     OFDTextObjectPtr textObject = std::make_shared<OFDTextObject>();
-    // FIXME
-    textObject->FromXML(reader, "TextObject");
+    textObject->FromXML(textObjectElement);
 
     return textObject;
 }
 
 // TODO
-OFDObjectPtr FromPathObjectXML(XMLReader &reader){
+OFDObjectPtr FromPathObjectXML(XMLElementPtr pathObjectElement){
     OFDObjectPtr object = nullptr;
 
     return object;
 }
 
 // TODO
-OFDObjectPtr FromImageObjectXML(XMLReader &reader){
+OFDObjectPtr FromImageObjectXML(XMLElementPtr imageObjectElement){
     OFDObjectPtr object = nullptr;
 
     return object;
 }
 
 // TODO
-OFDObjectPtr FromCompositeObjectXML(XMLReader &reader){
+OFDObjectPtr FromCompositeObjectXML(XMLElementPtr compositeObjectElement){
     OFDObjectPtr object = nullptr;
 
     return object;
 }
 
-OFDLayerPtr FromLayerXML(XMLReader &reader){
+// -------- FromLayerXML() --------
+// Called by OFDPage::ImplCls::FromContentXML()
+OFDLayerPtr FromLayerXML(XMLElementPtr layerElement){
     OFDLayerPtr layer = nullptr;
 
-    if ( reader.EnterChildElement("Layer") ){
+    assert(layerElement != nullptr);
 
-        layer = std::make_shared<OFDLayer>();
+    layer = std::make_shared<OFDLayer>();
 
-        uint64_t layerID = 0;
-        uint64_t layerType = 0;
-        uint64_t drawParamID = 0;
-        reader.ReadAttribute("ID", layerID);
-        reader.ReadAttribute("Type", layerType);
-        reader.ReadAttribute("DrawParam", drawParamID);
+    bool exist = false;
 
-        layer->ID = layerID;
-        layer->Type = (Layer::Type)layerType;
-        // TODO
-        /*layer->drawParamID = drawParamID;*/
+    uint64_t layerID = 0;
+    uint64_t layerType = 0;
+    uint64_t drawParamID = 0;
 
-        while ( reader.HasElement() ){
+    std::tie(layerID, exist) = layerElement->GetIntAttribute("ID");
+    if ( !exist ) return nullptr;
+    std::tie(layerType, std::ignore) = layerElement->GetIntAttribute("Type");
+    std::tie(drawParamID, std::ignore) = layerElement->GetIntAttribute("DrawParam");
 
-            OFDObjectPtr object = nullptr;
+    layer->ID = layerID;
+    layer->Type = (Layer::Type)layerType;
 
-            if ( reader.CheckElement("TextObject") ){
-                object = FromTextObjectXML(reader); 
-                LOG(DEBUG) << "Load text object. total: " << layer->Objects.size() << " GetObjectsCount() = " << layer->GetObjectsCount();
+    XMLElementPtr childElement = layerElement->GetFirstChildElement();
+    while ( childElement != nullptr ){
 
-            } else if ( reader.CheckElement("PathObject") ){
-                object = FromPathObjectXML(reader); 
+        OFDObjectPtr object = nullptr;
 
-            } else if ( reader.CheckElement("ImageObject") ){
-                object = FromImageObjectXML(reader); 
+        std::string childName = childElement->GetName();
+        if ( childName == "TextObject" ){
+            object = FromTextObjectXML(childElement); 
+            //LOG(DEBUG) << "Load text object. total: " << layer->Objects.size() << " GetObjectsCount() = " << layer->GetObjectsCount();
 
-            } else if ( reader.CheckElement("CompositeObject") ){
-                object = FromCompositeObjectXML(reader); 
+        } else if ( childName == "PathObject" ){
+            object = FromPathObjectXML(childElement); 
 
-            }
+        } else if ( childName == "ImageObject" ){
+            object = FromImageObjectXML(childElement); 
 
-            if ( object != nullptr ){
-                layer->Objects.push_back(object);
-            }
+        } else if ( childName == "CompositeObject" ){
+            object = FromCompositeObjectXML(childElement); 
+        }
 
-            reader.NextElement();
-        };
+        if ( object != nullptr ){
+            layer->Objects.push_back(object);
+        }
 
-        reader.BackParentElement();
-    } 
+        childElement = childElement->GetNextSiblingElement();
+    }
+
     return layer;
 }
 
 // ======== OFDPage::ImplCls::FromContentXML() ========
 // OFD (section 7.7) P20. Page.xsd
-bool OFDPage::ImplCls::FromContentXML(XMLReader &reader, const std::string &tagName){
+bool OFDPage::ImplCls::FromContentXML(XMLElementPtr contentElement){
     bool ok = false;
 
-    if ( reader.EnterChildElement(tagName) ){
-    
-        while ( reader.HasElement() ){
+    assert(contentElement != nullptr);
 
-            if ( reader.CheckElement("Layer") ){
-                OFDLayerPtr layer = FromLayerXML(reader);
-                if ( layer != nullptr ){
-                    Layers.push_back(layer);
-                    LOG(INFO) << "layer added. GetObjectsCount() = " << layer->GetObjectsCount();
-                    ok = true;
-                }
+    XMLElementPtr childElement = contentElement->GetFirstChildElement();
+    while ( childElement != nullptr ){
+        std::string childName = childElement->GetName();
+
+        if ( childName == "Layer" ){
+            OFDLayerPtr layer = FromLayerXML(childElement);
+            if ( layer != nullptr ){
+                Layers.push_back(layer);
+                LOG(INFO) << "layer added. GetObjectsCount() = " << layer->GetObjectsCount();
+                ok = true;
             }
+        }
 
-            reader.NextElement();
-        };
-        reader.BackParentElement();
-    } 
+        childElement = childElement->GetNextSiblingElement();
+    }
 
     return ok;
 }
@@ -399,8 +483,6 @@ bool OFDPage::ImplCls::FromContentXML(XMLReader &reader, const std::string &tagN
 
 OFDPage::OFDPage(OFDDocument *ofdDocument){
     m_impl = std::unique_ptr<ImplCls>(new ImplCls(ofdDocument));
-
-    //AddNewLayer(Layer::Type::BODY);
 }
 
 OFDPage::~OFDPage(){
@@ -481,4 +563,3 @@ std::string OFDPage::GeneratePageXML() const{
 bool OFDPage::FromPageXML(const std::string &strPageXML){
     return m_impl->FromPageXML(strPageXML);
 }
-

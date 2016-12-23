@@ -127,8 +127,9 @@ namespace ofd{
     protected:
         virtual void GenerateAttributesXML(utils::XMLWriter &writer) const override;
         virtual void GenerateElementsXML(utils::XMLWriter &writer) const override;
-        virtual bool FromAttributesXML(utils::XMLReader &reader) override;
-        virtual bool CheckElementsXML(utils::XMLReader &reader) override;
+
+        virtual bool FromAttributesXML(utils::XMLElementPtr objectElement) override;
+        virtual bool IterateElementsXML(utils::XMLElementPtr childElement) override;
 
     private:
         class ImplCls;

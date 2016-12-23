@@ -46,7 +46,10 @@ void OFDCairoRender::ImplCls::Draw(OFDPage *page){
     if ( page == nullptr ) return;
     //size_t numLayers = page->GetLayersCount();
     const OFDLayerPtr bodyLayer = page->GetBodyLayer(); 
-    if ( bodyLayer == nullptr ) return;
+    if ( bodyLayer == nullptr ) {
+        //LOG(WARNING) << "page->GetBodyLayer() return nullptr. Maybe NULL content.";
+        return;
+    }
     size_t numObjects = bodyLayer->GetObjectsCount();
     if ( numObjects == 0 ) return;
     //LOG(DEBUG) << numLayers << " layers in page.";

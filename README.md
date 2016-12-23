@@ -92,3 +92,4 @@ The command above will create a OFD file named sampl0.ofd in current directory, 
 
 - Section 8.3.2 P32 表26最后一行“格构高洛德渐变”应为“网格高洛德渐变”
 
+- Section 8.2.1 P28 "当图元未定义绘制属性时，应首先按照图元定义的绘制参数进行渲染"该句重复，应删除。

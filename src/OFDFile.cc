@@ -212,44 +212,63 @@ std::string OFDFile::ImplCls::GenerateOFDXML() const{
 }
 
 
+// OFD (section 7.4) P6. OFD.xsd
 bool OFDFile::ImplCls::FromOFDXML(const std::string &strOFDXML){
     bool ok = true;
 
-    XMLReader reader;
+    XMLElementPtr rootElement = XMLElement::ParseRootElement(strOFDXML);
+    if ( rootElement != nullptr ){
+        std::string rootName = rootElement->GetName();
+        if ( rootName == "OFD" ){
 
-    if ( reader.ParseXML(strOFDXML) ){
-        std::string Version, DocType;
-        reader.ReadAttribute("Version", Version);
-        reader.ReadAttribute("DocType", DocType);
-        LOG(INFO) << "Version:" << Version << " DocType:" << DocType;
+            std::string Version, DocType;
+            bool exist = false;
 
-        while ( reader.HasElement() ){
-
-            // -------- <OFD>
-            if ( reader.CheckElement("OFD") ) {
-                if ( reader.EnterChildElement("OFD") ){
-
-                    // -------- <DocBody>
-                    if ( reader.CheckElement("DocBody") ){
-                        OFDDocumentPtr ofdDoc = AddNewDocument();
-                        ofdDoc->FromDocBodyXML(reader);
-
-                        std::string docRoot = ofdDoc->GetDocRoot();
-                        std::string docXMLFile = docRoot + "/Document.xml";
-                        LOG(INFO) << "Document xml:" << docXMLFile;
-
-                        std::string strDocumentXML;
-                        std::tie(strDocumentXML, ok) = ReadZipFileString(docXMLFile);
-                        ok = ofdDoc->FromDocumentXML(strDocumentXML);
-                    }
-                    reader.BackParentElement();
-                } 
+            // -------- <OFD Version="">
+            // Required.
+            std::tie(Version, exist) = rootElement->GetStringAttribute("Version");
+            if ( !exist ){
+                LOG(ERROR) << "Attribute Version is Required in OFD.xsd";
+                return false;
             }
 
-            reader.NextElement();
-        };
+            // -------- <OFD DocType="">
+            // Required.
+            std::tie(DocType, exist) = rootElement->GetStringAttribute("DocType");
+            if ( !exist ){
+                LOG(ERROR) << "Attribute DocType is Required in OFD.xsd";
+                return false;
+            }
+
+            bool hasDocBody = false;
+            XMLElementPtr childElement = rootElement->GetFirstChildElement();
+            while ( childElement != nullptr ){
+                std::string childName = childElement->GetName();
+
+                // -------- <DocBody>
+                // Required.
+                if ( childName == "DocBody" ){
+                    hasDocBody = true;
+
+                    OFDDocumentPtr ofdDoc = AddNewDocument();
+                    ofdDoc->FromDocBodyXML(childElement);
+
+                    std::string docRoot = ofdDoc->GetDocRoot();
+                    std::string docXMLFile = docRoot + "/Document.xml";
+                    LOG(INFO) << "Document xml:" << docXMLFile;
+
+                    std::string strDocumentXML;
+                    std::tie(strDocumentXML, ok) = ReadZipFileString(docXMLFile);
+                    ok = ofdDoc->FromDocumentXML(strDocumentXML);
+                }
+
+                childElement = childElement->GetNextSiblingElement();
+            }
+        } else {
+            LOG(ERROR) << "Root element in OFD.xml is not named 'OFD'";
+        }
     } else {
-        LOG(ERROR) << "ParseXML() failed.";
+        LOG(ERROR) << "No root element in OFD.xml";
     }
 
     return ok;
@@ -306,7 +325,7 @@ bool OFDFile::ImplCls::Save(const std::string &filename){
 
         size_t numPages = document->GetPagesCount();
         for ( size_t k = 0 ; k < numPages ; k++ ){
-            OFDPagePtr page = document->GetPage(n);
+            OFDPagePtr page = document->GetPage(k);
             std::string Page_K = std::string("Page_") + std::to_string(k);
 
             std::string pageDir = Doc_N + "/Pages/" + Page_K;
@@ -314,6 +333,7 @@ bool OFDFile::ImplCls::Save(const std::string &filename){
 
             // Doc_N/Pages/Page_K/Content.xml
             std::string strPageXML = page->GeneratePageXML();
+
             AddZipFile(m_archive, pageDir + "/Content.xml", strPageXML);
 
             // Doc_N/Pages/Page_K/PageRes.xml

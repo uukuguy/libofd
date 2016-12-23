@@ -8,7 +8,8 @@
 #include "OFDCommon.h"
 
 namespace utils{
-    class XMLReader;
+    class XMLElement;
+    typedef std::shared_ptr<XMLElement> XMLElementPtr;
 };
 using namespace utils;
 
@@ -151,7 +152,7 @@ namespace ofd{
         std::string GenerateDocBodyXML() const;
         std::string GenerateDocumentXML() const;
 
-        bool FromDocBodyXML(XMLReader &reader);
+        bool FromDocBodyXML(utils::XMLElementPtr docBodyElement);
         bool FromDocumentXML(const std::string &strDocumentXML);
 
         std::string to_string() const;

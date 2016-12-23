@@ -21,8 +21,8 @@ public:
     void AddTextCode(const Text::TextCode &textCode);
     void ClearTextCodes();
 
-    bool FromAttributesXML(XMLReader &reader);
-    bool CheckElementsXML(XMLReader &reader);
+    bool FromAttributesXML(XMLElementPtr objectElement);
+    bool IterateElementsXML(XMLElementPtr objectElement);
 
     void GenerateAttributesXML(XMLWriter &writer) const;
     void GenerateElementsXML(XMLWriter &writer) const;
@@ -159,45 +159,66 @@ void OFDTextObject::ImplCls::GenerateElementsXML(XMLWriter &writer) const{
 
 // -------- TextObject --------
 // OFD (section 11.2) P63
-bool OFDTextObject::ImplCls::FromAttributesXML(XMLReader &reader){
+bool OFDTextObject::ImplCls::FromAttributesXML(XMLElementPtr objectElement){
     bool ok = true;
-
 
     // -------- <TextObject Font="">
     // Required.
     uint64_t fontID = 0;
-    reader.ReadAttribute("Font", fontID);
+    bool exist = false;
+    std::tie(fontID, exist) = objectElement->GetIntAttribute("Font");
+    if ( !exist ){
+        LOG(ERROR) << "Attribute Font is required in TextObject XML."; 
+        return false;
+    }
 
     // -------- <TextObject Size="">
     // Required.
-    reader.ReadAttribute("Size", FontSize);
+    std::tie(FontSize, exist) = objectElement->GetIntAttribute("Size");
+    if ( !exist ){
+        LOG(ERROR) << "Attribute Size is required in TextObject XML."; 
+        return false;
+    }
 
     return ok;
 }
 
 // -------- TextObject --------
 // OFD (section 11.2) P63
-bool OFDTextObject::ImplCls::CheckElementsXML(XMLReader &reader){
+bool OFDTextObject::ImplCls::IterateElementsXML(XMLElementPtr childElement){
     bool ok = false;
 
-    if (reader.CheckElement("TextCode") ){
+    std::string childName = childElement->GetName();
+
+    if ( childName == "TextCode" ){
 
         Text::TextCode textCode;
-        reader.ReadAttribute("X", textCode.X);
-        reader.ReadAttribute("Y", textCode.Y);
+
+        bool exist = false;
+        std::tie(textCode.X, exist) = childElement->GetFloatAttribute("X");
+        if ( !exist ){
+            LOG(ERROR) << "Attribute X is required in TextCode XML";
+            return false;
+        }
+
+        std::tie(textCode.Y, exist) = childElement->GetFloatAttribute("Y");
+        if ( !exist ){
+            LOG(ERROR) << "Attribute Y is required in TextCode XML";
+            return false;
+        }
+
         // TODO
         //std::string strDeltaX;
-        //reader.ReadAttribute("DeltaX", strDeltaX);
+        //std::tie(strDeltaX, std::ignore) = childElement->GetStringAttribute("DeltaX");
         //std::string strDeltaY;
-        //reader.ReadAttribute("DeltaY", strDeltaY);
+        //std::tie(strDeltaY, std::ignore) = childElement->GetStringAttribute("DeltaY");
 
-        reader.ReadElement(textCode.Text);
+        std::tie(textCode.Text, std::ignore) = childElement->GetStringValue();
 
-        LOG(DEBUG) << "X: " << textCode.X << " Y: " << textCode.Y << " Text: " << textCode.Text;
+        //LOG(DEBUG) << "X: " << textCode.X << " Y: " << textCode.Y << " Text: " << textCode.Text;
         TextCodes.push_back(textCode);
 
         ok = true;
-
     }
 
     return ok;
@@ -346,17 +367,16 @@ void OFDTextObject::GenerateElementsXML(XMLWriter &writer) const{
     m_impl->GenerateElementsXML(writer);
 }
 
-
-bool OFDTextObject::FromAttributesXML(XMLReader &reader){
-    if ( OFDObject::FromAttributesXML(reader) ){
-        return m_impl->FromAttributesXML(reader);
+bool OFDTextObject::FromAttributesXML(XMLElementPtr objectElement){
+    if ( OFDObject::FromAttributesXML(objectElement) ){
+        return m_impl->FromAttributesXML(objectElement);
     }
     return false;
 }
 
-bool OFDTextObject::CheckElementsXML(XMLReader &reader){
-    if ( !OFDObject::CheckElementsXML(reader) ){
-        return m_impl->CheckElementsXML(reader);
+bool OFDTextObject::IterateElementsXML(XMLElementPtr childElement){
+    if ( OFDObject::IterateElementsXML(childElement) ){
+        return m_impl->IterateElementsXML(childElement);
     }
     return false;
 }

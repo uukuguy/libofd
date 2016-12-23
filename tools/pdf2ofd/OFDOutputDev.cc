@@ -12,8 +12,10 @@ GBool rawOrder = gFalse;
 
 OFDOutputDev::OFDOutputDev(ofd::OFDFilePtr ofdFile) : 
     m_pdfDoc(nullptr),
-    m_xref(nullptr), m_textPage(nullptr), m_actualText(nullptr),
-    m_ofdFile(ofdFile), m_ofdDocument(nullptr), m_currentOFDPage(nullptr) {
+    m_xref(nullptr), m_textPage(nullptr), 
+    m_actualText(nullptr),
+    m_ofdFile(ofdFile), m_ofdDocument(nullptr), m_currentOFDPage(nullptr),
+    m_currentFontSize(14.0), m_currentCTM(nullptr) {
 
     m_textPage = new TextPage(rawOrder);
     m_actualText = new ActualText(m_textPage);
@@ -44,8 +46,6 @@ void OFDOutputDev::ProcessDoc(PDFDoc *pdfDoc){
     LOG(INFO) << "Total " << numPages << " pages in pdf file"; 
 
     for ( auto i = 0 ; i < numPages ; i++ ){
-
-
         pdfDoc->displayPage(this, i + 1, resolution, resolution, 0, useMediaBox, crop, printing);
     }
 }
@@ -158,6 +158,44 @@ void printLine(TextLine *line, OFDLayerPtr bodyLayer){
         if (lineYMax < yMax) lineYMax = yMax;
 
         const std::string myString = word->getText()->getCString();
+
+        int charPos = word->getCharPos();
+        int charLen = word->getCharLen();
+        LOG(INFO) << "TextWord charPos: " << charPos << " charLen: " << charLen;
+
+        // TextWord Rotation
+        int rotation = word->getRotation();
+
+        double baseLine = word->getBaseline();
+        
+        // TextWord Color
+        double red, green, blue;
+        word->getColor(&red, &green, &blue);
+        LOG(INFO) << "TextWord Baseline: " << baseLine << " Rotation: " << rotation << " Color: (" << red << ", " << green << ", " << blue << ")";
+        // TextWord Font
+        double fontSize = word->getFontSize();
+        int numChars = word->getLength();
+        LOG(INFO) << "TextWord FontSize=" << fontSize << " numChars=" << numChars << " len(string)=" << myString.length() << " size(string)=" << myString.size();
+        for ( int k = 0 ; k < numChars ; k++ ){
+            TextFontInfo *fontInfo = word->getFontInfo(k);
+            GooString *fontName = fontInfo->getFontName();
+            char tCh[4];
+            tCh[0] = myString[k*3];
+            tCh[1] = myString[k*3+1];
+            tCh[2] = myString[k*3+2];
+            tCh[3] = '\0';
+
+            double ascent = fontInfo->getAscent();
+            double descent = fontInfo->getDescent();
+
+            double xMinA, yMinA, xMaxA, yMaxA;
+            word->getCharBBox(k, &xMinA, &yMinA, &xMaxA, &yMaxA);
+
+            double edge = word->getEdge(k);
+
+            LOG(INFO) << tCh << "(" << xMinA << ", " << yMinA << ", " << xMaxA << ", " << yMaxA << ") " << " Edge: " << edge << " Ascent: " << ascent << " Descent: " << descent << " Font[" << k << "] name: " << std::string(fontName->getCString());
+        }
+
         wordXML << "          <word xMin=\"" << xMin << "\" yMin=\"" << yMin << "\" xMax=\"" <<
             xMax << "\" yMax=\"" << yMax << "\">" << myString << "</word>\n";
 
@@ -186,6 +224,8 @@ void processTextPage(TextPage *textPage, OFDPagePtr currentOFDPage){
     if ( currentOFDPage != nullptr ){
         bodyLayer = currentOFDPage->GetBodyLayer();
     }
+
+    LOG(DEBUG) << "processTextPage(). page ID: " << currentOFDPage->GetID();
 
     double xMin, yMin, xMax, yMax;
     for ( auto flow = textPage->getFlows(); flow != nullptr ; flow = flow->getNext()){
@@ -367,10 +407,27 @@ void OFDOutputDev::updateFont(GfxState *state){
 
             //PrintFonts();
         }
+
+        m_currentFontSize = state->getFontSize();
+        m_currentCTM = state->getTextMat();
+        //LOG(INFO) << "UpdateFont() fontSize: " << fontSize << " sizeof(ctm): " << sizeof(ctm);
+        //LOG(INFO) << "ctm: [" << ctm[0] << ", " << ctm[1] << ", " << ctm[2] << ", "
+            //<< ctm[3] << ", " << ctm[4] << ", " << ctm[5] << "]";
     }
 }
 
+//#include <UTF.h>
+//#include <UTF8.h>
 void OFDOutputDev::beginString(GfxState *state, GooString *s){
+
+    //Unicode *uni = NULL;
+    //__attribute__((unused)) int length = TextStringToUCS4(s, &uni);
+
+    //mapUTF8(u, buf, bufSize);
+
+    //gfree(uni);
+
+    //LOG(INFO) << "beginString() : " << std::string((const char *)uni);
 }
 
 void OFDOutputDev::endString(GfxState *state){
@@ -398,14 +455,23 @@ void OFDOutputDev::incCharCount(int nChars){
     }
 }
 
-void OFDOutputDev::beginActualText(GfxState *state, GooString *text) {
-    if ( m_textPage != nullptr ){
-        m_actualText->begin(state, text);
-    }
-}
+//#include <UTF.h>
+//void OFDOutputDev::beginActualText(GfxState *state, GooString *text) {
+    //LOG(INFO) << "********************* beginActualText() ******************";
+    //if ( m_textPage != nullptr ){
+        //m_actualText->begin(state, text);
 
-void OFDOutputDev::endActualText(GfxState *state) {
-    if ( m_textPage != nullptr ){
-        m_actualText->end(state);
-    }
-}
+        //GooString *aText = new GooString(text);
+        //Unicode *uni = NULL;
+        //__attribute__((unused)) int length = TextStringToUCS4(aText, &uni);
+        //gfree(uni);
+        //delete aText;
+        //LOG(INFO) << "beginActualText: " << std::string((const char*)text);
+    //}
+//}
+
+//void OFDOutputDev::endActualText(GfxState *state) {
+    //if ( m_textPage != nullptr ){
+        //m_actualText->end(state);
+    //}
+//}

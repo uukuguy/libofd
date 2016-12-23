@@ -2,6 +2,7 @@
 #define __OFDFONT_H__
 
 #include <string>
+#include <vector>
 #include <memory>
 
 namespace ofd {
@@ -25,16 +26,21 @@ namespace ofd {
     };
 
     // ======== class OFDFont ========
-    class OFDFont {
+    // OFD (section 11.1) P61. Res.xsd.
+    typedef struct OFDFont {
     public:
         OFDFont();
-        virtual ~OFDFont();
+        ~OFDFont();
 
     public:
         int ID;
         std::string FontName;
         std::string FamilyName;
         std::string Charset;
+        bool        Serif;
+        bool        Bold;
+        bool        Italic;
+        bool        FixedWidth;
         std::string FontFile;
 
         Font::Type FontType;
@@ -46,8 +52,10 @@ namespace ofd {
 
         std::string ToString() const;
 
-    }; // class OFDFont
+    } OFDFont_t; // class OFDFont
     typedef std::shared_ptr<OFDFont> OFDFontPtr;
+
+    typedef std::vector<OFDFont> FontArray;
 
 }; // namespace ofd
 

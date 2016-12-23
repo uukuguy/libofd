@@ -97,16 +97,14 @@ void OFDObject::GenerateElementsXML(XMLWriter &writer) const{
 
 }
 
-bool OFDObject::FromXML(utils::XMLReader &reader, const std::string &tagName){
+bool OFDObject::FromXML(XMLElementPtr objectElement){
     bool ok = true;
 
-    if ( reader.CheckElement(tagName) ){
-        ok = FromAttributesXML(reader); 
-        if ( ok && reader.EnterChildElement(tagName) ){
-            ok = FromElementsXML(reader);
-
-            reader.BackParentElement();
-        }
+    ok = FromAttributesXML(objectElement);
+    if ( ok ){
+        FromElementsXML(objectElement);
+    } else {
+        LOG(WARNING) << "FromAttributesXML() return false;";
     }
 
     return ok;
@@ -114,18 +112,28 @@ bool OFDObject::FromXML(utils::XMLReader &reader, const std::string &tagName){
 
 // -------- CT_GraphicUnit --------
 // OFD (section 8.5) P50.
-bool OFDObject::FromAttributesXML(XMLReader &reader){
+bool OFDObject::FromAttributesXML(utils::XMLElementPtr objectElement){
     bool ok = true;
 
     // -------- <TextObject ID="">
     // Required.
-    reader.ReadAttribute("ID", ID);
+    bool exist = false;
+    std::tie(ID, exist) = objectElement->GetIntAttribute("ID");
+    if ( !exist ){
+        LOG(ERROR) << "Attribute ID is required in Object XML."; 
+        return false;
+    }
 
     // -------- <Object Boundary="">
     // Required.
     std::string strBoundary;
-    reader.ReadAttribute("Boundary", strBoundary);
+    std::tie(strBoundary, exist) = objectElement->GetStringAttribute("Boundary");
+    LOG(INFO) << "Boundary: " << strBoundary;
 
+    if ( !exist ){
+        LOG(ERROR) << "Attribute ID is required in Object XML."; 
+        return false;
+    }
     std::vector<std::string> tokens = utils::SplitString(strBoundary);
     if ( tokens.size() >= 4 ){
         Boundary.Left = atof(tokens[0].c_str());
@@ -134,18 +142,18 @@ bool OFDObject::FromAttributesXML(XMLReader &reader){
         Boundary.Height = atof(tokens[3].c_str());
         ok = true;
     } else {
-        LOG(ERROR) << "Box String tokens size >= 4 failed. boxString:" << strBoundary << " element name: " << reader.GetElementName();
+        LOG(ERROR) << "Box String tokens size >= 4 failed. boxString:" << strBoundary << " element name: " << objectElement->GetName();
         return false;
     }
 
     // -------- <Object LineWidth="">
     // Optional
-    reader.ReadAttribute("LineWidth", LineWidth);
+    std::tie(LineWidth, std::ignore) = objectElement->GetFloatAttribute("LineWidth");
 
     // -------- <Object Alpha="">
     // Optional
     uint64_t alpha;
-    reader.ReadAttribute("Alpha", alpha);
+    std::tie(alpha, std::ignore) = objectElement->GetFloatAttribute("Alpha");
     Alpha = alpha;
 
     // -------- <Object Name="">
@@ -175,18 +183,18 @@ bool OFDObject::FromAttributesXML(XMLReader &reader){
     // -------- <DashPattern Name="">
     // Optional
 
-
     return ok;
 }
 
-bool OFDObject::FromElementsXML(XMLReader &reader){
+bool OFDObject::FromElementsXML(utils::XMLElementPtr objectElement){
     bool ok = true;
 
-    while ( reader.HasElement() ){
+    XMLElementPtr childElement = objectElement->GetFirstChildElement();
+    while ( childElement != nullptr ){
 
-        CheckElementsXML(reader);
+        IterateElementsXML(childElement);
 
-        reader.NextElement();
+        childElement = childElement->GetNextSiblingElement();
     }
 
     return ok;
@@ -194,16 +202,16 @@ bool OFDObject::FromElementsXML(XMLReader &reader){
 
 // -------- CT_GraphicUnit --------
 // OFD (section 8.5) P50.
-bool OFDObject::CheckElementsXML(XMLReader &reader){
-    bool ok = false;
+bool OFDObject::IterateElementsXML(utils::XMLElementPtr childElement){
+    bool ok = true;
 
-        // -------- <Actions Name="">
-        // Optional
 
-        // -------- <Clips Name="">
-        // Optional
+    // -------- <Actions Name="">
+    // Optional
+
+    // -------- <Clips Name="">
+    // Optional
 
 
     return ok;
 }
-

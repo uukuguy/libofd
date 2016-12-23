@@ -4,6 +4,7 @@
 using namespace ofd;
 
 OFDFont::OFDFont() : 
+    Charset("unicode"), Serif(false), Bold(false), Italic(false), FixedWidth(false),
     FontType(Font::Type::Unknown), FontLoc(Font::Location::Unknown),
     FontStream(nullptr), FontStreamSize(0){
 }

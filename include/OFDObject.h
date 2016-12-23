@@ -9,6 +9,8 @@
 namespace utils{
     class XMLWriter;
     class XMLReader;
+    class XMLElement;
+    typedef std::shared_ptr<utils::XMLElement> XMLElementPtr;
 };
 
 namespace ofd{
@@ -43,17 +45,19 @@ namespace ofd{
         int          Alpha;
 
         void GenerateXML(utils::XMLWriter &writer) const;
-        bool FromXML(utils::XMLReader &reader, const std::string &tagName);
+        //bool FromXML(utils::XMLReader &reader, const std::string &tagName);
+        bool FromXML(utils::XMLElementPtr objectElement);
 
     protected:
         virtual void GenerateAttributesXML(utils::XMLWriter &writer) const;
         virtual void GenerateElementsXML(utils::XMLWriter &writer) const;
 
-        virtual bool FromAttributesXML(utils::XMLReader &reader);
-        virtual bool CheckElementsXML(utils::XMLReader &reader);
+        virtual bool FromAttributesXML(utils::XMLElementPtr objectElement);
+        virtual bool IterateElementsXML(utils::XMLElementPtr childElement);
 
     private:
         bool FromElementsXML(utils::XMLReader &reader);
+        bool FromElementsXML(utils::XMLElementPtr objectElement);
 
     }; // class OFDObject
 

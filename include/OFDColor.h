@@ -6,11 +6,14 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include "OFDCommon.h"
 
 namespace ofd{
 
     struct OFDColor;
     typedef std::vector<OFDColor> ColorArray;
+    struct OFDColorSpace;
+    typedef std::vector<OFDColorSpace> ColorSpaceArray;
 
     namespace ColorSpace{
         // 颜色空间的类型。
@@ -63,7 +66,7 @@ namespace ofd{
     }; // namespace Color
 
     // ======== struct OFDColorSpace ========
-    // 标准 P31 页，Res.xsd。
+    // OFD (section 8.3.1) P31，Res.xsd。
     typedef struct OFDColorSpace{
 
         ColorSpace::Type Type;    // 颜色空间的类型，必选。
@@ -77,7 +80,7 @@ namespace ofd{
     typedef std::shared_ptr<OFDColorSpace> OFDColorSpacePtr;
 
     // ======== struct OFDColor ========
-    // 标准 P32 页，Page.xsd。
+    // OFD (section 8.3.2) P32, Page.xsd。
     typedef struct OFDColor{
 
         OFDColorSpacePtr ColorSpace; // 引用资源文件中颜色空间的标识。默认值为文档设定的颜色空间。
