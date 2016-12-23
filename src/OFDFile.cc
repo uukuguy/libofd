@@ -312,12 +312,20 @@ bool OFDFile::ImplCls::Save(const std::string &filename){
         strDocumentXML = m_documents[0]->GenerateDocumentXML();
         AddZipFile(m_archive, Doc_N + "/Document.xml", strDocumentXML); 
 
+        __attribute__((unused)) const OFDDocument::CommonData &commonData = document->GetCommonData();
+
         // Doc_N/PublicRes.xml
         std::string strPublicResXML;
+        if ( commonData.PublicRes != nullptr ){
+            strPublicResXML = commonData.PublicRes->GenerateResXML();
+        }
         AddZipFile(m_archive, Doc_N + "/PublicRes.xml", strPublicResXML); 
 
         // Doc_N/DocumentRes.xml
         std::string strDocumentResXML;
+        if ( commonData.DocumentRes != nullptr ){
+            strDocumentResXML = commonData.DocumentRes->GenerateResXML();
+        }
         AddZipFile(m_archive, Doc_N + "/DocumentRes.xml", strDocumentResXML); 
         
         // mkdir Doc_N/Pages

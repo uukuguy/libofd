@@ -46,6 +46,8 @@ namespace ofd{
         // 保存OFD包文件
         bool Save(const std::string &filename = "");
 
+        // ======== utils ========
+
         // 返回对象摘要信息字符串。
         std::string to_string() const;
 

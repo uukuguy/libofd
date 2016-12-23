@@ -5,7 +5,7 @@
 #include <string>
 
 #define OFDXML_HEAD_ATTRIBUTES \
-    writer.WriteAttribute("xmlns:ofd", "http://www.ofdspec.org/2016"); 
+    writer.WriteAttribute("xmlns:ofd", std::string("http://www.ofdspec.org/2016")); 
 
 // Defined in libxml/tree.h
 struct _xmlNode;

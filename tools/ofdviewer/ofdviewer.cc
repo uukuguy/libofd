@@ -409,6 +409,12 @@ int main(int argc, char *argv[]){
     assert(document != nullptr);
     LOG(DEBUG) << document->to_string();
 
+    bool bOpened = document->Open();
+    if ( !bOpened ){
+        LOG(ERROR) << "Open OFD Document failed. filename: " << filename;
+        exit(-1);
+    }
+
     size_t total_pages = document->GetPagesCount();
     LOG(INFO) << total_pages << " pages in " << filename;
     if ( total_pages > 0 ){

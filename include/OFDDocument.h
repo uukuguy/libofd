@@ -6,6 +6,7 @@
 #include <string>
 #include <unordered_map>
 #include "OFDCommon.h"
+#include "OFDRes.h"
 
 namespace utils{
     class XMLElement;
@@ -68,8 +69,9 @@ namespace ofd{
 
     } CT_DocInfo_t;
 
+    // ******** struct DocBody ********
     // 文件对象入口，可以存在多个，以便在一个文档中包含多个版式文件。
-    class DocBody{
+    typedef struct DocBody{
     public:
 
         class Version{
@@ -89,7 +91,7 @@ namespace ofd{
                                  // 用于定义文件因注释和其它改动产生的版本信息。
         ST_Loc       Signatures; // 指向文档中签名和签章结构。
 
-    }; // DocBody
+    } DocBody_t;
     typedef std::shared_ptr<DocBody> DocBodyPtr;
 
     // ======== class OFDDocument ========
@@ -124,10 +126,12 @@ namespace ofd{
             CT_PageArea PageArea;
 
             // 公共资源序列，每一个节点指向OFD包内的一个资源描述文档。
-            std::vector<ST_Loc> PublicRes;
+            //std::vector<ST_Loc> PublicRes;
+            OFDResPtr PublicRes;
 
             // 文档资源序列，每一个节点指向OFD包内的一个资源描述文档。
-            std::vector<ST_Loc> DocumentRes;
+            //std::vector<ST_Loc> DocumentRes;
+            OFDResPtr DocumentRes;
 
             // 模板页序列，为一系列模板页的集合，模板页内容结构和普通页相同。
             //CT_TemplatePage TemplatePage;

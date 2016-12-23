@@ -60,8 +60,8 @@ private:
 OFDDocument::ImplCls::ImplCls(OFDFile *ofdFile, OFDDocument *ofdDocument, const std::string &docRoot) : 
     m_ofdFile(ofdFile), m_ofdDocument(ofdDocument), m_opened(false){
     m_docBody.DocRoot = docRoot;
-    m_commonData.PublicRes.push_back("PublicRes.xml");
-    m_commonData.DocumentRes.push_back("DocumentRes.xml");
+    m_commonData.PublicRes = std::make_shared<OFDRes>(std::shared_ptr<OFDFile>(ofdFile), "PublicRes.xml");
+    m_commonData.DocumentRes = std::make_shared<OFDRes>(std::shared_ptr<OFDFile>(ofdFile), "DocumentRes.xml");
 }
 
 OFDDocument::ImplCls::~ImplCls(){
@@ -77,6 +77,24 @@ std::string OFDDocument::ImplCls::to_string() const{
 
 bool OFDDocument::ImplCls::Open(){
     if ( m_opened ) return true;
+
+    if ( m_commonData.PublicRes != nullptr ){
+        std::string strResXML;
+        std::tie(strResXML, std::ignore) = m_ofdFile->ReadZipFileString(m_docBody.DocRoot + "/" + m_commonData.PublicRes->GetResDescFile());
+        if ( !m_commonData.PublicRes->FromResXML(strResXML) ){
+            LOG(ERROR) << "m_commonData.PublicRes.FromResXML() failed.";
+            return false;
+        }
+    }
+
+    if ( m_commonData.DocumentRes != nullptr ){
+        std::string strResXML;
+        std::tie(strResXML, std::ignore) = m_ofdFile->ReadZipFileString(m_docBody.DocRoot + "/ " + m_commonData.DocumentRes->GetResDescFile());
+        if ( !m_commonData.DocumentRes->FromResXML(strResXML) ){
+            LOG(ERROR) << "m_commonData.DocumentRes.FromResXML() failed.";
+            return false;
+        }
+    }
 
     return m_opened;
 }
@@ -251,18 +269,14 @@ void OFDDocument::ImplCls::generateCommonDataXML(XMLWriter &writer) const{
 
         // -------- <PublicRes>
         // Optional.
-        if ( m_commonData.PublicRes.size() > 0 ){
-            for ( auto pr : m_commonData.PublicRes ){
-                writer.WriteElement("PublicRes", pr);
-            }
+        if ( m_commonData.PublicRes != nullptr ){
+            writer.WriteElement("PublicRes", m_commonData.PublicRes->GetResDescFile());
         }
 
         // -------- <DocumentRes>
         // Optional.
-        if ( m_commonData.DocumentRes.size() > 0 ){
-            for ( auto dr : m_commonData.DocumentRes ){
-                writer.WriteElement("DocumentRes", dr);
-            }
+        if ( m_commonData.DocumentRes != nullptr ){
+            writer.WriteElement("DocumentRes", m_commonData.DocumentRes->GetResDescFile());
         }
 
         // TODO
@@ -656,7 +670,7 @@ bool OFDDocument::ImplCls::FromCommonDataXML(XMLElementPtr commonDataElement){
             std::string res;
             std::tie(res, std::ignore) = childElement->GetStringValue();
             if ( !res.empty() ){
-                m_commonData.PublicRes.push_back(res);
+                m_commonData.PublicRes = std::make_shared<OFDRes>(std::shared_ptr<OFDFile>(m_ofdFile), res);
             }
 
         } else if ( childName == "DocumentRes" ){
@@ -665,7 +679,7 @@ bool OFDDocument::ImplCls::FromCommonDataXML(XMLElementPtr commonDataElement){
             std::string res;
             std::tie(res, std::ignore) = childElement->GetStringValue();
             if ( !res.empty() ){
-                m_commonData.DocumentRes.push_back(res);
+                m_commonData.DocumentRes = std::make_shared<OFDRes>(std::shared_ptr<OFDFile>(m_ofdFile), res);
             }
 
         //} else if ( childName == "TemplatePage" ){

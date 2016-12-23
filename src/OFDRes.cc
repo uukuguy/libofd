@@ -10,7 +10,7 @@ using namespace utils;
 
 class OFDRes::ImplCls{
 public:
-    ImplCls(OFDFilePtr ofdFile);
+    ImplCls(OFDFilePtr ofdFile, const std::string &resDescFile);
     ~ImplCls();
 
     void AddColorSpace(const OFDColorSpace &ofdColorSpace){m_colorSpaces.push_back(ofdColorSpace);};
@@ -29,10 +29,12 @@ public:
     std::string m_baseLoc;
     ColorSpaceArray m_colorSpaces;
     FontArray m_fonts;
+    std::string m_resDescFile;
 
 }; // class OFDRes::ImplCls
 
-OFDRes::ImplCls::ImplCls(OFDFilePtr ofdFile) : m_ofdFile(ofdFile) {
+OFDRes::ImplCls::ImplCls(OFDFilePtr ofdFile, const std::string &resDescFile) : 
+    m_ofdFile(ofdFile), m_baseLoc("Res"), m_resDescFile(resDescFile) {
 }
 
 OFDRes::ImplCls::~ImplCls(){
@@ -123,36 +125,46 @@ std::string OFDRes::ImplCls::GenerateResXML() const{
         // TODO
         // -------- <ColorSpaces>
         // Optional.
-        writer.StartElement("ColorSpaces");{
-            generateColorSpacesXML(writer);    
-        } writer.EndElement();
+        if ( m_colorSpaces.size() > 0 ){
+            writer.StartElement("ColorSpaces");{
+                generateColorSpacesXML(writer);    
+            } writer.EndElement();
+        }
 
         // TODO
         // -------- <DrawParams>
         // Optional.
-        writer.StartElement("DrawParams");{
-            generateDrawParamsXML(writer);    
-        } writer.EndElement();
+        //if ( m_drawParams.size() > 0 ){
+            //writer.StartElement("DrawParams");{
+                //generateDrawParamsXML(writer);    
+            //} writer.EndElement();
+        //}
 
         // -------- <Fonts>
         // Optional.
-        writer.StartElement("Fonts");{
-            generateFontsXML(writer, m_fonts);    
-        } writer.EndElement();
+        if ( m_fonts.size() > 0 ){
+            writer.StartElement("Fonts");{
+                generateFontsXML(writer, m_fonts);    
+            } writer.EndElement();
+        }
 
         // TODO
         // -------- <MultiMedias>
         // Optional.
-        writer.StartElement("MultiMedias");{
-            generateMultiMediasXML(writer);    
-        } writer.EndElement();
+        //if ( m_multiMedias.size() > 0 ){
+            //writer.StartElement("MultiMedias");{
+                //generateMultiMediasXML(writer);    
+            //} writer.EndElement();
+        //}
 
         // TODO
         // -------- <CompositeGraphicUnits>
         // Optional.
-        writer.StartElement("CompositeGraphicUnits");{
-            generateCompositeGraphicUnitsXML(writer);    
-        } writer.EndElement();
+        //if ( m_compositeGraphicUnits.size() > 0 ){
+            //writer.StartElement("CompositeGraphicUnits");{
+                //generateCompositeGraphicUnitsXML(writer);    
+            //} writer.EndElement();
+        //}
 
     } writer.EndElement();
 
@@ -168,7 +180,68 @@ bool OFDRes::ImplCls::FromColorSpacesXML(XMLElementPtr colorSpacesElement){
 }
 
 bool OFDRes::ImplCls::FromFontsXML(XMLElementPtr fontsElement){
-    bool ok = true;
+    bool ok = false;
+
+    XMLElementPtr childElement = fontsElement->GetFirstChildElement();
+    while ( childElement != nullptr ){
+        std::string childName = childElement->GetName();
+
+        // -------- <Font>
+        // OFD (section 11.1) P61. Res.xsd.
+        if ( childName == "Font" ){
+            XMLElementPtr fontElement = childElement;
+
+            OFDFont font;
+            bool exist = false;
+
+            // -------- <Font FontName="">
+            // Required.
+            std::tie(font.FontName, exist) = fontElement->GetStringAttribute("FontName");
+            if ( !exist ){
+                LOG(ERROR) << "Attribute FontName is required in Font XML.";
+            } else {
+
+                // -------- <Font FamilyName="">
+                // Optional
+                std::tie(font.FamilyName, std::ignore) = fontElement->GetStringAttribute("FamilyName");
+
+                // -------- <Font Charset="">
+                // Optional
+                std::tie(font.Charset, std::ignore) = fontElement->GetStringAttribute("Charset");
+
+                // -------- <Font Charset="">
+                // Optional
+                std::tie(font.Charset, std::ignore) = fontElement->GetStringAttribute("Charset");
+                
+                // -------- <Font Serif="">
+                // Optional
+                std::tie(font.Serif, std::ignore) = fontElement->GetBooleanAttribute("Serif");
+
+                // -------- <Font Bold="">
+                // Optional
+                std::tie(font.Bold, std::ignore) = fontElement->GetBooleanAttribute("Bold");
+
+                // -------- <Font Italic="">
+                // Optional
+                std::tie(font.Italic, std::ignore) = fontElement->GetBooleanAttribute("Italic");
+
+                // -------- <Font FixedWidth="">
+                // Optional
+                std::tie(font.FixedWidth, std::ignore) = fontElement->GetBooleanAttribute("FixedWidth");
+
+                XMLElementPtr fontFileElement = fontElement->GetFirstChildElement();
+                if ( fontFileElement != nullptr && fontFileElement->GetName() == "FontFile" ){
+                    std::tie(font.FontFile, std::ignore) = fontFileElement->GetStringValue();
+                }
+
+                m_fonts.push_back(font);
+                ok = true;
+            }
+
+        }
+
+        childElement = childElement->GetNextSiblingElement();
+    }
 
     return ok;
 }
@@ -227,61 +300,13 @@ bool OFDRes::ImplCls::FromResXML(const std::string &strResXML){
         }
     }
 
-    //XMLReader reader;
-    //if ( reader.ParseXML(strResXML) ){
-
-        //if ( reader.CheckElement("Res") ){
-            //if ( reader.EnterChildElement("Res") ){
-
-                //// -------- <Res BaseLoc="">
-                //// Required.
-                //reader.ReadAttribute("BaseLoc", m_baseLoc);
-                //if ( m_baseLoc.empty() ) return false;
-
-                //while ( reader.HasElement() ){
-
-                    //// -------- <ColorSpaces>
-                    //// Optional
-                    //if ( reader.CheckElement("ColorSpaces") ){
-                        //FromColorSpacesXML(reader, "ColorSpaces");
-
-                    //// TODO
-                    //// -------- <DrawParams>
-                    //// Optional
-                    ////} else if ( reader.CheckElement("DrawParams") ){
-
-                    //// -------- <Fonts>
-                    //// Optional
-                    //} else if ( reader.CheckElement("Fonts") ){
-                        //FromFontsXML(reader, "Fonts");
-
-                    //// TODO
-                    //// -------- <MultiMedias>
-                    //// Optional
-                    ////} else if ( reader.CheckElement("MultiMedias") ){
-
-                    //// TODO
-                    //// -------- <CompositeGraphicUnits>
-                    //// Optional
-                    ////} else if ( reader.CheckElement("CompositeGraphicUnits") ){
-
-                    //}
-
-                    //reader.NextElement();
-                //}
-
-                //reader.BackParentElement();
-            //}
-        //}
-    //}
-
     return ok;
 }
 
 // **************** class OFDRes ****************
 
-OFDRes::OFDRes(OFDFilePtr ofdFile){
-    m_impl = std::unique_ptr<ImplCls>(new ImplCls(ofdFile));
+OFDRes::OFDRes(OFDFilePtr ofdFile, const std::string &resDescFile){
+    m_impl = std::unique_ptr<ImplCls>(new ImplCls(ofdFile, resDescFile));
 }
 
 OFDRes::~OFDRes(){
@@ -309,4 +334,8 @@ std::string OFDRes::GenerateResXML() const{
 
 bool OFDRes::FromResXML(const std::string &strResXML){
     return m_impl->FromResXML(strResXML);
+}
+
+std::string OFDRes::GetResDescFile() const{
+    return m_impl->m_resDescFile;
 }

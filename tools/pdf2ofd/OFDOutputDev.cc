@@ -385,10 +385,15 @@ std::shared_ptr<ofd::OFDFont> GfxFont_to_OFDFont(GfxFont *gfxFont, XRef *xref){
     }
 
     // -------- FontStream --------
-    int fontStreamSize = 0;
-    char *fontStream = gfxFont->readEmbFontFile(xref, &fontStreamSize);
-    ofdFont->FontStream = fontStream;
-    ofdFont->FontStreamSize = fontStreamSize;
+    //int fontStreamSize = 0;
+    //char *fontStream = gfxFont->readEmbFontFile(xref, &fontStreamSize);
+
+    //ofdFont->FontStream = fontStream;
+    //ofdFont->FontStreamSize = fontStreamSize;
+
+    //ofdFont->FontStream = new char[fontStreamSize];
+    //memcpy(ofdFont->FontStream, fontStream, fontStreamSize);
+    //ofdFont->FontStreamSize = fontStreamSize;
 
     return ofdFont;
 }
@@ -396,6 +401,9 @@ std::shared_ptr<ofd::OFDFont> GfxFont_to_OFDFont(GfxFont *gfxFont, XRef *xref){
 void OFDOutputDev::updateFont(GfxState *state){
     GfxFont *gfxFont = state->getFont();
     if ( gfxFont != nullptr ){
+        //ofd::OFDDocument::CommonData &commonData = ofdDoc->GetCommonData();
+        //commonData.PublicRes->GetFonts();
+
         Ref *ref = gfxFont->getID();
         int fontID = ref->num;
         if ( m_fonts.find(fontID) == m_fonts.end() ){

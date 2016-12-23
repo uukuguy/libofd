@@ -97,6 +97,24 @@ int main(int argc, char *argv[]){
         OFDOutputDev *ofdOut = new OFDOutputDev(ofdFile);
         ofdOut->ProcessDoc(pdfDoc);
 
+        // Fonts
+        const std::map<int, std::shared_ptr<ofd::OFDFont> > &fonts = ofdOut->GetFonts();
+        ofd::OFDDocumentPtr ofdDoc = ofdFile->GetDocument(0);
+        __attribute__((unused)) ofd::OFDDocument::CommonData &commonData = ofdDoc->GetCommonData();
+        LOG(INFO) << "--------- fonts.size()=" << fonts.size();
+        for ( auto font :fonts){
+            if ( font.second != nullptr ){
+                if (commonData.PublicRes != nullptr ){
+                    LOG(DEBUG) << "Font Name: " << font.second->FontName;
+                    commonData.PublicRes->AddFont(*(font.second));
+                } else {
+                    LOG(ERROR) << "commonData.PublicRes == nullptr";
+                }
+            } else {
+                LOG(WARNING) << "font in fonts is nullptr";
+            }
+        }
+
         ofdFile->Save(ofdFilename);
 
         delete ofdOut;

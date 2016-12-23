@@ -88,6 +88,8 @@ The command above will create a OFD file named sampl0.ofd in current directory, 
 
 ## Errata
 
+- Section 6.2 P4 图中表明每个Doc\_N只有一个PublicRes以及一个DocumentRes，而Section 7.5 P10 表6中PublicRes和DocumentRes的说明明确两者都是“资源序列，每个节点指向OFD包内的一个资源描述文档“，但它们的类型都是ST\_Loc。矛盾的情况下，libofd按结构图中的定义，只允许一个PublicRes、一个DocumentRes。页面中的PageRes也有同样的问题。
+
 - Section 7.4 P8 表4第一行DocID备注“可选”，按附录A.1 OFD.xsd中P92定义应为“必选”。
 
 - Section 8.3.2 P32 表26最后一行“格构高洛德渐变”应为“网格高洛德渐变”

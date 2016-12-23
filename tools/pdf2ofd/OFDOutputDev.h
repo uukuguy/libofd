@@ -83,6 +83,8 @@ public:
     //virtual void beginActualText(GfxState *state, GooString *text);
     //virtual void endActualText(GfxState *state);
 
+    const std::map<int, std::shared_ptr<ofd::OFDFont> > &GetFonts()const{
+    return m_fonts;}
 private:
 
     PDFDoc *m_pdfDoc;

@@ -15,7 +15,7 @@ namespace ofd{
     // OFD (section 7.9) P23. Res.xsd
     class OFDRes{
     public:
-        OFDRes(OFDFilePtr ofdFile);
+        OFDRes(OFDFilePtr ofdFile, const std::string &resDescFile);
         ~OFDRes();
 
         std::string GetBaseLoc() const;
@@ -29,11 +29,15 @@ namespace ofd{
         std::string GenerateResXML() const;
         bool FromResXML(const std::string &strResXML);
 
+        std::string GetResDescFile() const;
+
     private:
         class ImplCls;
         std::unique_ptr<ImplCls> m_impl;
 
     }; // class OFDRes
+
+    typedef std::shared_ptr<OFDRes> OFDResPtr;
 
 }; // namespace ofd
 
