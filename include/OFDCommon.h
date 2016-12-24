@@ -7,6 +7,17 @@
 
 namespace ofd{
 
+    class OFDPackage;
+    typedef std::shared_ptr<OFDPackage> OFDPackagePtr;
+    class OFDDocument;
+    typedef std::shared_ptr<OFDDocument> OFDDocumentPtr;
+    class OFDPage;
+    typedef std::shared_ptr<OFDPage> OFDPagePtr;
+    class OFDLayer;
+    typedef std::shared_ptr<OFDLayer> OFDLayerPtr;
+    class OFDObject;
+    typedef std::shared_ptr<OFDObject> OFDObjectPtr;
+
     // 以下类型定义在OFD标准的Definitions.xsd文件中
 
     // ST_ID: 标识，无符号整数，应在文档内唯一。0表示无标识。

@@ -16,10 +16,6 @@ using namespace utils;
 
 namespace ofd{
 
-    class OFDFile;
-    class OFDPage;
-    typedef std::shared_ptr<OFDPage> OFDPagePtr;
-
     namespace DocInfo{
         // 文档分类
         enum class Usage{
@@ -95,16 +91,19 @@ namespace ofd{
     typedef std::shared_ptr<DocBody> DocBodyPtr;
 
     // ======== class OFDDocument ========
-    class OFDDocument{
+    class OFDDocument : public std::enable_shared_from_this<OFDDocument> {
     public:
-        OFDDocument(OFDFile *ofdFile, const std::string &docRoot);
+        OFDDocument(OFDPackagePtr ofdFile, const std::string &docRoot);
         virtual ~OFDDocument();
 
-        const OFDFile *GetOFDFile() const;
+        const OFDPackagePtr GetOFDPackage() const;
+        OFDPackagePtr GetOFDPackage();
 
         bool Open();
         void Close();
         bool IsOpened() const;
+
+        OFDDocumentPtr GetSelf();
 
         const DocBody& GetDocBody() const;
         DocBody& GetDocBody();

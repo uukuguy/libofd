@@ -1,6 +1,6 @@
 #include <sstream>
 #include <assert.h>
-#include "OFDFile.h"
+#include "OFDPackage.h"
 #include "OFDDocument.h"
 #include "OFDPage.h"
 #include "OFDTextObject.h"
@@ -14,7 +14,7 @@ using namespace ofd;
 
 class OFDPage::ImplCls{
 public:
-    ImplCls(OFDDocument *ofdDocument);
+    ImplCls(OFDDocumentPtr ofdDocument, OFDPage *ofdPage);
     ~ImplCls();
 
     std::string to_string() const;
@@ -40,7 +40,8 @@ private:
     // -------- Private Attributes --------
 public:
     
-    OFDDocument *m_ofdDocument;
+    std::weak_ptr<OFDDocument> m_ofdDocument;
+    OFDPage *m_ofdPage;
     std::string BaseLoc;
     uint64_t    ID;
 
@@ -56,8 +57,8 @@ private:
 
 }; // class OFDPage::ImplCls
 
-OFDPage::ImplCls::ImplCls(OFDDocument *ofdDocument) : 
-    m_ofdDocument(ofdDocument),
+OFDPage::ImplCls::ImplCls(OFDDocumentPtr ofdDocument, OFDPage *ofdPage) : 
+    m_ofdDocument(ofdDocument), m_ofdPage(ofdPage),
     ID(0), m_opened(false){
 }
 
@@ -84,18 +85,19 @@ std::string OFDPage::ImplCls::to_string() const{
 bool OFDPage::ImplCls::Open(){
     if ( m_opened ) return true;
     if ( BaseLoc.empty() ) return false;
-    if ( m_ofdDocument == nullptr ) return false;
+    OFDDocumentPtr ofdDocument = m_ofdDocument.lock();
+    if ( ofdDocument == nullptr ) return false;
 
-    const OFDFile * ofdFile = m_ofdDocument->GetOFDFile();     
-    if ( ofdFile == nullptr ) return false;
+    const OFDPackagePtr  ofdPackage = ofdDocument->GetOFDPackage();     
+    if ( ofdPackage == nullptr ) return false;
 
-    std::string docRoot = m_ofdDocument->GetDocRoot();
+    std::string docRoot = ofdDocument->GetDocRoot();
     std::string pageXMLFile = docRoot + "/" + BaseLoc + "/Content.xml";
     LOG(INFO) << "Try to open zipfile " << pageXMLFile;
 
     bool ok = false;
     std::string strPageXML;
-    std::tie(strPageXML, ok) = ofdFile->ReadZipFileString(pageXMLFile);
+    std::tie(strPageXML, ok) = ofdPackage->ReadZipFileString(pageXMLFile);
 
     if ( ok ) {
         m_opened = FromPageXML(strPageXML);
@@ -194,7 +196,7 @@ void OFDPage::ImplCls::generateContentXML(XMLWriter &writer) const{
 void writePageAreaXML(XMLWriter &writer, const CT_PageArea &pageArea);
 
 // Generate content in Doc_N/Pages/Page_N/Content.xml
-// Called by OFDFile::Save()
+// Called by OFDPackage::Save()
 // OFD (section 7.7) P18, Page.xsd。
 std::string OFDPage::ImplCls::GeneratePageXML() const{
 
@@ -481,15 +483,23 @@ bool OFDPage::ImplCls::FromContentXML(XMLElementPtr contentElement){
 
 // **************** class OFDPage ****************
 
-OFDPage::OFDPage(OFDDocument *ofdDocument){
-    m_impl = std::unique_ptr<ImplCls>(new ImplCls(ofdDocument));
+OFDPage::OFDPage(OFDDocumentPtr ofdDocument){
+    m_impl = std::unique_ptr<ImplCls>(new ImplCls(ofdDocument, this));
 }
 
 OFDPage::~OFDPage(){
 }
 
-const OFDDocument *OFDPage::GetOFDDocument() const{
-    return m_impl->m_ofdDocument;
+OFDPagePtr OFDPage::GetSelf(){
+    return shared_from_this();
+}
+
+const OFDDocumentPtr OFDPage::GetOFDDocument() const{
+    return m_impl->m_ofdDocument.lock();
+}
+
+OFDDocumentPtr OFDPage::GetOFDDocument() {
+    return m_impl->m_ofdDocument.lock();
 }
 
 uint64_t OFDPage::GetID() const{

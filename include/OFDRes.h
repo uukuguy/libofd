@@ -3,19 +3,16 @@
 
 #include <memory>
 #include <string>
+#include "OFDCommon.h"
 #include "OFDColor.h"
 #include "OFDFont.h"
 
 namespace ofd{
 
-    class OFDFile;
-    typedef std::shared_ptr<OFDFile> OFDFilePtr;
-
-
     // OFD (section 7.9) P23. Res.xsd
     class OFDRes{
     public:
-        OFDRes(OFDFilePtr ofdFile, const std::string &resDescFile);
+        OFDRes(OFDPackagePtr ofdPackage, const std::string &resDescFile);
         ~OFDRes();
 
         std::string GetBaseLoc() const;

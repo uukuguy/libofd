@@ -10,17 +10,19 @@ using namespace ofd;
 
 GBool rawOrder = gFalse;
 
-OFDOutputDev::OFDOutputDev(ofd::OFDFilePtr ofdFile) : 
+OFDOutputDev::OFDOutputDev(ofd::OFDPackagePtr ofdPackage) :
     m_pdfDoc(nullptr),
     m_xref(nullptr), m_textPage(nullptr), 
     m_actualText(nullptr),
-    m_ofdFile(ofdFile), m_ofdDocument(nullptr), m_currentOFDPage(nullptr),
+    m_ofdPackage(ofdPackage), m_ofdDocument(nullptr), m_currentOFDPage(nullptr),
     m_currentFontSize(14.0), m_currentCTM(nullptr) {
 
     m_textPage = new TextPage(rawOrder);
     m_actualText = new ActualText(m_textPage);
 
-    m_ofdDocument = ofdFile->AddNewDocument();
+    if ( ofdPackage != nullptr ){
+        m_ofdDocument = ofdPackage->AddNewDocument();
+    }
 }
 
 OFDOutputDev::~OFDOutputDev(){

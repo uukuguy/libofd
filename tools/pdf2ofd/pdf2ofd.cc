@@ -75,11 +75,11 @@ int main(int argc, char *argv[]){
     std::string pdfFilename = argv[1];
 
     // ofd filename
-    std::string ofdFilename = pdfFilename + ".ofd";
+    std::string ofdPackagename = pdfFilename + ".ofd";
     if ( argc > 2 ) {
-        ofdFilename = argv[2];
+        ofdPackagename = argv[2];
     }
-    LOG(INFO) << "Try to translate pdf file " << pdfFilename << " to ofd file " << ofdFilename;
+    LOG(INFO) << "Try to translate pdf file " << pdfFilename << " to ofd file " << ofdPackagename;
 
     // owner password
     std::string ownerPassword = FLAGS_owner_password;
@@ -93,13 +93,20 @@ int main(int argc, char *argv[]){
     PDFDoc *pdfDoc = OpenPDFFile(pdfFilename, ownerPassword, userPassword);
     if ( pdfDoc != nullptr ){
 
-        ofd::OFDFilePtr ofdFile = std::make_shared<ofd::OFDFile>();
-        OFDOutputDev *ofdOut = new OFDOutputDev(ofdFile);
+
+        ofd::OFDPackagePtr ofdPackage = std::make_shared<ofd::OFDPackage>();
+
+        LOG(DEBUG) << "------- 0 ========";
+        OFDOutputDev *ofdOut = new OFDOutputDev(ofdPackage);
+        //std::shared_ptr<OFDOutputDev> ofdOut = std::make_shared<OFDOutputDev>(ofdPackage);
+
+        LOG(DEBUG) << "------- 1 ========";
         ofdOut->ProcessDoc(pdfDoc);
 
+        LOG(DEBUG) << "------- 5 ========";
         // Fonts
         const std::map<int, std::shared_ptr<ofd::OFDFont> > &fonts = ofdOut->GetFonts();
-        ofd::OFDDocumentPtr ofdDoc = ofdFile->GetDocument(0);
+        ofd::OFDDocumentPtr ofdDoc = ofdPackage->GetDocument(0);
         __attribute__((unused)) ofd::OFDDocument::CommonData &commonData = ofdDoc->GetCommonData();
         LOG(INFO) << "--------- fonts.size()=" << fonts.size();
         for ( auto font :fonts){
@@ -115,7 +122,8 @@ int main(int argc, char *argv[]){
             }
         }
 
-        ofdFile->Save(ofdFilename);
+        LOG(DEBUG) << "------- 9 ========";
+        ofdPackage->Save(ofdPackagename);
 
         delete ofdOut;
         ofdOut = nullptr;

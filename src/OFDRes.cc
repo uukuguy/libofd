@@ -10,7 +10,7 @@ using namespace utils;
 
 class OFDRes::ImplCls{
 public:
-    ImplCls(OFDFilePtr ofdFile, const std::string &resDescFile);
+    ImplCls(OFDPackagePtr ofdPackage, const std::string &resDescFile);
     ~ImplCls();
 
     void AddColorSpace(const OFDColorSpace &ofdColorSpace){m_colorSpaces.push_back(ofdColorSpace);};
@@ -25,7 +25,8 @@ private:
 
     // -------- Private Attributes --------
 public:
-    OFDFilePtr m_ofdFile;
+    //OFDPackagePtr m_ofdPackage;
+    std::weak_ptr<OFDPackage> m_ofdPackage;
     std::string m_baseLoc;
     ColorSpaceArray m_colorSpaces;
     FontArray m_fonts;
@@ -33,8 +34,9 @@ public:
 
 }; // class OFDRes::ImplCls
 
-OFDRes::ImplCls::ImplCls(OFDFilePtr ofdFile, const std::string &resDescFile) : 
-    m_ofdFile(ofdFile), m_baseLoc("Res"), m_resDescFile(resDescFile) {
+OFDRes::ImplCls::ImplCls(OFDPackagePtr ofdPackage, const std::string &resDescFile) : 
+    m_ofdPackage(ofdPackage), 
+    m_baseLoc("Res"), m_resDescFile(resDescFile) {
 }
 
 OFDRes::ImplCls::~ImplCls(){
@@ -249,7 +251,7 @@ bool OFDRes::ImplCls::FromFontsXML(XMLElementPtr fontsElement){
 // ======== OFDRes::ImplCls::FromResXML() ========
 // OFD (section 7.9) P23. Res.xml.
 bool OFDRes::ImplCls::FromResXML(const std::string &strResXML){
-    bool ok = false;
+    bool ok = true;
 
     XMLElementPtr rootElement = XMLElement::ParseRootElement(strResXML);
     if ( rootElement != nullptr ){
@@ -305,8 +307,8 @@ bool OFDRes::ImplCls::FromResXML(const std::string &strResXML){
 
 // **************** class OFDRes ****************
 
-OFDRes::OFDRes(OFDFilePtr ofdFile, const std::string &resDescFile){
-    m_impl = std::unique_ptr<ImplCls>(new ImplCls(ofdFile, resDescFile));
+OFDRes::OFDRes(OFDPackagePtr ofdPackage, const std::string &resDescFile){
+    m_impl = std::unique_ptr<ImplCls>(new ImplCls(ofdPackage, resDescFile));
 }
 
 OFDRes::~OFDRes(){

@@ -4,14 +4,14 @@
 #include <OutputDev.h>
 #include <TextOutputDev.h>
 #include <PDFDoc.h>
-#include "OFDFile.h"
+#include "OFDPackage.h"
 #include "OFDDocument.h"
 #include "OFDPage.h"
 #include "OFDFont.h"
 
 class OFDOutputDev : public OutputDev {
 public:
-    OFDOutputDev(ofd::OFDFilePtr ofdFile);
+    OFDOutputDev(ofd::OFDPackagePtr ofdPackage);
     virtual ~OFDOutputDev();
 
     void ProcessDoc(PDFDoc *pdfDoc);
@@ -92,7 +92,7 @@ private:
     TextPage *m_textPage;	    
     ActualText *m_actualText;
 
-    ofd::OFDFilePtr m_ofdFile;
+    ofd::OFDPackagePtr m_ofdPackage;
     ofd::OFDDocumentPtr m_ofdDocument;
     ofd::OFDPagePtr m_currentOFDPage;
     double m_currentFontSize;

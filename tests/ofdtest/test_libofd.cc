@@ -1,9 +1,9 @@
-#include "OFDFile.h"
+#include "OFDPackage.h"
 #include "utils/logger.h"
 
 using namespace ofd;
 
 void test_libofd(int argc, char *argv[]){
-    OFDFile ofdFile;
-    ofdFile.Open(argv[1]);
+    OFDPackagePtr ofdPackage = std::make_shared<OFDPackage>();
+    ofdPackage->Open(argv[1]);
 }

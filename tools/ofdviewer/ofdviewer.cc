@@ -2,7 +2,7 @@
 #include <SDL2/SDL_image.h>
 #include <cairo/cairo.h>
 #include <assert.h>
-#include "OFDFile.h"
+#include "OFDPackage.h"
 #include "OFDDocument.h"
 #include "OFDPage.h"
 #include "utils/logger.h"
@@ -400,12 +400,12 @@ int main(int argc, char *argv[]){
 
     std::string filename = argv[1];
 
-    OFDFile ofdFile;
-    if ( !ofdFile.Open(filename) ){
-        LOG(ERROR) << "OFDFile::Open() failed. filename:" << filename;
+    ofd::OFDPackagePtr ofdFile = std::make_shared<ofd::OFDPackage>();
+    if ( !ofdFile->Open(filename) ){
+        LOG(ERROR) << "OFDPackage::Open() failed. filename:" << filename;
         return -1;
     }
-    OFDDocumentPtr document = OFDDocumentPtr(ofdFile.GetDefaultDocument()); 
+    OFDDocumentPtr document = ofdFile->GetDefaultDocument(); 
     assert(document != nullptr);
     LOG(DEBUG) << document->to_string();
 
@@ -427,7 +427,7 @@ int main(int argc, char *argv[]){
         app.Execute();
     }
 
-    ofdFile.Close();
+    ofdFile->Close();
 
 
 

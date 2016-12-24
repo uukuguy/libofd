@@ -3,11 +3,10 @@
 
 #include <memory>
 #include <string>
+#include "OFDCommon.h"
 #include "OFDObject.h"
 
 namespace ofd{
-
-    class OFDDocument;
 
     namespace Layer{
 
@@ -32,14 +31,14 @@ namespace ofd{
 
     }; // class OFDLayer
 
-    typedef std::shared_ptr<OFDLayer> OFDLayerPtr;
-
-    class OFDPage{
+    class OFDPage : public std::enable_shared_from_this<OFDPage> {
     public:
-        OFDPage(OFDDocument *ofdDocument);
+        OFDPage(OFDDocumentPtr ofdDocument);
         virtual ~OFDPage();
 
-        const OFDDocument *GetOFDDocument() const;
+        const OFDDocumentPtr GetOFDDocument() const;
+        OFDDocumentPtr GetOFDDocument();
+        OFDPagePtr GetSelf();
 
         std::string to_string() const;
 
@@ -70,7 +69,6 @@ namespace ofd{
         std::unique_ptr<ImplCls> m_impl;
 
     }; // OFDPage
-    typedef std::shared_ptr<OFDPage> OFDPagePtr;
 
 }; // namespace ofd
 

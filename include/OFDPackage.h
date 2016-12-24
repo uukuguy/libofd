@@ -1,5 +1,5 @@
-#ifndef __LIBOFD_FILE_H__
-#define __LIBOFD_FILE_H__
+#ifndef __OFD_PACKAGE_H__
+#define __OFD_PACKAGE_H__
 
 #include <vector>
 #include <string>
@@ -9,13 +9,13 @@
 
 namespace ofd{
 
-    // ======== class OFDFile ========
-    class OFDFile{
+    // ======== class OFDPackage ========
+    class OFDPackage : public std::enable_shared_from_this<OFDPackage> {
     public:
 
-        OFDFile();
-        OFDFile(const std::string &filename);
-        virtual ~OFDFile();
+        OFDPackage();
+        OFDPackage(const std::string &filename);
+        virtual ~OFDPackage();
 
         // 打开OFD文件
         // 打开成功返回true，否则返回false。
@@ -28,6 +28,8 @@ namespace ofd{
 
         const OFDDocumentPtr GetDefaultDocument() const;
         OFDDocumentPtr GetDefaultDocument();
+
+        OFDPackagePtr GetSelf();
 
         OFDDocumentPtr AddNewDocument();
 
@@ -57,10 +59,10 @@ namespace ofd{
         class ImplCls;
         std::unique_ptr<ImplCls> m_impl;
 
-    }; // class OFDFile
-    typedef std::shared_ptr<OFDFile> OFDFilePtr;
+    }; // class OFDPackage
+    typedef std::shared_ptr<OFDPackage> OFDPackagePtr;
 
 }; // namespace ofd
 
-#endif
+#endif // __OFD_PACKAGE_H__
 

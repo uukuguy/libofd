@@ -11,6 +11,11 @@ namespace utils{
 
     void SetStringStreamPrecision(std::stringstream &ss, int precision);
 
+    template<typename T, typename... Ts>
+    std::unique_ptr<T> make_unique(Ts&&... params){
+        return std::unique_ptr<T>(new T(std::forward<Ts>(params)...));
+    }
 }
+
 
 #endif // __UTILS_UTILS_H__

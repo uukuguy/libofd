@@ -61,7 +61,6 @@ namespace ofd{
 
     }; // class OFDObject
 
-    typedef std::shared_ptr<OFDObject> OFDObjectPtr;
 
     // ======== class PageBlock ========
     class PageBlock{
