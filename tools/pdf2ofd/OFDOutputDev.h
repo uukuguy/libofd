@@ -1,20 +1,26 @@
 #ifndef __OFDOUTPUTDEV_H__
 #define __OFDOUTPUTDEV_H__
 
+#include <memory>
 #include <OutputDev.h>
-#include <TextOutputDev.h>
+#include "TextOutputDev.h"
 #include <PDFDoc.h>
+#include "OFDCommon.h"
 #include "OFDPackage.h"
 #include "OFDDocument.h"
 #include "OFDPage.h"
 #include "OFDFont.h"
+
+class OFDOutputDev;
+typedef std::shared_ptr<OFDOutputDev> OFDOutputDevPtr;
+typedef std::shared_ptr<PDFDoc> PDFDocPtr;
 
 class OFDOutputDev : public OutputDev {
 public:
     OFDOutputDev(ofd::OFDPackagePtr ofdPackage);
     virtual ~OFDOutputDev();
 
-    void ProcessDoc(PDFDoc *pdfDoc);
+    void ProcessDoc(PDFDocPtr pdfDoc);
     void PrintFonts() const;
 
     void SetTextPage(TextPage *textPage);
@@ -83,11 +89,11 @@ public:
     //virtual void beginActualText(GfxState *state, GooString *text);
     //virtual void endActualText(GfxState *state);
 
-    const std::map<int, std::shared_ptr<ofd::OFDFont> > &GetFonts()const{
+    const std::map<int, ofd::OFDFontPtr> &GetFonts()const{
     return m_fonts;}
 private:
 
-    PDFDoc *m_pdfDoc;
+    PDFDocPtr m_pdfDoc;
     XRef *m_xref;
     TextPage *m_textPage;	    
     ActualText *m_actualText;
@@ -95,10 +101,12 @@ private:
     ofd::OFDPackagePtr m_ofdPackage;
     ofd::OFDDocumentPtr m_ofdDocument;
     ofd::OFDPagePtr m_currentOFDPage;
+
+public:
+    std::map<int, ofd::OFDFontPtr> m_fonts;
+    ofd::OFDFontPtr m_currentFont;
     double m_currentFontSize;
     double *m_currentCTM;
-    std::map<int, std::shared_ptr<ofd::OFDFont> > m_fonts;
-
 
 
 }; // class OFDOutputDev

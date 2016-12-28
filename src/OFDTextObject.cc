@@ -14,7 +14,7 @@ public:
     ~ImplCls();
 
     std::string to_string() const;
-
+  
     size_t GetTextCodesCount() const;
     const Text::TextCode& GetTextCode(size_t idx) const;
     Text::TextCode& GetTextCode(size_t idx);

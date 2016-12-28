@@ -10,18 +10,21 @@
 namespace ofd{
 
     // OFD (section 7.9) P23. Res.xsd
-    class OFDRes{
+    class OFDRes : public std::enable_shared_from_this<OFDRes> {
     public:
         OFDRes(OFDPackagePtr ofdPackage, const std::string &resDescFile);
         ~OFDRes();
 
+        OFDResPtr GetSelf();
+
         std::string GetBaseLoc() const;
         void SetBaseLoc(const std::string &baseLoc);
         const ColorSpaceArray &GetColorSpaces() const;
-        const FontArray &GetFonts() const;
         
         void AddColorSpace(const OFDColorSpace &ofdColorSpace);
-        void AddFont(const OFDFont &ofdFont);
+        void AddFont(OFDFontPtr font);
+        const FontMap &GetFonts() const;
+        const OFDFontPtr GetFont(uint64_t fontID) const;
 
         std::string GenerateResXML() const;
         bool FromResXML(const std::string &strResXML);
@@ -34,7 +37,6 @@ namespace ofd{
 
     }; // class OFDRes
 
-    typedef std::shared_ptr<OFDRes> OFDResPtr;
 
 }; // namespace ofd
 

@@ -128,7 +128,7 @@ bool OFDObject::FromAttributesXML(utils::XMLElementPtr objectElement){
     // Required.
     std::string strBoundary;
     std::tie(strBoundary, exist) = objectElement->GetStringAttribute("Boundary");
-    LOG(INFO) << "Boundary: " << strBoundary;
+    //LOG(INFO) << "Boundary: " << strBoundary;
 
     if ( !exist ){
         LOG(ERROR) << "Attribute ID is required in Object XML."; 

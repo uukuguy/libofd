@@ -17,6 +17,9 @@ namespace ofd{
     typedef std::shared_ptr<OFDLayer> OFDLayerPtr;
     class OFDObject;
     typedef std::shared_ptr<OFDObject> OFDObjectPtr;
+    class OFDRes;
+    typedef std::shared_ptr<OFDRes> OFDResPtr;
+
 
     // 以下类型定义在OFD标准的Definitions.xsd文件中
 

@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include <memory>
 
 namespace ofd {
@@ -33,7 +34,7 @@ namespace ofd {
         ~OFDFont();
 
     public:
-        int ID;
+        uint64_t    ID;
         std::string FontName;
         std::string FamilyName;
         std::string Charset;
@@ -55,7 +56,8 @@ namespace ofd {
     } OFDFont_t; // class OFDFont
     typedef std::shared_ptr<OFDFont> OFDFontPtr;
 
-    typedef std::vector<OFDFont> FontArray;
+    typedef std::vector<OFDFontPtr> FontArray;
+    typedef std::map<uint64_t, OFDFontPtr> FontMap;
 
 }; // namespace ofd
 

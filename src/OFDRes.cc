@@ -10,11 +10,13 @@ using namespace utils;
 
 class OFDRes::ImplCls{
 public:
-    ImplCls(OFDPackagePtr ofdPackage, const std::string &resDescFile);
+    ImplCls(OFDPackagePtr ofdPackage, OFDRes *ofdRes, const std::string &resDescFile);
     ~ImplCls();
 
     void AddColorSpace(const OFDColorSpace &ofdColorSpace){m_colorSpaces.push_back(ofdColorSpace);};
-    void AddFont(const OFDFont &ofdFont){m_fonts.push_back(ofdFont);};
+    void AddFont(OFDFontPtr font);
+    const FontMap &GetFonts() const {return m_fonts;};
+    const OFDFontPtr GetFont(uint64_t fontID) const;
 
     std::string GenerateResXML() const;
     bool FromResXML(const std::string &strResXML);
@@ -25,21 +27,39 @@ private:
 
     // -------- Private Attributes --------
 public:
-    //OFDPackagePtr m_ofdPackage;
     std::weak_ptr<OFDPackage> m_ofdPackage;
+    OFDRes* m_ofdRes;
     std::string m_baseLoc;
     ColorSpaceArray m_colorSpaces;
-    FontArray m_fonts;
+    FontMap m_fonts;
     std::string m_resDescFile;
 
 }; // class OFDRes::ImplCls
 
-OFDRes::ImplCls::ImplCls(OFDPackagePtr ofdPackage, const std::string &resDescFile) : 
-    m_ofdPackage(ofdPackage), 
+OFDRes::ImplCls::ImplCls(OFDPackagePtr ofdPackage, OFDRes *ofdRes, const std::string &resDescFile) : 
+    m_ofdPackage(ofdPackage), m_ofdRes(ofdRes),
     m_baseLoc("Res"), m_resDescFile(resDescFile) {
 }
 
 OFDRes::ImplCls::~ImplCls(){
+}
+
+void OFDRes::ImplCls::AddFont(OFDFontPtr font){
+    uint64_t fontID = font->ID;
+    if ( m_fonts.find(fontID) != m_fonts.end() ){
+        m_fonts[fontID] = font;
+    } else {
+        m_fonts.insert(FontMap::value_type(fontID, font));
+    }
+}
+
+const OFDFontPtr OFDRes::ImplCls::GetFont(uint64_t fontID) const{
+    auto iter = m_fonts.find(fontID);
+    if ( iter != m_fonts.end() ){
+        return nullptr;
+    } else {
+        return iter->second;
+    }
 }
 
 void generateColorSpacesXML(XMLWriter &writer){
@@ -50,55 +70,58 @@ void generateDrawParamsXML(XMLWriter &writer){
 
 // -------- generateFontsXML() --------
 // OFD (section 11.1) P61. Res.xsd.
-void generateFontsXML(XMLWriter &writer, const FontArray &fonts){
+void generateFontsXML(XMLWriter &writer, const FontMap &fonts){
 
-    for ( auto font : fonts ){
+    for ( auto iter : fonts ){
+        auto font = iter.second;
 
         writer.StartElement("Font");{
+            // -------- <Font ID="">
+            writer.WriteAttribute("ID", font->ID);
 
             // -------- <Font FontName="">
             // Required.
-            writer.WriteAttribute("FontName", font.FontName);
+            writer.WriteAttribute("FontName", font->FontName);
 
             // -------- <Font FamilyName="">
             // Optional.
-            if ( !font.FamilyName.empty() ){
-                writer.WriteAttribute("FamilyName", font.FamilyName);
+            if ( !font->FamilyName.empty() ){
+                writer.WriteAttribute("FamilyName", font->FamilyName);
             }
 
             // -------- <Font Charset="">
             // Optional.
-            if ( !font.Charset.empty() ){
-                writer.WriteAttribute("Charset", font.Charset);
+            if ( !font->Charset.empty() ){
+                writer.WriteAttribute("Charset", font->Charset);
             }
 
             // -------- <Font Serif="">
             // Optional.
-            if ( font.Serif ){
+            if ( font->Serif ){
                 writer.WriteAttribute("Serif", true);
             }
 
             // -------- <Font Bold="">
             // Optional.
-            if ( font.Bold ){
+            if ( font->Bold ){
                 writer.WriteAttribute("Bold", true);
             }
 
             // -------- <Font Italic="">
             // Optional.
-            if ( font.Italic ){
+            if ( font->Italic ){
                 writer.WriteAttribute("Italic", true);
             }
 
             // -------- <Font FixedWidth="">
             // Optional.
-            if ( font.FixedWidth ){
+            if ( font->FixedWidth ){
                 writer.WriteAttribute("FixedWidth", true);
             }
 
             // -------- <FontFile>
             // Optional
-            writer.WriteElement("FontFile", font.FontFile);
+            writer.WriteElement("FontFile", font->FontFile);
 
         } writer.EndElement();
 
@@ -193,50 +216,59 @@ bool OFDRes::ImplCls::FromFontsXML(XMLElementPtr fontsElement){
         if ( childName == "Font" ){
             XMLElementPtr fontElement = childElement;
 
-            OFDFont font;
+            OFDFontPtr font = std::make_shared<OFDFont>();
             bool exist = false;
 
             // -------- <Font FontName="">
             // Required.
-            std::tie(font.FontName, exist) = fontElement->GetStringAttribute("FontName");
-            if ( !exist ){
-                LOG(ERROR) << "Attribute FontName is required in Font XML.";
+            std::tie(font->ID, exist) = fontElement->GetIntAttribute("ID");
+            if ( exist ){
+                // -------- <Font FontName="">
+                // Required.
+                std::tie(font->FontName, exist) = fontElement->GetStringAttribute("FontName");
+                if ( !exist ){
+                    LOG(ERROR) << "Attribute FontName is required in Font XML.";
+                }
             } else {
+                LOG(ERROR) << "Attribute ID is required in Font XML.";
+            }
+
+            if ( exist ) {
 
                 // -------- <Font FamilyName="">
                 // Optional
-                std::tie(font.FamilyName, std::ignore) = fontElement->GetStringAttribute("FamilyName");
+                std::tie(font->FamilyName, std::ignore) = fontElement->GetStringAttribute("FamilyName");
 
                 // -------- <Font Charset="">
                 // Optional
-                std::tie(font.Charset, std::ignore) = fontElement->GetStringAttribute("Charset");
+                std::tie(font->Charset, std::ignore) = fontElement->GetStringAttribute("Charset");
 
                 // -------- <Font Charset="">
                 // Optional
-                std::tie(font.Charset, std::ignore) = fontElement->GetStringAttribute("Charset");
+                std::tie(font->Charset, std::ignore) = fontElement->GetStringAttribute("Charset");
                 
                 // -------- <Font Serif="">
                 // Optional
-                std::tie(font.Serif, std::ignore) = fontElement->GetBooleanAttribute("Serif");
+                std::tie(font->Serif, std::ignore) = fontElement->GetBooleanAttribute("Serif");
 
                 // -------- <Font Bold="">
                 // Optional
-                std::tie(font.Bold, std::ignore) = fontElement->GetBooleanAttribute("Bold");
+                std::tie(font->Bold, std::ignore) = fontElement->GetBooleanAttribute("Bold");
 
                 // -------- <Font Italic="">
                 // Optional
-                std::tie(font.Italic, std::ignore) = fontElement->GetBooleanAttribute("Italic");
+                std::tie(font->Italic, std::ignore) = fontElement->GetBooleanAttribute("Italic");
 
                 // -------- <Font FixedWidth="">
                 // Optional
-                std::tie(font.FixedWidth, std::ignore) = fontElement->GetBooleanAttribute("FixedWidth");
+                std::tie(font->FixedWidth, std::ignore) = fontElement->GetBooleanAttribute("FixedWidth");
 
                 XMLElementPtr fontFileElement = fontElement->GetFirstChildElement();
                 if ( fontFileElement != nullptr && fontFileElement->GetName() == "FontFile" ){
-                    std::tie(font.FontFile, std::ignore) = fontFileElement->GetStringValue();
+                    std::tie(font->FontFile, std::ignore) = fontFileElement->GetStringValue();
                 }
 
-                m_fonts.push_back(font);
+                AddFont(font);
                 ok = true;
             }
 
@@ -308,10 +340,14 @@ bool OFDRes::ImplCls::FromResXML(const std::string &strResXML){
 // **************** class OFDRes ****************
 
 OFDRes::OFDRes(OFDPackagePtr ofdPackage, const std::string &resDescFile){
-    m_impl = std::unique_ptr<ImplCls>(new ImplCls(ofdPackage, resDescFile));
+    m_impl = std::unique_ptr<ImplCls>(new ImplCls(ofdPackage, this, resDescFile));
 }
 
 OFDRes::~OFDRes(){
+}
+
+OFDResPtr OFDRes::GetSelf() {
+    return shared_from_this();
 }
 
 std::string OFDRes::GetBaseLoc() const{
@@ -326,8 +362,16 @@ void OFDRes::AddColorSpace(const OFDColorSpace &ofdColorSpace){
     m_impl->AddColorSpace(ofdColorSpace);
 }
 
-void OFDRes::AddFont(const OFDFont &ofdFont){
-    m_impl->AddFont(ofdFont);
+void OFDRes::AddFont(OFDFontPtr font){
+    m_impl->AddFont(font);
+}
+
+const FontMap &OFDRes::GetFonts() const {
+    return m_impl->GetFonts();
+}
+
+const OFDFontPtr OFDRes::GetFont(uint64_t fontID) const {
+    return m_impl->GetFont(fontID);
 }
 
 std::string OFDRes::GenerateResXML() const{

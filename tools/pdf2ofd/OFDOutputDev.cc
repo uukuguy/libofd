@@ -15,7 +15,7 @@ OFDOutputDev::OFDOutputDev(ofd::OFDPackagePtr ofdPackage) :
     m_xref(nullptr), m_textPage(nullptr), 
     m_actualText(nullptr),
     m_ofdPackage(ofdPackage), m_ofdDocument(nullptr), m_currentOFDPage(nullptr),
-    m_currentFontSize(14.0), m_currentCTM(nullptr) {
+    m_currentFont(nullptr), m_currentFontSize(14.0), m_currentCTM(nullptr) {
 
     m_textPage = new TextPage(rawOrder);
     m_actualText = new ActualText(m_textPage);
@@ -35,7 +35,7 @@ OFDOutputDev::~OFDOutputDev(){
     }
 }
 
-void OFDOutputDev::ProcessDoc(PDFDoc *pdfDoc){
+void OFDOutputDev::ProcessDoc(PDFDocPtr pdfDoc){
     if ( pdfDoc == nullptr ) return;
     m_pdfDoc = pdfDoc;
 
@@ -144,7 +144,7 @@ void OFDOutputDev::startPage(int pageNum, GfxState *state, XRef *xrefA) {
     }
 }
 
-void printLine(TextLine *line, OFDLayerPtr bodyLayer){
+void printLine(OFDOutputDev *ofdOutputDev, TextLine *line, OFDLayerPtr bodyLayer){
     double xMin, yMin, xMax, yMax;
     double lineXMin = 0, lineYMin = 0, lineXMax = 0, lineYMax = 0;
     TextWord *word;
@@ -180,6 +180,10 @@ void printLine(TextLine *line, OFDLayerPtr bodyLayer){
         LOG(INFO) << "TextWord FontSize=" << fontSize << " numChars=" << numChars << " len(string)=" << myString.length() << " size(string)=" << myString.size();
         for ( int k = 0 ; k < numChars ; k++ ){
             TextFontInfo *fontInfo = word->getFontInfo(k);
+
+            Ref *ref = fontInfo->gfxFont->getID();
+            uint64_t fontID = ref->num;
+
             GooString *fontName = fontInfo->getFontName();
             char tCh[4];
             tCh[0] = myString[k*3];
@@ -195,11 +199,23 @@ void printLine(TextLine *line, OFDLayerPtr bodyLayer){
 
             double edge = word->getEdge(k);
 
-            LOG(INFO) << tCh << "(" << xMinA << ", " << yMinA << ", " << xMaxA << ", " << yMaxA << ") " << " Edge: " << edge << " Ascent: " << ascent << " Descent: " << descent << " Font[" << k << "] name: " << std::string(fontName->getCString());
+            LOG(INFO) << tCh << "(" << xMinA << ", " << yMinA << ", " << xMaxA << ", " << yMaxA << ") " << " Edge: " << edge << " Ascent: " << ascent << " Descent: " << descent << " Font[" << k << "] name: " << std::string(fontName->getCString()) << " (" << fontID << ")";
+
+            auto iter = ofdOutputDev->m_fonts.find(fontID);
+            if ( iter != ofdOutputDev->m_fonts.end() ){
+                auto font = iter->second;
+                LOG(INFO) << "fontID: " << fontID << " fontName: " << std::string(fontName->getCString()) << " OFDFont::FontName: " << font->FontName;
+            } else {
+                LOG(WARNING) << "fontID: " << fontID << " Not found in m_fonts.";
+            }
         }
 
-        wordXML << "          <word xMin=\"" << xMin << "\" yMin=\"" << yMin << "\" xMax=\"" <<
+        std::stringstream ss;
+        ss << "          <word xMin=\"" << xMin << "\" yMin=\"" << yMin << "\" xMax=\"" <<
             xMax << "\" yMax=\"" << yMax << "\">" << myString << "</word>\n";
+        LOG(DEBUG) << ss.str();
+
+        wordXML << ss.str();
 
         if ( bodyLayer != nullptr ){
             OFDTextObject *textObject = new OFDTextObject();
@@ -213,6 +229,10 @@ void printLine(TextLine *line, OFDLayerPtr bodyLayer){
             textCode.Y = yMax;
             textCode.Text = myString;
             textObject->AddTextCode(textCode);
+
+            textObject->SetFont(ofdOutputDev->m_currentFont);
+            textObject->SetFontSize(fontSize);
+
             OFDObjectPtr object = std::shared_ptr<OFDObject>(textObject);
             bodyLayer->AddObject(object);
         }
@@ -221,7 +241,7 @@ void printLine(TextLine *line, OFDLayerPtr bodyLayer){
     LOG(DEBUG) << wordXML.str();
 }
 
-void processTextPage(TextPage *textPage, OFDPagePtr currentOFDPage){
+void processTextPage(OFDOutputDev *ofdOutputDev, TextPage *textPage, OFDPagePtr currentOFDPage){
     OFDLayerPtr bodyLayer = nullptr;
     if ( currentOFDPage != nullptr ){
         bodyLayer = currentOFDPage->GetBodyLayer();
@@ -234,7 +254,7 @@ void processTextPage(TextPage *textPage, OFDPagePtr currentOFDPage){
         for ( auto blk = flow->getBlocks(); blk != nullptr ; blk = blk->getNext()){
             blk->getBBox(&xMin, &yMin, &xMax, &yMax);
             for ( auto line = blk->getLines(); line != nullptr ; line = line->getNext()){
-                printLine(line, bodyLayer);
+                printLine(ofdOutputDev, line, bodyLayer);
             }
         }
     }
@@ -245,7 +265,7 @@ void OFDOutputDev::endPage() {
     m_textPage->endPage();
     m_textPage->coalesce(gTrue, 0, gFalse);
 
-    processTextPage(m_textPage, m_currentOFDPage);
+    processTextPage(this, m_textPage, m_currentOFDPage);
   }
 }
 
@@ -336,8 +356,8 @@ void OFDOutputDev::PrintFonts() const{
     }
 }
 
-std::shared_ptr<ofd::OFDFont> GfxFont_to_OFDFont(GfxFont *gfxFont, XRef *xref){
-    std::shared_ptr<ofd::OFDFont> ofdFont = std::make_shared<ofd::OFDFont>();
+OFDFontPtr GfxFont_to_OFDFont(GfxFont *gfxFont, XRef *xref){
+    OFDFontPtr ofdFont = std::make_shared<OFDFont>();
 
     // -------- FontID --------
     Ref *ref = gfxFont->getID();
@@ -408,16 +428,21 @@ void OFDOutputDev::updateFont(GfxState *state){
 
         Ref *ref = gfxFont->getID();
         int fontID = ref->num;
-        if ( m_fonts.find(fontID) == m_fonts.end() ){
-            std::shared_ptr<ofd::OFDFont> ofdFont = GfxFont_to_OFDFont(gfxFont, m_xref);
 
-            m_fonts.insert(std::map<int, std::shared_ptr<ofd::OFDFont> >::value_type(fontID, ofdFont));
+        OFDFontPtr ofdFont = nullptr;
+        if ( m_fonts.find(fontID) == m_fonts.end() ){
+            ofdFont = GfxFont_to_OFDFont(gfxFont, m_xref);
+
+            m_fonts.insert(std::map<int, OFDFontPtr>::value_type(fontID, ofdFont));
 
             showGfxFont(gfxFont);
 
             //PrintFonts();
+        } else {
+            ofdFont = m_fonts[fontID];
         }
 
+        m_currentFont = ofdFont;
         m_currentFontSize = state->getFontSize();
         m_currentCTM = state->getTextMat();
         //LOG(INFO) << "UpdateFont() fontSize: " << fontSize << " sizeof(ctm): " << sizeof(ctm);

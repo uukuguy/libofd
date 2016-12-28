@@ -14,7 +14,7 @@
 #include "OFDOutputDev.h"
 #include "utils/logger.h"
 
-PDFDoc* OpenPDFFile(const std::string &pdfFilename, const std::string &ownerPassword, const std::string &userPassword){
+std::shared_ptr<PDFDoc> OpenPDFFile(const std::string &pdfFilename, const std::string &ownerPassword, const std::string &userPassword){
     GooString fileName(pdfFilename.c_str());
     GooString *ownerPW = (ownerPassword == "") ? nullptr: new GooString(ownerPassword.c_str()); 
     GooString *userPW = (userPassword == "") ? nullptr : new GooString(userPassword.c_str());
@@ -49,7 +49,7 @@ PDFDoc* OpenPDFFile(const std::string &pdfFilename, const std::string &ownerPass
         userPW = nullptr;
     }
 
-    return pdfDoc;
+    return std::shared_ptr<PDFDoc>(pdfDoc);
 }
 
 DEFINE_int32(v, 0, "Logger level.");
@@ -90,30 +90,30 @@ int main(int argc, char *argv[]){
     globalParams = new GlobalParams(nullptr);
 
 
-    PDFDoc *pdfDoc = OpenPDFFile(pdfFilename, ownerPassword, userPassword);
+    //PDFDoc *pdfDoc = OpenPDFFile(pdfFilename, ownerPassword, userPassword);
+    std::shared_ptr<PDFDoc> pdfDoc = OpenPDFFile(pdfFilename, ownerPassword, userPassword);
     if ( pdfDoc != nullptr ){
 
 
         ofd::OFDPackagePtr ofdPackage = std::make_shared<ofd::OFDPackage>();
 
-        LOG(DEBUG) << "------- 0 ========";
-        OFDOutputDev *ofdOut = new OFDOutputDev(ofdPackage);
-        //std::shared_ptr<OFDOutputDev> ofdOut = std::make_shared<OFDOutputDev>(ofdPackage);
+        //OFDOutputDev *ofdOut = new OFDOutputDev(ofdPackage);
+        std::shared_ptr<OFDOutputDev> ofdOut = std::make_shared<OFDOutputDev>(ofdPackage);
 
-        LOG(DEBUG) << "------- 1 ========";
         ofdOut->ProcessDoc(pdfDoc);
 
-        LOG(DEBUG) << "------- 5 ========";
         // Fonts
         const std::map<int, std::shared_ptr<ofd::OFDFont> > &fonts = ofdOut->GetFonts();
         ofd::OFDDocumentPtr ofdDoc = ofdPackage->GetDocument(0);
         __attribute__((unused)) ofd::OFDDocument::CommonData &commonData = ofdDoc->GetCommonData();
         LOG(INFO) << "--------- fonts.size()=" << fonts.size();
-        for ( auto font :fonts){
-            if ( font.second != nullptr ){
+        for ( auto iter :fonts){
+            auto font = iter.second;
+
+            if ( font != nullptr ){
                 if (commonData.PublicRes != nullptr ){
-                    LOG(DEBUG) << "Font Name: " << font.second->FontName;
-                    commonData.PublicRes->AddFont(*(font.second));
+                    LOG(DEBUG) << "Font Name: " << font->FontName;
+                    commonData.PublicRes->AddFont(font);
                 } else {
                     LOG(ERROR) << "commonData.PublicRes == nullptr";
                 }
@@ -122,13 +122,12 @@ int main(int argc, char *argv[]){
             }
         }
 
-        LOG(DEBUG) << "------- 9 ========";
         ofdPackage->Save(ofdPackagename);
 
-        delete ofdOut;
+        //delete ofdOut;
         ofdOut = nullptr;
 
-        delete pdfDoc;
+        //delete pdfDoc;
         pdfDoc = nullptr;
     }
 

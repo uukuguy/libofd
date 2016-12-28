@@ -333,8 +333,6 @@ bool OFDPage::ImplCls::FromPageXML(const std::string &strPageXML){
                     // -------- <Area>
                     // Optional.
                     std::tie(Area, ok) = FromPageAreaXML(childElement);
-                    LOG(INFO) << "Area done.";
-
                 } else if ( childName == "Content" ) {
                     // -------- <Content>
                     // Optional.
