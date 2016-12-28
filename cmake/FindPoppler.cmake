@@ -13,7 +13,7 @@ find_path(POPPLER_INCLUDE_DIR poppler/poppler-config.h
 
 find_library(POPPLER_LIBRARY
   NAMES poppler
-  PATHS /usr/lib /usr/local/lib
+  PATHS /usr/local/lib /usr/lib
   )
 
 if (POPPLER_LIBRARY AND POPPLER_INCLUDE_DIR)

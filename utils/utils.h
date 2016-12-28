@@ -1,6 +1,7 @@
 #ifndef __UTILS_UTILS_H__
 #define __UTILS_UTILS_H__
 
+#include <memory>
 #include <string>
 #include <vector>
 #include <sstream>

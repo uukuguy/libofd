@@ -288,6 +288,8 @@ bool OFDPackage::ImplCls::FromOFDXML(const std::string &strOFDXML){
 
                 childElement = childElement->GetNextSiblingElement();
             }
+            if ( !hasDocBody ){
+            }
         } else {
             LOG(ERROR) << "Root element in OFD.xml is not named 'OFD'";
         }

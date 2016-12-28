@@ -4575,7 +4575,7 @@ public:
 
 private:
   OutputDev *out;
-  __attribute__((unused)) GfxColor *box_color;
+  GfxColor *box_color;
   GfxColor *glyph_color;
   GfxState *state;
   GooList *selectionList;
