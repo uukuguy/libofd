@@ -144,7 +144,7 @@ void OFDOutputDev::startPage(int pageNum, GfxState *state, XRef *xrefA) {
     }
 }
 
-void printLine(OFDOutputDev *ofdOutputDev, TextLine *line, OFDLayerPtr bodyLayer){
+void processTextLine(OFDOutputDev *ofdOutputDev, TextLine *line, OFDLayerPtr bodyLayer){
     double xMin, yMin, xMax, yMax;
     double lineXMin = 0, lineYMin = 0, lineXMax = 0, lineYMax = 0;
     TextWord *word;
@@ -210,6 +210,12 @@ void printLine(OFDOutputDev *ofdOutputDev, TextLine *line, OFDLayerPtr bodyLayer
             }
         }
 
+        TextFontInfo *fontInfo = word->getFontInfo(0);
+        Ref *ref = fontInfo->gfxFont->getID();
+        uint64_t fontID = ref->num;
+        auto iter = ofdOutputDev->m_fonts.find(fontID);
+        auto textFont = iter->second;
+
         std::stringstream ss;
         ss << "          <word xMin=\"" << xMin << "\" yMin=\"" << yMin << "\" xMax=\"" <<
             xMax << "\" yMax=\"" << yMax << "\">" << myString << "</word>\n";
@@ -230,7 +236,7 @@ void printLine(OFDOutputDev *ofdOutputDev, TextLine *line, OFDLayerPtr bodyLayer
             textCode.Text = myString;
             textObject->AddTextCode(textCode);
 
-            textObject->SetFont(ofdOutputDev->m_currentFont);
+            textObject->SetFont(textFont);
             textObject->SetFontSize(fontSize);
 
             OFDObjectPtr object = std::shared_ptr<OFDObject>(textObject);
@@ -254,7 +260,7 @@ void processTextPage(OFDOutputDev *ofdOutputDev, TextPage *textPage, OFDPagePtr 
         for ( auto blk = flow->getBlocks(); blk != nullptr ; blk = blk->getNext()){
             blk->getBBox(&xMin, &yMin, &xMax, &yMax);
             for ( auto line = blk->getLines(); line != nullptr ; line = line->getNext()){
-                printLine(ofdOutputDev, line, bodyLayer);
+                processTextLine(ofdOutputDev, line, bodyLayer);
             }
         }
     }
@@ -407,15 +413,15 @@ OFDFontPtr GfxFont_to_OFDFont(GfxFont *gfxFont, XRef *xref){
     }
 
     // -------- FontStream --------
-    //int fontStreamSize = 0;
-    //char *fontStream = gfxFont->readEmbFontFile(xref, &fontStreamSize);
+    int fontStreamSize = 0;
+    char *fontStream = gfxFont->readEmbFontFile(xref, &fontStreamSize);
 
-    //ofdFont->FontStream = fontStream;
-    //ofdFont->FontStreamSize = fontStreamSize;
+    ofdFont->FontStream = fontStream;
+    ofdFont->FontStreamSize = fontStreamSize;
 
-    //ofdFont->FontStream = new char[fontStreamSize];
-    //memcpy(ofdFont->FontStream, fontStream, fontStreamSize);
-    //ofdFont->FontStreamSize = fontStreamSize;
+    ofdFont->FontStream = new char[fontStreamSize];
+    memcpy(ofdFont->FontStream, fontStream, fontStreamSize);
+    ofdFont->FontStreamSize = fontStreamSize;
 
     return ofdFont;
 }
@@ -423,9 +429,6 @@ OFDFontPtr GfxFont_to_OFDFont(GfxFont *gfxFont, XRef *xref){
 void OFDOutputDev::updateFont(GfxState *state){
     GfxFont *gfxFont = state->getFont();
     if ( gfxFont != nullptr ){
-        //ofd::OFDDocument::CommonData &commonData = ofdDoc->GetCommonData();
-        //commonData.PublicRes->GetFonts();
-
         Ref *ref = gfxFont->getID();
         int fontID = ref->num;
 

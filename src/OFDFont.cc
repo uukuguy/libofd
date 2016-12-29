@@ -1,7 +1,10 @@
 #include <sstream>
 #include "OFDFont.h"
+#include "utils/xml.h"
+#include "utils/logger.h"
 
 using namespace ofd;
+using namespace utils;
 
 OFDFont::OFDFont() : 
     Charset("unicode"), Serif(false), Bold(false), Italic(false), FixedWidth(false),
@@ -57,3 +60,126 @@ std::string OFDFont::ToString() const {
     return ss.str();
 }
 
+void OFDFont::GenerateXML(XMLWriter &writer) const{
+
+    writer.StartElement("Font");{
+        // -------- <Font ID="">
+        writer.WriteAttribute("ID", ID);
+
+        // -------- <Font FontName="">
+        // Required.
+        writer.WriteAttribute("FontName", FontName);
+
+        // -------- <Font FamilyName="">
+        // Optional.
+        if ( !FamilyName.empty() ){
+            writer.WriteAttribute("FamilyName", FamilyName);
+        }
+
+        // -------- <Font Charset="">
+        // Optional.
+        if ( !Charset.empty() ){
+            writer.WriteAttribute("Charset", Charset);
+        }
+
+        // -------- <Font Serif="">
+        // Optional.
+        if ( Serif ){
+            writer.WriteAttribute("Serif", true);
+        }
+
+        // -------- <Font Bold="">
+        // Optional.
+        if ( Bold ){
+            writer.WriteAttribute("Bold", true);
+        }
+
+        // -------- <Font Italic="">
+        // Optional.
+        if ( Italic ){
+            writer.WriteAttribute("Italic", true);
+        }
+
+        // -------- <Font FixedWidth="">
+        // Optional.
+        if ( FixedWidth ){
+            writer.WriteAttribute("FixedWidth", true);
+        }
+
+        // -------- <FontFile>
+        // Optional
+        writer.WriteElement("FontFile", FontFile);
+
+    } writer.EndElement();
+
+}
+
+bool OFDFont::FromXML(XMLElementPtr fontElement){
+
+    bool ok = false;
+    OFDFontPtr font = nullptr;
+
+    std::string childName = fontElement->GetName();
+
+    // -------- <Font>
+    // OFD (section 11.1) P61. Res.xsd.
+    if ( childName == "Font" ){
+        bool exist = false;
+
+        // -------- <Font FontName="">
+        // Required.
+        std::tie(ID, exist) = fontElement->GetIntAttribute("ID");
+        if ( exist ){
+            // -------- <Font FontName="">
+            // Required.
+            std::tie(FontName, exist) = fontElement->GetStringAttribute("FontName");
+            if ( !exist ){
+                LOG(ERROR) << "Attribute FontName is required in Font XML.";
+            }
+        } else {
+            LOG(ERROR) << "Attribute ID is required in Font XML.";
+        }
+
+        if ( exist ) {
+
+            // -------- <Font FamilyName="">
+            // Optional
+            std::tie(FamilyName, std::ignore) = fontElement->GetStringAttribute("FamilyName");
+
+            // -------- <Font Charset="">
+            // Optional
+            std::tie(Charset, std::ignore) = fontElement->GetStringAttribute("Charset");
+
+            // -------- <Font Charset="">
+            // Optional
+            std::tie(Charset, std::ignore) = fontElement->GetStringAttribute("Charset");
+
+            // -------- <Font Serif="">
+            // Optional
+            std::tie(Serif, std::ignore) = fontElement->GetBooleanAttribute("Serif");
+
+            // -------- <Font Bold="">
+            // Optional
+            std::tie(Bold, std::ignore) = fontElement->GetBooleanAttribute("Bold");
+
+            // -------- <Font Italic="">
+            // Optional
+            std::tie(Italic, std::ignore) = fontElement->GetBooleanAttribute("Italic");
+
+            // -------- <Font FixedWidth="">
+            // Optional
+            std::tie(FixedWidth, std::ignore) = fontElement->GetBooleanAttribute("FixedWidth");
+
+            XMLElementPtr fontFileElement = fontElement->GetFirstChildElement();
+            if ( fontFileElement != nullptr && fontFileElement->GetName() == "FontFile" ){
+                std::tie(FontFile, std::ignore) = fontFileElement->GetStringValue();
+            }
+
+            ok = true;
+        } else {
+            ok = false;
+        }
+    }
+
+    return ok;
+}

@@ -31,6 +31,7 @@ namespace ofd{
 
         std::string GetResDescFile() const;
 
+
     private:
         class ImplCls;
         std::unique_ptr<ImplCls> m_impl;

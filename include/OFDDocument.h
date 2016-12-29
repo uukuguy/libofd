@@ -147,6 +147,12 @@ namespace ofd{
         const CommonData& GetCommonData() const;
         CommonData& GetCommonData();
 
+        const OFDResPtr GetPublicRes() const{return GetCommonData().PublicRes;};
+        OFDResPtr GetPublicRes() {return GetCommonData().PublicRes;};
+
+        const OFDResPtr GetDocumentRes() const{return GetCommonData().DocumentRes;};
+        OFDResPtr GetDocumentRes() {return GetCommonData().DocumentRes;};
+
         size_t GetPagesCount() const;
         const OFDPagePtr GetPage(size_t idx) const;
         OFDPagePtr GetPage(size_t idx);

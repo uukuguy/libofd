@@ -52,7 +52,7 @@ public:
 
 
 OFDTextObject::ImplCls::ImplCls() :
-    FontSize(12.0), Stroke(false), Fill(true), HScale(1.0), 
+    Font(nullptr), FontSize(12.0), Stroke(false), Fill(true), HScale(1.0), 
     RD(Text::ReadDirection::ANGLE0), CD(Text::CharDirection::ANGLE0),
     Italic(false){
 }
@@ -91,7 +91,11 @@ void OFDTextObject::ImplCls::GenerateAttributesXML(XMLWriter &writer) const{
     // FIXME
     // -------- <TextObject Font="">
     // Required.
-    writer.WriteAttribute("Font", "1");
+    if ( Font != nullptr ){
+        writer.WriteAttribute("Font", Font->ID);
+    } else {
+        LOG(ERROR) << "Attribute Font is required in TextObject XML.";
+    }
 
     // -------- <TextObject Size="">
     // Required.
@@ -100,13 +104,13 @@ void OFDTextObject::ImplCls::GenerateAttributesXML(XMLWriter &writer) const{
     // -------- <TextObject Stroke="">
     // Optional, default value: false.
     if ( Stroke ){
-        writer.WriteAttribute("Stroke", "true");
+        writer.WriteAttribute("Stroke", true);
     }
 
     // -------- <TextObject Fill="">
     // Optional, default value: true.
     if ( !Fill ){
-        writer.WriteAttribute("Fill", "false");
+        writer.WriteAttribute("Fill", false);
     }
 
     // -------- <Textobject HScale="">

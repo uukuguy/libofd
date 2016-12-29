@@ -107,19 +107,22 @@ int main(int argc, char *argv[]){
         ofd::OFDDocumentPtr ofdDoc = ofdPackage->GetDocument(0);
         __attribute__((unused)) ofd::OFDDocument::CommonData &commonData = ofdDoc->GetCommonData();
         LOG(INFO) << "--------- fonts.size()=" << fonts.size();
+        size_t k = 0;
         for ( auto iter :fonts){
             auto font = iter.second;
 
             if ( font != nullptr ){
-                if (commonData.PublicRes != nullptr ){
-                    LOG(DEBUG) << "Font Name: " << font->FontName;
-                    commonData.PublicRes->AddFont(font);
+                if (commonData.DocumentRes != nullptr ){
+                    LOG(DEBUG) << "Font Name: " << font->FontName << "(ID:" << font->ID<< ")";
+                    font->FontFile = std::string("Font_") + std::to_string(k) + ".ttf";
+                    commonData.DocumentRes->AddFont(font);
                 } else {
-                    LOG(ERROR) << "commonData.PublicRes == nullptr";
+                    LOG(ERROR) << "commonData.DocumentRes == nullptr";
                 }
             } else {
                 LOG(WARNING) << "font in fonts is nullptr";
             }
+            k++;
         }
 
         ofdPackage->Save(ofdPackagename);

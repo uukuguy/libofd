@@ -6,6 +6,14 @@
 #include <map>
 #include <memory>
 
+struct _cairo_font_face;
+
+namespace utils{
+    class XMLWriter;
+    class XMLElement;
+    typedef std::shared_ptr<XMLElement> XMLElementPtr;
+}; // namespace utils
+
 namespace ofd {
 
     namespace Font{
@@ -25,6 +33,9 @@ namespace ofd {
             Resident,
         };
     };
+
+    class OFDFont;
+    typedef std::shared_ptr<OFDFont> OFDFontPtr;
 
     // ======== class OFDFont ========
     // OFD (section 11.1) P61. Res.xsd.
@@ -50,11 +61,13 @@ namespace ofd {
         char *FontStream;
         size_t FontStreamSize;
 
+        _cairo_font_face *font_face;
 
         std::string ToString() const;
+        void GenerateXML(utils::XMLWriter &writer) const;
+        bool FromXML(utils::XMLElementPtr fontElement);
 
     } OFDFont_t; // class OFDFont
-    typedef std::shared_ptr<OFDFont> OFDFontPtr;
 
     typedef std::vector<OFDFontPtr> FontArray;
     typedef std::map<uint64_t, OFDFontPtr> FontMap;

@@ -450,14 +450,29 @@ bool OFDPackage::ImplCls::Save(const std::string &filename){
             //AddZipFile(m_archive, imageFileName, strImage);
         }
 
-        for ( auto m = 0 ; m < 1 ; m++ ){
-            // Doc_N/Res/Font_M.ttf
+        OFDResPtr documentRes = document->GetDocumentRes();
+        assert(documentRes != nullptr);
+
+        const FontMap &fonts = documentRes->GetFonts();
+        size_t m = 0;
+        for ( auto iter : fonts){
+            auto font = iter.second;
             std::string fontFileName = resDir + "/Font_" + std::to_string(m) + ".ttf";
 
-            std::string strFont;
-            zip->AddFile(fontFileName, strFont);
-            //AddZipFile(m_archive, fontFileName, strFont);
+            if ( font->FontStream != nullptr && font->FontStreamSize > 0 ){
+                zip->AddFile(fontFileName, font->FontStream, font->FontStreamSize);
+            }
+            m++;
         }
+
+        //for ( auto m = 0 ; m < 1 ; m++ ){
+            //// Doc_N/Res/Font_M.ttf
+            //std::string fontFileName = resDir + "/Font_" + std::to_string(m) + ".ttf";
+
+            //std::string strFont;
+            //zip->AddFile(fontFileName, strFont);
+            ////AddZipFile(m_archive, fontFileName, strFont);
+        //}
         
         n++;
     }
