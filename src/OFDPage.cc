@@ -17,6 +17,8 @@ public:
     ImplCls(OFDDocumentPtr ofdDocument, OFDPage *ofdPage);
     ~ImplCls();
 
+    void Init_After_Construct();
+
     std::string to_string() const;
 
     bool Open();
@@ -63,6 +65,9 @@ OFDPage::ImplCls::ImplCls(OFDDocumentPtr ofdDocument, OFDPage *ofdPage) :
 }
 
 OFDPage::ImplCls::~ImplCls(){
+}
+
+void OFDPage::ImplCls::Init_After_Construct(){
 }
 
 std::string OFDPage::ImplCls::to_string() const{
@@ -571,3 +576,10 @@ std::string OFDPage::GeneratePageXML() const{
 bool OFDPage::FromPageXML(const std::string &strPageXML){
     return m_impl->FromPageXML(strPageXML);
 }
+
+OFDPagePtr OFDPage::CreateNewPage(OFDDocumentPtr ofdDocument){
+    OFDPagePtr ofdPage = std::shared_ptr<OFDPage>(new OFDPage(ofdDocument));
+    ofdPage->m_impl->Init_After_Construct();
+    return ofdPage;
+}
+

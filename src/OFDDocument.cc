@@ -19,7 +19,7 @@ CT_DocInfo::CT_DocInfo() : DocUsage(DocInfo::Usage::Normal){
 
 class OFDDocument::ImplCls{
 public:
-    ImplCls(OFDPackagePtr ofdFile, OFDDocument *ofdDocument, const std::string &docRoot);
+    ImplCls(OFDDocument *ofdDocument, OFDPackagePtr ofdPackage, const std::string &docRoot);
     ~ImplCls();
 
     std::string to_string() const;
@@ -34,17 +34,19 @@ public:
     bool FromDocBodyXML(XMLElementPtr docBodyElement);
     bool FromDocumentXML(const std::string &strDocumentXML);
 
+    void Init_After_Construct();
+
 private:
     bool FromDocInfoXML(XMLElementPtr docInfoElement);
 
     bool FromCommonDataXML(XMLElementPtr commonDataElement);
     bool FromPagesXML(XMLElementPtr pagesElement);
 
+
     // -------- Private Attributes --------
 public:
-    //OFDPackage *m_ofdFile;
-    std::weak_ptr<OFDPackage> m_ofdFile;
     OFDDocument *m_ofdDocument;
+    std::weak_ptr<OFDPackage> m_ofdPackage;
     bool m_opened;
 
     DocBody    m_docBody;
@@ -58,15 +60,36 @@ private:
 
 }; // class OFDDocument::ImplCls
 
-OFDDocument::ImplCls::ImplCls(OFDPackagePtr ofdFile, OFDDocument *ofdDocument, const std::string &docRoot) : 
-    m_ofdFile(ofdFile), m_ofdDocument(ofdDocument), m_opened(false){
+OFDDocument::ImplCls::ImplCls(OFDDocument *ofdDocument, OFDPackagePtr ofdPackage, const std::string &docRoot) : 
+    m_ofdDocument(ofdDocument), m_ofdPackage(ofdPackage), m_opened(false){
     m_docBody.DocRoot = docRoot;
 
-    m_commonData.PublicRes = std::make_shared<OFDRes>(m_ofdFile.lock(), "PublicRes.xml");
-    m_commonData.DocumentRes = std::make_shared<OFDRes>(m_ofdFile.lock(), "DocumentRes.xml");
 }
 
 OFDDocument::ImplCls::~ImplCls(){
+}
+
+void OFDDocument::ImplCls::Init_After_Construct(){
+    LOG(INFO) << "-------- 0 -------";
+    m_commonData.PublicRes = OFDRes::CreateNewRes(m_ofdPackage.lock());
+    //m_commonData.PublicRes = std::make_shared<OFDRes>(m_ofdPackage.lock(), nullptr, nullptr);
+    //m_commonData.PublicRes = std::make_shared<OFDRes>(m_ofdPackage.lock());
+    //m_commonData.PublicRes = OFDRes::CreateNewRes(m_ofdPackage.lock());
+    //LOG(INFO) << "-------- 1 -------";
+    //if ( m_ofdDocument == nullptr ){
+        //LOG(WARNING) << "m_ofdDocument == nullptr";
+    //} else {
+        //LOG(INFO) << "m_ofdDocument != nullptr";
+    //}
+    //OFDPackagePtr opp = m_ofdDocument->GetOFDPackage();
+    //LOG(INFO) << "-------- 1.3 -------";
+    //OFDDocumentPtr odp = m_ofdDocument->GetSelf();
+    //LOG(INFO) << "-------- 1.5 -------";
+    //m_commonData.DocumentRes = std::make_shared<OFDRes>(opp, odp, nullptr);
+    //m_commonData.DocumentRes = OFDRes::CreateNewRes(m_ofdDocument->GetSelf());
+    //m_commonData.DocumentRes = std::make_shared<OFDRes>(m_ofdDocument->GetSelf());
+    m_commonData.DocumentRes = OFDRes::CreateNewRes(m_ofdDocument->GetSelf()); 
+    LOG(INFO) << "-------- 2 -------";
 }
 
 std::string OFDDocument::ImplCls::to_string() const{
@@ -82,7 +105,7 @@ bool OFDDocument::ImplCls::Open(){
 
     if ( m_commonData.PublicRes != nullptr ){
         std::string strResXML;
-        std::tie(strResXML, std::ignore) = m_ofdFile.lock()->ReadZipFileString(m_docBody.DocRoot + "/" + m_commonData.PublicRes->GetResDescFile());
+        std::tie(strResXML, std::ignore) = m_ofdPackage.lock()->ReadZipFileString(m_docBody.DocRoot + "/" + m_commonData.PublicRes->GetResDescFile());
         if ( !m_commonData.PublicRes->FromResXML(strResXML) ){
             LOG(ERROR) << "m_commonData.PublicRes.FromResXML() failed.";
             return false;
@@ -91,7 +114,7 @@ bool OFDDocument::ImplCls::Open(){
 
     if ( m_commonData.DocumentRes != nullptr ){
         std::string strResXML;
-        std::tie(strResXML, std::ignore) = m_ofdFile.lock()->ReadZipFileString(m_docBody.DocRoot + "/" + m_commonData.DocumentRes->GetResDescFile());
+        std::tie(strResXML, std::ignore) = m_ofdPackage.lock()->ReadZipFileString(m_docBody.DocRoot + "/" + m_commonData.DocumentRes->GetResDescFile());
         if ( !m_commonData.DocumentRes->FromResXML(strResXML) ){
             LOG(ERROR) << "m_commonData.DocumentRes.FromResXML() failed.";
             return false;
@@ -107,7 +130,7 @@ void OFDDocument::ImplCls::Close(){
 }
 
 OFDPagePtr OFDDocument::ImplCls::AddNewPage(){
-    OFDPagePtr page = std::make_shared<OFDPage>(m_ofdDocument->GetSelf());
+    OFDPagePtr page = OFDPage::CreateNewPage(m_ofdDocument->GetSelf());
     page->SetID(m_pages.size());
     m_pages.push_back(page);
     return page;
@@ -670,20 +693,21 @@ bool OFDDocument::ImplCls::FromCommonDataXML(XMLElementPtr commonDataElement){
         } else if ( childName == "PublicRes" ){
             // -------- <PublicRes>
             // Optional.
-            std::string res;
-            std::tie(res, std::ignore) = childElement->GetStringValue();
-            if ( !res.empty() ){
-                //m_commonData.PublicRes = std::make_shared<OFDRes>(std::shared_ptr<OFDPackage>(m_ofdFile), res);
-                m_commonData.PublicRes = std::make_shared<OFDRes>(m_ofdFile.lock(), res);
+            std::string resDescFile;
+            std::tie(resDescFile, std::ignore) = childElement->GetStringValue();
+            if ( !resDescFile.empty() ){
+                //m_commonData.PublicRes = std::make_shared<OFDRes>(m_ofdPackage.lock(), nullptr, nullptr, resDescFile);
+                m_commonData.PublicRes = OFDRes::CreateNewRes(m_ofdPackage.lock());
             }
 
         } else if ( childName == "DocumentRes" ){
             // -------- <DocumentRes>
             // Optional.
-            std::string res;
-            std::tie(res, std::ignore) = childElement->GetStringValue();
-            if ( !res.empty() ){
-                m_commonData.DocumentRes = std::make_shared<OFDRes>(m_ofdFile.lock(), res);
+            std::string resDescFile;
+            std::tie(resDescFile, std::ignore) = childElement->GetStringValue();
+            if ( !resDescFile.empty() ){
+                //m_commonData.DocumentRes = std::make_shared<OFDRes>(m_ofdDocument->GetOFDPackage(), m_ofdDocument->GetSelf(), nullptr, resDescFile);
+                m_commonData.DocumentRes = OFDRes::CreateNewRes(m_ofdDocument->GetSelf());
             }
 
         //} else if ( childName == "TemplatePage" ){
@@ -749,8 +773,8 @@ bool OFDDocument::ImplCls::FromPagesXML(XMLElementPtr pagesElement){
 
 // **************** class OFDDocument ****************
 
-OFDDocument::OFDDocument(OFDPackagePtr ofdFile, const std::string &docRoot){
-    m_impl = std::unique_ptr<ImplCls>(new ImplCls(ofdFile, this, docRoot));
+OFDDocument::OFDDocument(OFDPackagePtr ofdPackage, const std::string &docRoot){
+    m_impl = std::unique_ptr<ImplCls>(new ImplCls(this, ofdPackage, docRoot));
 }
 
 OFDDocument::~OFDDocument(){
@@ -761,11 +785,11 @@ OFDDocumentPtr OFDDocument::GetSelf(){
 }
 
 const OFDPackagePtr OFDDocument::GetOFDPackage() const{
-    return m_impl->m_ofdFile.lock();
+    return m_impl->m_ofdPackage.lock();
 }
 
 OFDPackagePtr OFDDocument::GetOFDPackage() {
-    return m_impl->m_ofdFile.lock();
+    return m_impl->m_ofdPackage.lock();
 }
 
 const DocBody& OFDDocument::GetDocBody() const{
@@ -840,5 +864,15 @@ void OFDDocument::Close(){
 
 bool OFDDocument::IsOpened() const{
     return m_impl->m_opened;
+}
+
+//void OFDDocument::InitRes(){
+    //m_impl->InitRes();
+//}
+
+OFDDocumentPtr OFDDocument::CreateNewDocument(OFDPackagePtr ofdPackage, const std::string &docRoot){
+    OFDDocumentPtr document = std::shared_ptr<OFDDocument>(new OFDDocument(ofdPackage, docRoot));
+    document->m_impl->Init_After_Construct();
+    return document;
 }
 

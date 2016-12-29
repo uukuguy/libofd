@@ -9,13 +9,13 @@ using namespace utils;
 OFDFont::OFDFont() : 
     Charset("unicode"), Serif(false), Bold(false), Italic(false), FixedWidth(false),
     FontType(Font::Type::Unknown), FontLoc(Font::Location::Unknown),
-    FontStream(nullptr), FontStreamSize(0){
+    m_fontData(nullptr), m_fontDataSize(0){
 }
 
 OFDFont::~OFDFont(){
-    if ( FontStream != nullptr ){
-        delete FontStream;
-        FontStream = nullptr;
+    if ( m_fontData != nullptr ){
+        delete m_fontData;
+        m_fontData = nullptr;
     }
 }
 
@@ -53,11 +53,15 @@ std::string OFDFont::ToString() const {
             ss << "FontLoc: Unknown" << std::endl;
         }
 
-        ss << "FontStreamSize: " << FontStreamSize << std::endl;
+        ss << "FontData Size: " << m_fontDataSize << std::endl;
         ss << std::endl
            << "------------------------------" << std::endl;
 
     return ss.str();
+}
+
+std::string OFDFont::GetFileName() const{
+    return std::string("Font_") + std::to_string(ID) + ".ttf";
 }
 
 void OFDFont::GenerateXML(XMLWriter &writer) const{

@@ -337,7 +337,7 @@ bool OFDPackage::ImplCls::Save(const std::string &filename){
     for ( auto document : m_documents ) {
 
         // -------- mkdir Doc_N
-        std::string Doc_N = document->GetDocBody().DocRoot;
+        std::string Doc_N = document->GetDocRoot();
         zip->AddDir(Doc_N);
         //AddZipDir(m_archive, Doc_N);
 
@@ -454,26 +454,14 @@ bool OFDPackage::ImplCls::Save(const std::string &filename){
         assert(documentRes != nullptr);
 
         const FontMap &fonts = documentRes->GetFonts();
-        size_t m = 0;
         for ( auto iter : fonts){
             auto font = iter.second;
-            std::string fontFileName = resDir + "/Font_" + std::to_string(m) + ".ttf";
-
-            if ( font->FontStream != nullptr && font->FontStreamSize > 0 ){
-                zip->AddFile(fontFileName, font->FontStream, font->FontStreamSize);
+            if ( font->m_fontData != nullptr && font->m_fontDataSize > 0 ){
+                std::string fontFileName = resDir + "/" + font->GetFileName();
+                zip->AddFile(fontFileName, font->m_fontData, font->m_fontDataSize);
             }
-            m++;
         }
 
-        //for ( auto m = 0 ; m < 1 ; m++ ){
-            //// Doc_N/Res/Font_M.ttf
-            //std::string fontFileName = resDir + "/Font_" + std::to_string(m) + ".ttf";
-
-            //std::string strFont;
-            //zip->AddFile(fontFileName, strFont);
-            ////AddZipFile(m_archive, fontFileName, strFont);
-        //}
-        
         n++;
     }
 
@@ -511,9 +499,13 @@ OFDDocumentPtr OFDPackage::ImplCls::AddNewDocument(){
     LOG(DEBUG) << "Calling OFDPackage::AddNewDocument(). docRoot: " << docRoot;
 
     assert(m_ofdPackage != nullptr);
-    OFDPackagePtr of = m_ofdPackage->GetSelf();
-    LOG(DEBUG) << "before make_shared";
-    OFDDocumentPtr document = std::make_shared<OFDDocument>(of, docRoot);
+    //OFDPackagePtr of = m_ofdPackage->GetSelf();
+    //LOG(DEBUG) << "before make_shared";
+
+    //OFDDocumentPtr document = std::make_shared<OFDDocument>(of, docRoot);
+    //document->InitRes();
+    OFDDocumentPtr document = OFDDocument::CreateNewDocument(m_ofdPackage->GetSelf(), docRoot);
+
     LOG(DEBUG) << "After create document.";
     m_documents.push_back(document);
 
@@ -592,3 +584,8 @@ std::string OFDPackage::to_string() const{
 std::tuple<std::string, bool> OFDPackage::ReadZipFileString(const std::string &fileinzip) const{
     return m_impl->ReadZipFileString(fileinzip);
 }
+
+std::tuple<char*, size_t, bool> OFDPackage::ReadZipFileRaw(const std::string &fileinzip) const{
+    return m_impl->ReadZipFileRaw(fileinzip);
+}
+

@@ -34,7 +34,7 @@ namespace ofd {
         };
     };
 
-    class OFDFont;
+    struct OFDFont;
     typedef std::shared_ptr<OFDFont> OFDFontPtr;
 
     // ======== class OFDFont ========
@@ -58,14 +58,15 @@ namespace ofd {
         Font::Type FontType;
         Font::Location FontLoc;
 
-        char *FontStream;
-        size_t FontStreamSize;
+        char *m_fontData;
+        size_t m_fontDataSize;
 
         _cairo_font_face *font_face;
 
         std::string ToString() const;
         void GenerateXML(utils::XMLWriter &writer) const;
         bool FromXML(utils::XMLElementPtr fontElement);
+        std::string GetFileName() const;
 
     } OFDFont_t; // class OFDFont
 

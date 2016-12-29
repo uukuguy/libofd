@@ -9,6 +9,9 @@
 
 namespace ofd{
 
+    class OFDPackage;
+    typedef std::shared_ptr<OFDPackage> OFDPackagePtr;
+
     // ======== class OFDPackage ========
     class OFDPackage : public std::enable_shared_from_this<OFDPackage> {
     public:
@@ -54,13 +57,13 @@ namespace ofd{
         std::string to_string() const;
 
         std::tuple<std::string, bool> ReadZipFileString(const std::string &fileinzip) const;
+        std::tuple<char*, size_t, bool> ReadZipFileRaw(const std::string &fileinzip) const;
 
     private:
         class ImplCls;
         std::unique_ptr<ImplCls> m_impl;
 
     }; // class OFDPackage
-    typedef std::shared_ptr<OFDPackage> OFDPackagePtr;
 
 }; // namespace ofd
 

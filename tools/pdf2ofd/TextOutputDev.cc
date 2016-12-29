@@ -4586,12 +4586,12 @@ TextSelectionPainter::TextSelectionPainter(TextPage *page,
 					   double scale,
 					   int rotation,
 					   OutputDev *out,
-					   GfxColor *box_color,
-					   GfxColor *glyph_color)
+					   GfxColor *_box_color,
+					   GfxColor *_glyph_color)
   : TextSelectionVisitor(page),
     out(out),
-    box_color(box_color),
-    glyph_color(glyph_color)
+    box_color(_box_color),
+    glyph_color(_glyph_color)
 {
   PDFRectangle box(0, 0, page->pageWidth, page->pageHeight);
 

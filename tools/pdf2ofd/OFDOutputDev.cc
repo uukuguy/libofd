@@ -412,16 +412,16 @@ OFDFontPtr GfxFont_to_OFDFont(GfxFont *gfxFont, XRef *xref){
         LOG(WARNING) << "fontLoc == nullptr.";
     }
 
-    // -------- FontStream --------
-    int fontStreamSize = 0;
-    char *fontStream = gfxFont->readEmbFontFile(xref, &fontStreamSize);
+    // -------- FontData --------
+    int fontDataSize = 0;
+    char *fontData = gfxFont->readEmbFontFile(xref, &fontDataSize);
 
-    ofdFont->FontStream = fontStream;
-    ofdFont->FontStreamSize = fontStreamSize;
+    ofdFont->m_fontData = fontData;
+    ofdFont->m_fontDataSize = fontDataSize;
 
-    ofdFont->FontStream = new char[fontStreamSize];
-    memcpy(ofdFont->FontStream, fontStream, fontStreamSize);
-    ofdFont->FontStreamSize = fontStreamSize;
+    ofdFont->m_fontData = new char[fontDataSize];
+    memcpy(ofdFont->m_fontData, fontData, fontDataSize);
+    ofdFont->m_fontDataSize = fontDataSize;
 
     return ofdFont;
 }

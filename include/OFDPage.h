@@ -32,9 +32,12 @@ namespace ofd{
     }; // class OFDLayer
 
     class OFDPage : public std::enable_shared_from_this<OFDPage> {
-    public:
+    private:
         OFDPage(OFDDocumentPtr ofdDocument);
+    public:
         virtual ~OFDPage();
+
+        static OFDPagePtr CreateNewPage(OFDDocumentPtr ofdDocument);
 
         const OFDDocumentPtr GetOFDDocument() const;
         OFDDocumentPtr GetOFDDocument();

@@ -92,12 +92,17 @@ namespace ofd{
 
     // ======== class OFDDocument ========
     class OFDDocument : public std::enable_shared_from_this<OFDDocument> {
+    private:
+        OFDDocument(OFDPackagePtr ofdPackage, const std::string &docRoot);
     public:
-        OFDDocument(OFDPackagePtr ofdFile, const std::string &docRoot);
         virtual ~OFDDocument();
+
+        static OFDDocumentPtr CreateNewDocument(OFDPackagePtr ofdPackage, const std::string &docRoot);
 
         const OFDPackagePtr GetOFDPackage() const;
         OFDPackagePtr GetOFDPackage();
+
+        //void InitRes();
 
         bool Open();
         void Close();

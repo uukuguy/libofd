@@ -1,10 +1,14 @@
 #include <vector>
+#include <assert.h>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include FT_GLYPH_H
 
 #include "OFDRes.h"
+#include "OFDPage.h"
+#include "OFDDocument.h"
+#include "OFDPackage.h"
 #include "utils/xml.h"
 #include "utils/logger.h"
 
@@ -58,8 +62,14 @@ FreetypeInitiator ftInitiator;
 
 class OFDRes::ImplCls{
 public:
-    ImplCls(OFDPackagePtr ofdPackage, OFDRes *ofdRes, const std::string &resDescFile);
+    ImplCls(OFDRes *ofdRes, OFDPackagePtr ofdPackage, const std::string &resDescFile);
+    ImplCls(OFDRes *ofdRes, OFDDocumentPtr ofdDocument, const std::string &resDescFile);
+    ImplCls(OFDRes *ofdRes, OFDPagePtr ofdPage, const std::string &resDescFile);
+    ImplCls(OFDRes *ofdRes, OFDPackagePtr ofdPackage, OFDDocumentPtr ofdDocument, OFDPagePtr ofdPage, const std::string &resDescFile); 
+
     ~ImplCls();
+
+    void Init_After_Construct();
 
     void AddColorSpace(const OFDColorSpace &ofdColorSpace){m_colorSpaces.push_back(ofdColorSpace);};
     void AddFont(OFDFontPtr font);
@@ -69,29 +79,140 @@ public:
     std::string GenerateResXML() const;
     bool FromResXML(const std::string &strResXML);
 
+    bool LoadFonts();
+    bool LoadImages();
+
 private:
     bool FromColorSpacesXML(XMLElementPtr colorSpacesElement);
     bool FromFontsXML(XMLElementPtr fontsElement);
 
     // -------- Private Attributes --------
 public:
-    std::weak_ptr<OFDPackage> m_ofdPackage;
     OFDRes* m_ofdRes;
+    std::weak_ptr<OFDPackage> m_ofdPackage;
+    std::weak_ptr<OFDDocument> m_ofdDocument;
+    std::weak_ptr<OFDPage> m_ofdPage;
     std::string m_baseLoc;
+    std::string m_resDescFile;
+
     ColorSpaceArray m_colorSpaces;
     FontMap m_fonts;
-    std::string m_resDescFile;
 
 
 }; // class OFDRes::ImplCls
 
 
-OFDRes::ImplCls::ImplCls(OFDPackagePtr ofdPackage, OFDRes *ofdRes, const std::string &resDescFile) : 
-    m_ofdPackage(ofdPackage), m_ofdRes(ofdRes),
+OFDRes::ImplCls::ImplCls(OFDRes *ofdRes, OFDPackagePtr ofdPackage, const std::string &resDescFile) : 
+    m_ofdRes(ofdRes),m_ofdPackage(ofdPackage), 
     m_baseLoc("Res"), m_resDescFile(resDescFile) {
+    m_ofdDocument.reset();
+    m_ofdPage.reset();
 
 }
 
+OFDRes::ImplCls::ImplCls(OFDRes *ofdRes, OFDDocumentPtr ofdDocument, const std::string &resDescFile) :
+    m_ofdRes(ofdRes), 
+    //m_ofdDocument(ofdDocument), 
+    m_baseLoc("Res"), m_resDescFile(resDescFile){
+
+    //LOG(INFO) << "******** 00 ********";
+    m_ofdPage.reset();
+
+    //LOG(INFO) << "******** 01 ********";
+    //m_ofdDocument = ofdDocument;
+    //LOG(INFO) << "******** 02 ********";
+    //assert(ofdDocument != nullptr);
+    //m_ofdPackage = ofdDocument->GetOFDPackage();
+    //assert(m_ofdPackage.lock() != nullptr);
+    //LOG(INFO) << "******** 03 ********";
+}
+
+OFDRes::ImplCls::ImplCls(OFDRes *ofdRes, OFDPagePtr ofdPage, const std::string &resDescFile) :
+    m_ofdRes(ofdRes), 
+    m_ofdPage(ofdPage),
+    m_baseLoc("Res"), m_resDescFile(resDescFile){
+
+    //assert(ofdPage != nullptr);
+    //m_ofdDocument = ofdPage->GetOFDDocument();
+    //assert(m_ofdDocument.lock() != nullptr);
+    //m_ofdPackage = m_ofdDocument.lock()->GetOFDPackage();
+    //assert(m_ofdPackage.lock() != nullptr);
+}
+
+void OFDRes::ImplCls::Init_After_Construct(){
+    LOG(INFO) << "&&&&&&&& begin &&&&&&&&";
+    if ( !m_ofdPage.expired() ){
+        LOG(INFO) << "&&&&&&&& 0 &&&&&&&&";
+        OFDDocumentPtr ofdDocument = m_ofdPage.lock()->GetOFDDocument();
+        assert(ofdDocument != nullptr);
+        m_ofdDocument = ofdDocument;
+
+        OFDPackagePtr ofdPackage = ofdDocument->GetOFDPackage();
+        assert(ofdPackage != nullptr);
+        m_ofdPackage = ofdPackage;
+
+        if ( m_resDescFile.empty() ){
+            m_resDescFile = "PageRes.xml";
+        }
+    } else {
+        LOG(INFO) << "&&&&&&&& 1 &&&&&&&&";
+        if ( !m_ofdDocument.expired() ){
+            OFDPackagePtr ofdPackage = m_ofdDocument.lock()->GetOFDPackage();
+            assert(ofdPackage != nullptr);
+            m_ofdPackage = ofdPackage;
+
+            if ( m_resDescFile.empty() ){
+                m_resDescFile = "DocumentRes.xml";
+            }
+        } else {
+            if ( m_resDescFile.empty() ){
+                m_resDescFile = "PublicRes.xml";
+            }
+        }
+    }
+    LOG(INFO) << "&&&&&&&& end &&&&&&&&";
+}
+
+OFDRes::ImplCls::ImplCls(OFDRes *ofdRes, OFDPackagePtr ofdPackage, OFDDocumentPtr ofdDocument, OFDPagePtr ofdPage, const std::string &resDescFile) :
+    m_ofdRes(ofdRes), 
+    //m_ofdPackage(ofdPackage), m_ofdDocument(ofdDocument), m_ofdPage(ofdPage),
+    m_baseLoc("Res"), m_resDescFile(resDescFile){
+    
+    LOG(INFO) << "******** full 0 ********";
+    m_ofdPackage.reset();
+    m_ofdDocument.reset();
+    m_ofdPage.reset();
+
+    if ( ofdPackage != nullptr ){
+        m_ofdPackage = ofdPackage;
+    }
+
+    if ( ofdDocument != nullptr ){
+        m_ofdDocument = ofdDocument;
+    }
+
+    if ( ofdPage != nullptr ){
+        m_ofdPage = ofdPage;
+    }
+
+    LOG(INFO) << "******** full 1 ********";
+    if ( m_resDescFile.empty() ){
+        if ( m_ofdPackage.lock() != nullptr ){
+            if ( m_ofdDocument.lock() != nullptr ){
+                if ( m_ofdPage.lock() != nullptr ){
+                    m_resDescFile = "PageRes.xml";
+                } else {
+                    m_resDescFile = "DocumentRes.xml";
+                }
+            } else {
+                m_resDescFile = "PublicRes.xml";
+            }
+        } else {
+            LOG(ERROR) << "m_ofdPackage == nullptr in OFDRes.";
+        }
+    }
+    LOG(INFO) << "******** full 9 ********";
+}
 
 OFDRes::ImplCls::~ImplCls(){
 }
@@ -207,6 +328,24 @@ bool OFDRes::ImplCls::FromColorSpacesXML(XMLElementPtr colorSpacesElement){
     return ok;
 }
 
+bool OFDRes::ImplCls::LoadFonts(){
+    bool ok = true;
+
+    for ( auto fontIter : m_fonts ){
+        auto font = fontIter.second;
+
+        //m_ofdPackage.lock()->ReadZipFileRaw();
+    }
+
+    return ok;
+}
+
+bool OFDRes::ImplCls::LoadImages(){
+    bool ok = true;
+
+    return ok;
+}
+
 bool OFDRes::ImplCls::FromFontsXML(XMLElementPtr fontsElement){
     bool ok = false;
 
@@ -218,71 +357,6 @@ bool OFDRes::ImplCls::FromFontsXML(XMLElementPtr fontsElement){
             AddFont(font);
             ok = true;
         }
-
-        //std::string childName = childElement->GetName();
-
-        //// -------- <Font>
-        //// OFD (section 11.1) P61. Res.xsd.
-        //if ( childName == "Font" ){
-            //XMLElementPtr fontElement = childElement;
-
-            //OFDFontPtr font = std::make_shared<OFDFont>();
-            //bool exist = false;
-
-            //// -------- <Font FontName="">
-            //// Required.
-            //std::tie(font->ID, exist) = fontElement->GetIntAttribute("ID");
-            //if ( exist ){
-                //// -------- <Font FontName="">
-                //// Required.
-                //std::tie(font->FontName, exist) = fontElement->GetStringAttribute("FontName");
-                //if ( !exist ){
-                    //LOG(ERROR) << "Attribute FontName is required in Font XML.";
-                //}
-            //} else {
-                //LOG(ERROR) << "Attribute ID is required in Font XML.";
-            //}
-
-            //if ( exist ) {
-
-                //// -------- <Font FamilyName="">
-                //// Optional
-                //std::tie(font->FamilyName, std::ignore) = fontElement->GetStringAttribute("FamilyName");
-
-                //// -------- <Font Charset="">
-                //// Optional
-                //std::tie(font->Charset, std::ignore) = fontElement->GetStringAttribute("Charset");
-
-                //// -------- <Font Charset="">
-                //// Optional
-                //std::tie(font->Charset, std::ignore) = fontElement->GetStringAttribute("Charset");
-                
-                //// -------- <Font Serif="">
-                //// Optional
-                //std::tie(font->Serif, std::ignore) = fontElement->GetBooleanAttribute("Serif");
-
-                //// -------- <Font Bold="">
-                //// Optional
-                //std::tie(font->Bold, std::ignore) = fontElement->GetBooleanAttribute("Bold");
-
-                //// -------- <Font Italic="">
-                //// Optional
-                //std::tie(font->Italic, std::ignore) = fontElement->GetBooleanAttribute("Italic");
-
-                //// -------- <Font FixedWidth="">
-                //// Optional
-                //std::tie(font->FixedWidth, std::ignore) = fontElement->GetBooleanAttribute("FixedWidth");
-
-                //XMLElementPtr fontFileElement = fontElement->GetFirstChildElement();
-                //if ( fontFileElement != nullptr && fontFileElement->GetName() == "FontFile" ){
-                    //std::tie(font->FontFile, std::ignore) = fontFileElement->GetStringValue();
-                //}
-
-                //AddFont(font);
-                //ok = true;
-            //}
-
-        //}
 
         childElement = childElement->GetNextSiblingElement();
     }
@@ -350,8 +424,28 @@ bool OFDRes::ImplCls::FromResXML(const std::string &strResXML){
 // **************** class OFDRes ****************
 
 OFDRes::OFDRes(OFDPackagePtr ofdPackage, const std::string &resDescFile){
-    m_impl = std::unique_ptr<ImplCls>(new ImplCls(ofdPackage, this, resDescFile));
+    LOG(INFO) << "!!!!!!!! 0 - Package !!!!!!!!";
+    m_impl = std::unique_ptr<ImplCls>(new ImplCls(this, ofdPackage, resDescFile));
+    LOG(INFO) << "!!!!!!!! 1 - Package !!!!!!!!";
 }
+
+OFDRes::OFDRes(OFDDocumentPtr ofdDocument, const std::string &resDescFile){ 
+    //m_impl(std::unique_ptr<ImplCls>(new ImplCls(this, ofdDocument, resDescFile))){
+
+    LOG(INFO) << "!!!!!!!! 0 - Document !!!!!!!!";
+    m_impl = std::unique_ptr<ImplCls>(new ImplCls(this, ofdDocument, resDescFile));
+    LOG(INFO) << "!!!!!!!! 1 - Document !!!!!!!!";
+}
+
+OFDRes::OFDRes(OFDPagePtr ofdPage, const std::string &resDescFile){
+    LOG(INFO) << "!!!!!!!! 0 - Page !!!!!!!!";
+    m_impl = std::unique_ptr<ImplCls>(new ImplCls(this, ofdPage, resDescFile));
+    LOG(INFO) << "!!!!!!!! 1 - Page !!!!!!!!";
+}
+
+//OFDRes::OFDRes(OFDPackagePtr ofdPackage, OFDDocumentPtr ofdDocument, OFDPagePtr ofdPage, const std::string &resDescFile) {
+    //m_impl = std::unique_ptr<ImplCls>(new ImplCls(this, ofdPackage, ofdDocument, ofdPage, resDescFile));
+//}
 
 OFDRes::~OFDRes(){
 }
@@ -362,6 +456,31 @@ OFDResPtr OFDRes::GetSelf() {
 
 std::string OFDRes::GetBaseLoc() const{
     return m_impl->m_baseLoc;
+}
+
+Res::Level OFDRes::GetResLevel() const {
+    assert(m_impl->m_ofdPackage.lock() != nullptr);
+
+    if ( m_impl->m_ofdPage.lock() != nullptr ){
+        assert(m_impl->m_ofdDocument.lock() != nullptr);
+        return Res::Level::PAGE;
+    } else if ( m_impl->m_ofdDocument.lock() != nullptr ) {
+        return Res::Level::DOCUMENT;
+    } else {
+        return Res::Level::PACKAGE;
+    }
+}
+
+const OFDPackagePtr OFDRes::GetOFDPackage() const{
+    return m_impl->m_ofdPackage.lock();
+}
+
+const OFDDocumentPtr OFDRes::GetOFDDocument() const{
+    return m_impl->m_ofdDocument.lock();
+}
+
+const OFDPagePtr OFDRes::GetOFDPage() const{
+    return m_impl->m_ofdPage.lock();
 }
 
 void OFDRes::SetBaseLoc(const std::string &baseLoc){
@@ -395,3 +514,34 @@ bool OFDRes::FromResXML(const std::string &strResXML){
 std::string OFDRes::GetResDescFile() const{
     return m_impl->m_resDescFile;
 }
+
+//void OFDRes::Adjust(){
+    //m_impl->Adjust();
+//}
+
+
+OFDResPtr OFDRes::CreateNewRes(OFDPackagePtr ofdPackage, const std::string &resDescFile){
+
+    OFDResPtr ofdRes = std::shared_ptr<OFDRes>(new OFDRes(ofdPackage, resDescFile));
+    ofdRes->m_impl->Init_After_Construct();
+    return ofdRes;
+}
+
+OFDResPtr OFDRes::CreateNewRes(OFDDocumentPtr ofdDocument, const std::string &resDescFile){
+    //LOG(INFO) << "$$$$$$$$ 0 $$$$$$$$";
+    //OFDResPtr ofdRes = std::make_shared<OFDRes>(ofdDocument, resDescFile);
+    //LOG(INFO) << "$$$$$$$$ 1 $$$$$$$$";
+    //ofdRes->Adjust();
+    //LOG(INFO) << "$$$$$$$$ 2 $$$$$$$$";
+    //return ofdRes;
+    OFDResPtr ofdRes = std::shared_ptr<OFDRes>(new OFDRes(ofdDocument, resDescFile));
+    ofdRes->m_impl->Init_After_Construct();
+    return ofdRes;
+}
+
+OFDResPtr OFDRes::CreateNewRes(OFDPagePtr ofdPage, const std::string &resDescFile){
+    OFDResPtr ofdRes = std::shared_ptr<OFDRes>(new OFDRes(ofdPage, resDescFile));
+    ofdRes->m_impl->Init_After_Construct();
+    return ofdRes;
+}
+

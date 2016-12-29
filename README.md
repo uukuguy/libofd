@@ -76,17 +76,23 @@ $ mkdir build && cd build && cmake .. && make
 
 ```
 $ make pdf2ofd
+
+$ make ofdviewer
 ```
 
 or 
 
 ```
 $ build/bin/pdf2ofd data/sample0.pdf
+
+$ build/bin/ofdviewer --v=1 sample0.ofd
 ```
 The command above will create a OFD file named sampl0.ofd in current directory, and upzip it into sample0 folder. See Makefile for detail.
 
 
 ## Errata
+
+- What's the differences between PublicRes and DocumentRes?
 
 - Section 6.2 P4 图中表明每个Doc\_N只有一个PublicRes以及一个DocumentRes，而Section 7.5 P10 表6中PublicRes和DocumentRes的说明明确两者都是“资源序列，每个节点指向OFD包内的一个资源描述文档“，但它们的类型都是ST\_Loc。矛盾的情况下，libofd按结构图中的定义，只允许一个PublicRes、一个DocumentRes。页面中的PageRes也有同样的问题。
 
