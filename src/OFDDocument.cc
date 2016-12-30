@@ -118,6 +118,8 @@ bool OFDDocument::ImplCls::Open(){
         if ( !m_commonData.DocumentRes->FromResXML(strResXML) ){
             LOG(ERROR) << "m_commonData.DocumentRes.FromResXML() failed.";
             return false;
+        } else {
+            m_commonData.DocumentRes->LoadFonts();
         }
     }
     m_opened = true;

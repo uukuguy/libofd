@@ -114,7 +114,7 @@ int main(int argc, char *argv[]){
             if ( font != nullptr ){
                 if (commonData.DocumentRes != nullptr ){
                     LOG(DEBUG) << "Font Name: " << font->FontName << "(ID:" << font->ID<< ")";
-                    font->FontFile = std::string("Font_") + std::to_string(k) + ".ttf";
+                    font->FontFile = std::string("Font_") + std::to_string(font->ID) + ".ttf";
                     commonData.DocumentRes->AddFont(font);
                 } else {
                     LOG(ERROR) << "commonData.DocumentRes == nullptr";

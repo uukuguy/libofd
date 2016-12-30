@@ -20,10 +20,10 @@ namespace ofd{
     // OFD (section 7.9) P23. Res.xsd
     class OFDRes : public std::enable_shared_from_this<OFDRes> {
     private:
-        OFDRes(OFDPackagePtr ofdPackage, const std::string &resDescFile = "PublicRes.xml");
-        OFDRes(OFDDocumentPtr ofdDocument, const std::string &resDescFile = "DocumentRes.xml");
-        OFDRes(OFDPagePtr ofdPage, const std::string &resDescFile = "PageRes.xml");
-        //OFDRes(OFDPackagePtr ofdPackage, OFDDocumentPtr ofdDocument, OFDPagePtr ofdPage, const std::string &resDescFile = "");
+        OFDRes(OFDPackagePtr ofdPackage, const std::string &resDescFile);
+        OFDRes(OFDDocumentPtr ofdDocument, const std::string &resDescFile);
+        OFDRes(OFDPagePtr ofdPage, const std::string &resDescFile);
+
     public:
         ~OFDRes();
 
@@ -32,7 +32,6 @@ namespace ofd{
         static OFDResPtr CreateNewRes(OFDPackagePtr ofdPackage, const std::string &resDescFile = "PublicRes.xml");
         static OFDResPtr CreateNewRes(OFDDocumentPtr ofdDocument, const std::string &resDescFile = "DocumentRes.xml");
         static OFDResPtr CreateNewRes(OFDPagePtr ofdPage, const std::string &resDescFile = "PageRes.xml");
-        //void Adjust();
 
         Res::Level GetResLevel() const;
 
@@ -40,6 +39,7 @@ namespace ofd{
         const OFDDocumentPtr GetOFDDocument() const;
         const OFDPagePtr GetOFDPage() const;
 
+        std::string GetEntryRoot() const;
         std::string GetBaseLoc() const;
         void SetBaseLoc(const std::string &baseLoc);
         std::string GetResDescFile() const;
@@ -54,6 +54,7 @@ namespace ofd{
         std::string GenerateResXML() const;
         bool FromResXML(const std::string &strResXML);
 
+        bool LoadFonts();
 
 
     private:
