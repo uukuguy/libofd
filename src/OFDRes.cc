@@ -1,10 +1,6 @@
 #include <vector>
 #include <assert.h>
 
-#include <ft2build.h>
-#include FT_FREETYPE_H
-#include FT_GLYPH_H
-
 #include "OFDRes.h"
 #include "OFDPage.h"
 #include "OFDDocument.h"
@@ -14,49 +10,6 @@
 
 using namespace ofd;
 using namespace utils;
-
-class FreetypeInitiator{
-public:
-    FreetypeInitiator(){
-        InitializeFreetype();
-    }
-
-    ~FreetypeInitiator(){
-        FinalizeFreetype();
-    }
-
-    bool InitializeFreetype();
-    void FinalizeFreetype();
-
-private:
-    static FT_Library ft_lib;
-    static bool ft_lib_initialized;
-};
-
-bool FreetypeInitiator::InitializeFreetype(){
-    if ( ft_lib_initialized ) return true;
-
-    FT_Error error = FT_Init_FreeType(&ft_lib);
-    if ( error ){
-        LOG(ERROR) << "FT_Init_FreeType() in OFDRes::InitializeFreetype() failed.";
-    } else {
-        ft_lib_initialized = true;
-    }
-
-    return ft_lib_initialized;
-}
-
-void FreetypeInitiator::FinalizeFreetype(){
-    if ( ft_lib_initialized ){
-        FT_Done_FreeType(ft_lib);
-        ft_lib = nullptr;
-        ft_lib_initialized = false;
-    }
-}
-
-FT_Library FreetypeInitiator::ft_lib = nullptr;
-bool FreetypeInitiator::ft_lib_initialized = false;
-FreetypeInitiator ftInitiator;
 
 // **************** class OFDRes::ImplCls ****************
 
@@ -200,6 +153,7 @@ void OFDRes::ImplCls::AddFont(OFDFontPtr font){
     } else {
         m_fonts.insert(FontMap::value_type(fontID, font));
     }
+    font->FontFile = font->GetFileName();
 }
 
 const OFDFontPtr OFDRes::ImplCls::GetFont(uint64_t fontID) const{
@@ -313,19 +267,9 @@ bool OFDRes::ImplCls::LoadFonts(){
 
     for ( auto fontIter : m_fonts ){
         auto font = fontIter.second;
-        std::string fontFile = GetEntryRoot() + "/" + m_baseLoc + "/" + font->FontFile;
-        LOG(DEBUG) << "Load Font: " << fontFile;
 
-        char *fontData = nullptr;
-        size_t fontDataSize = 0;
-        bool readOK = false;
-        std::tie(fontData, fontDataSize, readOK) = m_ofdPackage.lock()->ReadZipFileRaw(fontFile);
-        if ( readOK ){
-            font->m_fontData = fontData;
-            font->m_fontDataSize = fontDataSize;
-            LOG(INFO) << "Font " << font->FontName << "(ID=" << font->ID << ") loaded.";
-        } else {
-            LOG(ERROR) << "Call ReadZipFileRaw() to read font file " << fontFile << " failed.";
+        if ( !font->Load(m_ofdPackage.lock()) ){
+            LOG(ERROR) << "Load font (" << font->FontName << " failed.";
         }
     }
 
@@ -346,6 +290,8 @@ bool OFDRes::ImplCls::FromFontsXML(XMLElementPtr fontsElement){
 
         OFDFontPtr font = std::make_shared<OFDFont>();
         if ( font->FromXML(childElement) ){
+            std::string fontFilePath = GetEntryRoot() + "/" + m_baseLoc + "/" + font->FontFile;
+            font->SetFontFilePath(fontFilePath);
             AddFont(font);
             ok = true;
         }

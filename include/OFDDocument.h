@@ -152,6 +152,8 @@ namespace ofd{
         const CommonData& GetCommonData() const;
         CommonData& GetCommonData();
 
+        const FontMap& GetFonts() const;
+
         const OFDResPtr GetPublicRes() const{return GetCommonData().PublicRes;};
         OFDResPtr GetPublicRes() {return GetCommonData().PublicRes;};
 

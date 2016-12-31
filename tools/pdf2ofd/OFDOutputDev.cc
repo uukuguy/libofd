@@ -1,5 +1,9 @@
 #include <iostream>
 #include <iomanip>
+#include <assert.h>
+
+#include <fofi/FoFiTrueType.h>
+
 #include "OFDCommon.h"
 #include "OFDOutputDev.h"
 #include "OFDPage.h"
@@ -9,6 +13,7 @@
 using namespace ofd;
 
 GBool rawOrder = gFalse;
+
 
 OFDOutputDev::OFDOutputDev(ofd::OFDPackagePtr ofdPackage) :
     m_pdfDoc(nullptr),
@@ -362,6 +367,44 @@ void OFDOutputDev::PrintFonts() const{
     }
 }
 
+std::tuple<int*, size_t> getCodeToGID(GfxFont *gfxFont, char *fontData, size_t fontDataLen) {
+    assert(gfxFont != nullptr);
+    assert(fontData != nullptr && fontDataLen > 0);
+
+    int *codeToGID = nullptr;
+    size_t codeToGIDLen = 0;
+    FoFiTrueType *ff;
+    GfxFontType fontType = gfxFont->getType();
+
+    switch ( fontType ){
+        case fontCIDType2:
+        case fontCIDType2OT: {
+                codeToGID = NULL;
+                int n = 0;
+                if (((GfxCIDFont *)gfxFont)->getCIDToGID()) {
+                    n = ((GfxCIDFont *)gfxFont)->getCIDToGIDLen();
+                    if (n) {
+                        codeToGID = (int *)gmallocn(n, sizeof(int));
+                        memcpy(codeToGID, ((GfxCIDFont *)gfxFont)->getCIDToGID(), n * sizeof(int));
+                    }
+                } else {
+                    ff = FoFiTrueType::make(fontData, fontDataLen);
+                    if ( ff != nullptr ){
+                        codeToGID = ((GfxCIDFont *)gfxFont)->getCodeToGIDMap(ff, &n);
+                        delete ff;
+                    } else {
+                        LOG(ERROR) << "FofiTrueType make or load failed.";
+                    }
+                }
+                codeToGIDLen = n;
+            } break;
+        default:
+            break;
+    }; // switch ( fontType ){
+
+    return std::make_tuple(codeToGID, codeToGIDLen);
+}
+
 OFDFontPtr GfxFont_to_OFDFont(GfxFont *gfxFont, XRef *xref){
     OFDFontPtr ofdFont = std::make_shared<OFDFont>();
 
@@ -408,6 +451,8 @@ OFDFontPtr GfxFont_to_OFDFont(GfxFont *gfxFont, XRef *xref){
         } else {
             ofdFont->FontLoc = ofd::Font::Location::Unknown;
         }
+        delete fontLoc;
+        fontLoc = nullptr;
     } else {
         LOG(WARNING) << "fontLoc == nullptr.";
     }
@@ -419,9 +464,12 @@ OFDFontPtr GfxFont_to_OFDFont(GfxFont *gfxFont, XRef *xref){
     ofdFont->m_fontData = fontData;
     ofdFont->m_fontDataSize = fontDataSize;
 
-    ofdFont->m_fontData = new char[fontDataSize];
-    memcpy(ofdFont->m_fontData, fontData, fontDataSize);
+    ofdFont->m_fontData = fontData;
     ofdFont->m_fontDataSize = fontDataSize;
+
+    int *codeToGID = nullptr;
+    size_t codeToGIDLen = 0;
+    std::tie(codeToGID, codeToGIDLen) = getCodeToGID(gfxFont, fontData, fontDataSize);
 
     return ofdFont;
 }
@@ -437,6 +485,11 @@ void OFDOutputDev::updateFont(GfxState *state){
             ofdFont = GfxFont_to_OFDFont(gfxFont, m_xref);
 
             m_fonts.insert(std::map<int, OFDFontPtr>::value_type(fontID, ofdFont));
+            OFDDocument::CommonData &commonData = m_ofdDocument->GetCommonData();
+            if (commonData.DocumentRes != nullptr ){
+                    LOG(DEBUG) << "Font Name: " << ofdFont->FontName << "(ID:" << ofdFont->ID<< ")";
+                    commonData.DocumentRes->AddFont(ofdFont);
+            }
 
             showGfxFont(gfxFont);
 

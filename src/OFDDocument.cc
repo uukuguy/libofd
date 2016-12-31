@@ -36,6 +36,8 @@ public:
 
     void Init_After_Construct();
 
+    const FontMap& GetFonts() const;
+
 private:
     bool FromDocInfoXML(XMLElementPtr docInfoElement);
 
@@ -98,6 +100,10 @@ std::string OFDDocument::ImplCls::to_string() const{
     ss << "Pages: " << m_pages.size() << "\n";
     ss << std::endl;
     return ss.str();
+}
+
+const FontMap& OFDDocument::ImplCls::GetFonts() const{
+    return m_commonData.DocumentRes->GetFonts();
 }
 
 bool OFDDocument::ImplCls::Open(){
@@ -818,6 +824,10 @@ const OFDDocument::CommonData& OFDDocument::GetCommonData() const{
 
 OFDDocument::CommonData& OFDDocument::GetCommonData(){
     return m_impl->m_commonData;
+}
+
+const FontMap& OFDDocument::GetFonts() const{
+    return m_impl->GetFonts();
 }
 
 size_t OFDDocument::GetPagesCount() const{

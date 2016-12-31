@@ -18,6 +18,9 @@ public:
 
     cairo_surface_t *m_surface;
 
+public:
+    OFDCairoRender *m_cairoRender;
+
 }; // class OFDCairoRender::ImplCls
 
 OFDCairoRender::ImplCls::ImplCls(cairo_surface_t *surface) : m_surface(surface){
@@ -64,11 +67,17 @@ void OFDCairoRender::ImplCls::Draw(OFDPage *page){
 
     cairo_scale(cr, pixels_per_mm, pixels_per_mm);
 
+    //OFDFontEnginePtr fontEngine = 
     for ( size_t i = 0 ; i < numObjects ; i++ ){
         const OFDObjectPtr object = bodyLayer->GetObject(i);
         assert(object != nullptr);
         if ( object->Type == ofd::Object::Type::TEXT ){
             OFDTextObject *textObject = static_cast<OFDTextObject*>(object.get());
+
+            // FIXME
+            //OFDFontPtr font = textObject->GetFont();
+            //LOG(DEBUG) << "******** font id: " << font->ID << " ********";
+
             size_t numTextCodes = textObject->GetTextCodesCount();
             //LOG(DEBUG) << "numTextCodes: " << numTextCodes;
             for ( size_t n = 0 ; n < numTextCodes ; n++ ){
