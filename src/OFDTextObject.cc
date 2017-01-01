@@ -1,5 +1,8 @@
 #include <math.h>
+#include <assert.h>
 #include "OFDTextObject.h"
+#include "OFDPage.h"
+#include "OFDDocument.h"
 #include "utils/logger.h"
 #include "utils/xml.h"
 
@@ -10,7 +13,7 @@ using namespace ofd;
 
 class OFDTextObject::ImplCls{
 public:
-    ImplCls();
+    ImplCls(OFDTextObject *textObject);
     ~ImplCls();
 
     std::string to_string() const;
@@ -48,13 +51,17 @@ public:
     typedef std::vector<Text::TextCode> TextCodeArray;
     TextCodeArray TextCodes;
 
+private:
+    OFDTextObject *m_textObject;
+
 }; // class OFDTextObject::ImplCls
 
 
-OFDTextObject::ImplCls::ImplCls() :
+OFDTextObject::ImplCls::ImplCls(OFDTextObject *textObject) :
     Font(nullptr), FontSize(12.0), Stroke(false), Fill(true), HScale(1.0), 
     RD(Text::ReadDirection::ANGLE0), CD(Text::CharDirection::ANGLE0),
-    Italic(false){
+    Italic(false),
+    m_textObject(textObject){
 }
 
 OFDTextObject::ImplCls::~ImplCls(){
@@ -118,7 +125,6 @@ void OFDTextObject::ImplCls::GenerateAttributesXML(XMLWriter &writer) const{
     if ( fabs(HScale - 1.0) > 0.0000001 ){
         writer.WriteAttribute("HScale", HScale);
     }
-
 }
 
 // -------- <TextObject>
@@ -174,6 +180,21 @@ bool OFDTextObject::ImplCls::FromAttributesXML(XMLElementPtr objectElement){
     if ( !exist ){
         LOG(ERROR) << "Attribute Font is required in TextObject XML."; 
         return false;
+    } else {
+        const OFDPagePtr page = m_textObject->GetPage();
+        assert(page != nullptr);
+        const OFDDocumentPtr document = page->GetOFDDocument();
+        assert(document != nullptr);
+        const OFDDocument::CommonData &commonData = document->GetCommonData();
+        const OFDResPtr documentRes = commonData.DocumentRes;
+        assert(documentRes != nullptr);
+        const OFDFontPtr font = documentRes->GetFont(fontID);
+        if ( font == nullptr ){
+            LOG(ERROR) << "Font ID = " << fontID << " not found in documentRes.";
+            return false;
+        } else {
+            Font = font;
+        }
     }
 
     // -------- <TextObject Size="">
@@ -230,10 +251,11 @@ bool OFDTextObject::ImplCls::IterateElementsXML(XMLElementPtr childElement){
 
 // **************** class OFDTextObject ****************
 
-OFDTextObject::OFDTextObject() {
+OFDTextObject::OFDTextObject(OFDPagePtr page) :
+    OFDObject(page) {
     Type = Object::Type::TEXT;
     ObjectLabel = "TextObject";
-    m_impl = std::unique_ptr<ImplCls>(new ImplCls());
+    m_impl = std::unique_ptr<ImplCls>(new ImplCls(this));
 
 }
 

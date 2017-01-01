@@ -28,7 +28,7 @@ namespace ofd{
     // ======== class OFDObject ========
     class OFDObject {
     public:
-        OFDObject();
+        OFDObject(OFDPagePtr page);
         virtual ~OFDObject();
 
         uint64_t     ID;
@@ -44,6 +44,8 @@ namespace ofd{
         double       LineWidth;
         int          Alpha;
 
+        const OFDPagePtr GetPage() const;
+
         void GenerateXML(utils::XMLWriter &writer) const;
         //bool FromXML(utils::XMLReader &reader, const std::string &tagName);
         bool FromXML(utils::XMLElementPtr objectElement);
@@ -55,9 +57,12 @@ namespace ofd{
         virtual bool FromAttributesXML(utils::XMLElementPtr objectElement);
         virtual bool IterateElementsXML(utils::XMLElementPtr childElement);
 
+        std::weak_ptr<OFDPage> m_page;
+
     private:
         bool FromElementsXML(utils::XMLReader &reader);
         bool FromElementsXML(utils::XMLElementPtr objectElement);
+
 
     }; // class OFDObject
 
@@ -79,11 +84,11 @@ namespace ofd{
 
     }; // class PageBlock
 
-    class OFDObjectFactory{
-    public:
-        static OFDObjectPtr CreateObject(Object::Type objType);
+    //class OFDObjectFactory{
+    //public:
+        //static OFDObjectPtr CreateObject(Object::Type objType);
 
-    }; // class OFDObjectFactory
+    //}; // class OFDObjectFactory
 
 }; // namespace ofd
 

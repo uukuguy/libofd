@@ -159,9 +159,9 @@ void OFDRes::ImplCls::AddFont(OFDFontPtr font){
 const OFDFontPtr OFDRes::ImplCls::GetFont(uint64_t fontID) const{
     auto iter = m_fonts.find(fontID);
     if ( iter != m_fonts.end() ){
-        return nullptr;
-    } else {
         return iter->second;
+    } else {
+        return nullptr;
     }
 }
 

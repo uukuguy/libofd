@@ -75,8 +75,11 @@ void OFDCairoRender::ImplCls::Draw(OFDPage *page){
             OFDTextObject *textObject = static_cast<OFDTextObject*>(object.get());
 
             // FIXME
-            //OFDFontPtr font = textObject->GetFont();
-            //LOG(DEBUG) << "******** font id: " << font->ID << " ********";
+            OFDFontPtr font = textObject->GetFont();
+            if ( font == nullptr ) {
+                LOG(ERROR) << "TextObject Font  is nullptr.";
+                continue;
+            }
 
             size_t numTextCodes = textObject->GetTextCodesCount();
             //LOG(DEBUG) << "numTextCodes: " << numTextCodes;

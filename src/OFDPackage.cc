@@ -316,21 +316,9 @@ bool OFDPackage::ImplCls::Save(const std::string &filename){
         return false;
     }
 
-    //int error = 0;
-    //m_archive = zip_open(filename.c_str(), ZIP_CREATE | ZIP_EXCL, &error);
-    //if ( m_archive == nullptr ){
-        //if ( error == ZIP_ER_EXISTS ){
-            //LOG(ERROR) << "Error: Open " << filename << " failed. error=" << error << " The file exists and ZIP_EXCL is set.";
-        //} else {
-            //LOG(ERROR) << "Error: Open " << filename << " failed. error=" << error;
-        //}
-        //return false;
-    //}
-
     // -------- OFD.xml
     std::string strOFDXML = GenerateOFDXML();
     zip->AddFile("OFD.xml", strOFDXML);
-    //AddZipFile(m_archive, "OFD.xml", strOFDXML);
 
 
     int n = 0;
@@ -339,13 +327,11 @@ bool OFDPackage::ImplCls::Save(const std::string &filename){
         // -------- mkdir Doc_N
         std::string Doc_N = document->GetDocRoot();
         zip->AddDir(Doc_N);
-        //AddZipDir(m_archive, Doc_N);
 
         // Doc_N/Document.xml
         std::string strDocumentXML;
         strDocumentXML = m_documents[0]->GenerateDocumentXML();
         zip->AddFile(Doc_N + "/Document.xml", strDocumentXML); 
-        //AddZipFile(m_archive, Doc_N + "/Document.xml", strDocumentXML); 
 
         __attribute__((unused)) const OFDDocument::CommonData &commonData = document->GetCommonData();
 
@@ -355,7 +341,6 @@ bool OFDPackage::ImplCls::Save(const std::string &filename){
             strPublicResXML = commonData.PublicRes->GenerateResXML();
         }
         zip->AddFile(Doc_N + "/PublicRes.xml", strPublicResXML); 
-        //AddZipFile(m_archive, Doc_N + "/PublicRes.xml", strPublicResXML); 
 
         // Doc_N/DocumentRes.xml
         std::string strDocumentResXML;
@@ -363,11 +348,9 @@ bool OFDPackage::ImplCls::Save(const std::string &filename){
             strDocumentResXML = commonData.DocumentRes->GenerateResXML();
         }
         zip->AddFile(Doc_N + "/DocumentRes.xml", strDocumentResXML); 
-        //AddZipFile(m_archive, Doc_N + "/DocumentRes.xml", strDocumentResXML); 
         
         // mkdir Doc_N/Pages
         zip->AddDir(Doc_N + "/Pages"); 
-        //AddZipDir(m_archive, Doc_N + "/Pages"); 
 
         size_t numPages = document->GetPagesCount();
         for ( size_t k = 0 ; k < numPages ; k++ ){
@@ -376,23 +359,19 @@ bool OFDPackage::ImplCls::Save(const std::string &filename){
 
             std::string pageDir = Doc_N + "/Pages/" + Page_K;
             zip->AddDir(pageDir);
-            //AddZipDir(m_archive, pageDir);
 
             // Doc_N/Pages/Page_K/Content.xml
             std::string strPageXML = page->GeneratePageXML();
 
             zip->AddFile(pageDir + "/Content.xml", strPageXML);
-            //AddZipFile(m_archive, pageDir + "/Content.xml", strPageXML);
 
             // Doc_N/Pages/Page_K/PageRes.xml
             std::string strPageResXML;
             zip->AddFile(pageDir + "/PageRes.xml", strPageResXML);
-            //AddZipFile(m_archive, pageDir + "/PageRes.xml", strPageResXML);
 
             // mkdir Doc_N/Pages/Page_K/Res
             std::string pageResDir = pageDir + "/Res";
             zip->AddDir(pageResDir);
-            //AddZipDir(m_archive, pageResDir);
 
             for ( auto m = 0 ; m < 1 ; m++ ){
                 // Doc_N/Pages/Page_K/Res/Image_M.png
@@ -400,20 +379,16 @@ bool OFDPackage::ImplCls::Save(const std::string &filename){
 
                 std::string strImage;
                 zip->AddFile(imageFileName, strImage);
-                //AddZipFile(m_archive, imageFileName, strImage);
             }
-
         }
 
         // mkdir Doc_N/Signs
         std::string signsDir = Doc_N + "/Signs";
         zip->AddDir(signsDir); 
-        //AddZipDir(m_archive, signsDir); 
 
         // Doc_N/Signs/Signatures.xml
         std::string strSignaturesXML;
         zip->AddFile(signsDir + "/Signatures.xml", strSignaturesXML);
-        //AddZipFile(m_archive, signsDir + "/Signatures.xml", strSignaturesXML);
 
         for ( auto m = 0 ; m < 1 ; m++ ){
             // mkdir Doc_N/Signs/Sign_N
@@ -421,25 +396,23 @@ bool OFDPackage::ImplCls::Save(const std::string &filename){
 
             std::string signDir = Doc_N + "/Signs/" + Sign_N; 
             zip->AddDir(signDir);
-            //AddZipDir(m_archive, signDir);
+
             // Doc_N/Signs/Sign_N/Seal.esl
             std::string strSealESL;
             zip->AddFile(signDir + "/Seal.esl", strSealESL); 
-            //AddZipFile(m_archive, signDir + "/Seal.esl", strSealESL); 
+
             // Doc_N/Signs/Sign_N/Signature.xml
             std::string strSignatureXML;
             zip->AddFile(signDir + "/Signature.xml", strSignatureXML);
-            //AddZipFile(m_archive, signDir + "/Signature.xml", strSignatureXML);
+            
             // Doc_N/Signs/Sign_N/SignedValue.dat
             std::string strSignedValueDAT;
             zip->AddFile(signDir + "/SignedValue.dat", strSignedValueDAT);
-            //AddZipFile(m_archive, signDir + "/SignedValue.dat", strSignedValueDAT);
         }
         
         // mkdir Doc_N/Res
         std::string resDir = Doc_N + "/Res";
         zip->AddDir(resDir); 
-        //AddZipDir(m_archive, resDir); 
 
         for ( auto m = 0 ; m < 1 ; m++ ){
             // Doc_N/Res/Image_M.png
@@ -447,7 +420,6 @@ bool OFDPackage::ImplCls::Save(const std::string &filename){
 
             std::string strImage;
             zip->AddFile(imageFileName, strImage);
-            //AddZipFile(m_archive, imageFileName, strImage);
         }
 
         OFDResPtr documentRes = document->GetDocumentRes();
@@ -464,9 +436,6 @@ bool OFDPackage::ImplCls::Save(const std::string &filename){
 
         n++;
     }
-
-    //zip_close(m_archive);
-    //m_archive = nullptr;
 
     zip->Close();
     zip = nullptr;

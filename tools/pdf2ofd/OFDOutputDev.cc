@@ -149,7 +149,7 @@ void OFDOutputDev::startPage(int pageNum, GfxState *state, XRef *xrefA) {
     }
 }
 
-void processTextLine(OFDOutputDev *ofdOutputDev, TextLine *line, OFDLayerPtr bodyLayer){
+void OFDOutputDev::processTextLine(TextLine *line, OFDLayerPtr bodyLayer){
     double xMin, yMin, xMax, yMax;
     double lineXMin = 0, lineYMin = 0, lineXMax = 0, lineYMax = 0;
     TextWord *word;
@@ -205,21 +205,15 @@ void processTextLine(OFDOutputDev *ofdOutputDev, TextLine *line, OFDLayerPtr bod
             double edge = word->getEdge(k);
 
             LOG(INFO) << tCh << "(" << xMinA << ", " << yMinA << ", " << xMaxA << ", " << yMaxA << ") " << " Edge: " << edge << " Ascent: " << ascent << " Descent: " << descent << " Font[" << k << "] name: " << std::string(fontName->getCString()) << " (" << fontID << ")";
-
-            auto iter = ofdOutputDev->m_fonts.find(fontID);
-            if ( iter != ofdOutputDev->m_fonts.end() ){
-                auto font = iter->second;
-                LOG(INFO) << "fontID: " << fontID << " fontName: " << std::string(fontName->getCString()) << " OFDFont::FontName: " << font->FontName;
-            } else {
-                LOG(WARNING) << "fontID: " << fontID << " Not found in m_fonts.";
-            }
         }
 
         TextFontInfo *fontInfo = word->getFontInfo(0);
         Ref *ref = fontInfo->gfxFont->getID();
         uint64_t fontID = ref->num;
-        auto iter = ofdOutputDev->m_fonts.find(fontID);
-        auto textFont = iter->second;
+
+        OFDDocument::CommonData &commonData = m_ofdDocument->GetCommonData();
+        assert(commonData.DocumentRes != nullptr );
+        auto textFont = commonData.DocumentRes->GetFont(fontID);
 
         std::stringstream ss;
         ss << "          <word xMin=\"" << xMin << "\" yMin=\"" << yMin << "\" xMax=\"" <<
@@ -229,7 +223,7 @@ void processTextLine(OFDOutputDev *ofdOutputDev, TextLine *line, OFDLayerPtr bod
         wordXML << ss.str();
 
         if ( bodyLayer != nullptr ){
-            OFDTextObject *textObject = new OFDTextObject();
+            OFDTextObject *textObject = new OFDTextObject(m_currentOFDPage);
 
             // OFDObject::Boundary
             textObject->Boundary = ST_Box(xMin, yMin, xMax - xMin, yMax - yMin);
@@ -252,7 +246,7 @@ void processTextLine(OFDOutputDev *ofdOutputDev, TextLine *line, OFDLayerPtr bod
     LOG(DEBUG) << wordXML.str();
 }
 
-void processTextPage(OFDOutputDev *ofdOutputDev, TextPage *textPage, OFDPagePtr currentOFDPage){
+void OFDOutputDev::processTextPage(TextPage *textPage, OFDPagePtr currentOFDPage){
     OFDLayerPtr bodyLayer = nullptr;
     if ( currentOFDPage != nullptr ){
         bodyLayer = currentOFDPage->GetBodyLayer();
@@ -265,7 +259,7 @@ void processTextPage(OFDOutputDev *ofdOutputDev, TextPage *textPage, OFDPagePtr 
         for ( auto blk = flow->getBlocks(); blk != nullptr ; blk = blk->getNext()){
             blk->getBBox(&xMin, &yMin, &xMax, &yMax);
             for ( auto line = blk->getLines(); line != nullptr ; line = line->getNext()){
-                processTextLine(ofdOutputDev, line, bodyLayer);
+                processTextLine(line, bodyLayer);
             }
         }
     }
@@ -276,7 +270,7 @@ void OFDOutputDev::endPage() {
     m_textPage->endPage();
     m_textPage->coalesce(gTrue, 0, gFalse);
 
-    processTextPage(this, m_textPage, m_currentOFDPage);
+    processTextPage(m_textPage, m_currentOFDPage);
   }
 }
 
@@ -358,13 +352,6 @@ void showGfxFont(GfxFont *gfxFont){
         << "fontBBox: [" << fontBBox[0] << ", " << fontBBox[1] << ", " << fontBBox[2] << ", " << fontBBox[3] << "] \n"
         ;
 
-}
-
-void OFDOutputDev::PrintFonts() const{
-    LOG(INFO) << m_fonts.size() << " fonts in pdf file.";
-    for ( auto font : m_fonts ){
-        LOG(INFO) << font.second->ToString();
-    }
 }
 
 std::tuple<int*, size_t> getCodeToGID(GfxFont *gfxFont, char *fontData, size_t fontDataLen) {
@@ -481,24 +468,18 @@ void OFDOutputDev::updateFont(GfxState *state){
         int fontID = ref->num;
 
         OFDFontPtr ofdFont = nullptr;
-        if ( m_fonts.find(fontID) == m_fonts.end() ){
+        OFDDocument::CommonData &commonData = m_ofdDocument->GetCommonData();
+        assert(commonData.DocumentRes != nullptr );
+        ofdFont = commonData.DocumentRes->GetFont(fontID);
+
+        if ( ofdFont == nullptr ){
             ofdFont = GfxFont_to_OFDFont(gfxFont, m_xref);
-
-            m_fonts.insert(std::map<int, OFDFontPtr>::value_type(fontID, ofdFont));
-            OFDDocument::CommonData &commonData = m_ofdDocument->GetCommonData();
-            if (commonData.DocumentRes != nullptr ){
-                    LOG(DEBUG) << "Font Name: " << ofdFont->FontName << "(ID:" << ofdFont->ID<< ")";
-                    commonData.DocumentRes->AddFont(ofdFont);
-            }
-
+            commonData.DocumentRes->AddFont(ofdFont);
             showGfxFont(gfxFont);
-
-            //PrintFonts();
-        } else {
-            ofdFont = m_fonts[fontID];
         }
 
         m_currentFont = ofdFont;
+
         m_currentFontSize = state->getFontSize();
         m_currentCTM = state->getTextMat();
         //LOG(INFO) << "UpdateFont() fontSize: " << fontSize << " sizeof(ctm): " << sizeof(ctm);

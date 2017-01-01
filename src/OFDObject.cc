@@ -6,33 +6,38 @@
 using namespace utils;
 using namespace ofd;
 
-OFDObject::OFDObject() :
-    ID(0), Visible(true), LineWidth(0.353), Alpha(255){
+OFDObject::OFDObject(OFDPagePtr page) :
+    ID(0), Visible(true), LineWidth(0.353), Alpha(255),
+    m_page(page){
 }
 
 OFDObject::~OFDObject(){
 }
 
-OFDObjectPtr OFDObjectFactory::CreateObject(Object::Type objType){
-    OFDObjectPtr object = nullptr;
-
-    switch ( objType ){
-    case Object::Type::TEXT:{
-        OFDTextObject *textObject = new OFDTextObject();
-        object = std::shared_ptr<OFDObject>(textObject);
-        } break;
-    case Object::Type::PATH:
-        break;
-    case Object::Type::IMAGE:
-        break;
-    case Object::Type::COMPOSITE:
-        break;
-    default:
-        break;
-    };
-
-    return object;
+const OFDPagePtr OFDObject::GetPage() const{
+    return m_page.lock();
 }
+
+//OFDObjectPtr OFDObjectFactory::CreateObject(Object::Type objType){
+    //OFDObjectPtr object = nullptr;
+
+    //switch ( objType ){
+    //case Object::Type::TEXT:{
+        //OFDTextObject *textObject = new OFDTextObject();
+        //object = std::shared_ptr<OFDObject>(textObject);
+        //} break;
+    //case Object::Type::PATH:
+        //break;
+    //case Object::Type::IMAGE:
+        //break;
+    //case Object::Type::COMPOSITE:
+        //break;
+    //default:
+        //break;
+    //};
+
+    //return object;
+//}
 
 // Called by OFDPage::ImplCls::generateContentXML()
 void OFDObject::GenerateXML(XMLWriter &writer) const{

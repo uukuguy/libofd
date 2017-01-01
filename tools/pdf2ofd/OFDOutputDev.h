@@ -89,8 +89,6 @@ public:
     //virtual void beginActualText(GfxState *state, GooString *text);
     //virtual void endActualText(GfxState *state);
 
-    const std::map<int, ofd::OFDFontPtr> &GetFonts()const{
-    return m_fonts;}
 private:
 
     PDFDocPtr m_pdfDoc;
@@ -102,8 +100,10 @@ private:
     ofd::OFDDocumentPtr m_ofdDocument;
     ofd::OFDPagePtr m_currentOFDPage;
 
+    void processTextLine(TextLine *line, ofd::OFDLayerPtr bodyLayer);
+    void processTextPage(TextPage *textPage, ofd::OFDPagePtr currentOFDPage);
+
 public:
-    std::map<int, ofd::OFDFontPtr> m_fonts;
     ofd::OFDFontPtr m_currentFont;
     double m_currentFontSize;
     double *m_currentCTM;

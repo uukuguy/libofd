@@ -56,6 +56,7 @@ public:
 private:
     void generateContentXML(XMLWriter &writer) const;
 
+    OFDLayerPtr FromLayerXML(XMLElementPtr layerElement);
 
 }; // class OFDPage::ImplCls
 
@@ -375,39 +376,9 @@ bool OFDPage::ImplCls::FromPageXML(const std::string &strPageXML){
     return ok;
 }
 
-// OFD (section 11.2) P63. Page.xsd 
-OFDObjectPtr FromTextObjectXML(XMLElementPtr textObjectElement){
-
-    OFDTextObjectPtr textObject = std::make_shared<OFDTextObject>();
-    textObject->FromXML(textObjectElement);
-
-    return textObject;
-}
-
-// TODO
-OFDObjectPtr FromPathObjectXML(XMLElementPtr pathObjectElement){
-    OFDObjectPtr object = nullptr;
-
-    return object;
-}
-
-// TODO
-OFDObjectPtr FromImageObjectXML(XMLElementPtr imageObjectElement){
-    OFDObjectPtr object = nullptr;
-
-    return object;
-}
-
-// TODO
-OFDObjectPtr FromCompositeObjectXML(XMLElementPtr compositeObjectElement){
-    OFDObjectPtr object = nullptr;
-
-    return object;
-}
-
 // -------- FromLayerXML() --------
 // Called by OFDPage::ImplCls::FromContentXML()
-OFDLayerPtr FromLayerXML(XMLElementPtr layerElement){
+OFDLayerPtr OFDPage::ImplCls::FromLayerXML(XMLElementPtr layerElement){
     OFDLayerPtr layer = nullptr;
 
     assert(layerElement != nullptr);
@@ -435,17 +406,26 @@ OFDLayerPtr FromLayerXML(XMLElementPtr layerElement){
 
         std::string childName = childElement->GetName();
         if ( childName == "TextObject" ){
-            object = FromTextObjectXML(childElement); 
+            OFDTextObjectPtr textObject = std::make_shared<OFDTextObject>(m_ofdPage->GetSelf());
+            textObject->FromXML(childElement);
+            object = textObject;
             //LOG(DEBUG) << "Load text object. total: " << layer->Objects.size() << " GetObjectsCount() = " << layer->GetObjectsCount();
 
         } else if ( childName == "PathObject" ){
-            object = FromPathObjectXML(childElement); 
-
+            // TODO
+            //OFDPathObjectPtr pathObject = std::make_shared<OFDPathObject>(m_ofdPage.GetSelf());
+            //pathObject->FromXML(childElement);
+            //object = pathObject;
         } else if ( childName == "ImageObject" ){
-            object = FromImageObjectXML(childElement); 
-
+            // TODO
+            //OFDImageObjectPtr imageObject = std::make_shared<OFDImageObject>(m_ofdPage->GetSelf());
+            //imageObject->FromXML(childElement);
+            //object = imageObject;
         } else if ( childName == "CompositeObject" ){
-            object = FromCompositeObjectXML(childElement); 
+            // TODO
+            //OFDCompositeObjectPtr compositeObject = std::make_shared<OFDCompositeObject>(m_ofdPage->GetSelf());
+            //compositeObject->FromXML(childElement);
+            //object = compositeObject;
         }
 
         if ( object != nullptr ){

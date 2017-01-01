@@ -63,7 +63,7 @@ namespace ofd{
     // OFD P63，Page.xsd.
     class OFDTextObject : public OFDObject{
     public:
-        OFDTextObject();
+        OFDTextObject(OFDPagePtr page);
         virtual ~OFDTextObject();
 
         // 引用资源文件中定义的字型的标识。
