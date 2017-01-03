@@ -87,7 +87,10 @@ namespace ofd {
     typedef std::map<uint64_t, OFDFontPtr> FontMap;
 
 
-    class OFDFontEngine{
+    class OFDFontEngine;
+    typedef std::shared_ptr<OFDFontEngine> OFDFontEnginePtr;
+
+    class OFDFontEngine : public std::enable_shared_from_this<OFDFontEngine> {
     public:
         OFDFontEngine(OFDDocumentPtr document);
         ~OFDFontEngine();
@@ -95,6 +98,7 @@ namespace ofd {
         static const size_t MaxCachedFonts = 64;
 
         OFDFontPtr GetFont(uint64_t fontID); 
+        OFDFontEnginePtr GetSelf();
 
     private:
        class ImplCls;

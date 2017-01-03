@@ -353,9 +353,9 @@ public:
     // -------- Private Attributes --------
 public:
     std::list<OFDFontPtr> m_cachedFonts;
+    OFDFontEngine *m_fontEngine;
 
 private:
-    __attribute__((unused)) OFDFontEngine *m_fontEngine;
     std::weak_ptr<OFDDocument> m_document;
 
 }; // class OFDFontEngine::ImplCls
@@ -422,3 +422,8 @@ OFDFontEngine::~OFDFontEngine(){
 OFDFontPtr OFDFontEngine::GetFont(uint64_t fontID){
     return m_impl->GetFont(fontID);
 }
+
+OFDFontEnginePtr OFDFontEngine::GetSelf(){
+    return shared_from_this();
+}
+
