@@ -56,6 +56,7 @@ DEFINE_int32(v, 0, "Logger level.");
 DEFINE_string(owner_password, "", "The owner password of PDF file.");
 DEFINE_string(user_password, "", "The user password of PDF file.");
 
+
 int main(int argc, char *argv[]){
 
     TIMED_FUNC(timerMain);

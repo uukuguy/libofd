@@ -6,6 +6,7 @@
 #include <OutputDev.h>
 #include "TextOutputDev.h"
 #include <PDFDoc.h>
+#include <GfxState.h>
 #include "OFDCommon.h"
 #include "OFDPackage.h"
 #include "OFDDocument.h"
@@ -29,6 +30,7 @@ public:
     TextPage *TakeTextPage();
 
     void SetCairo(cairo_t *cairo); 
+    void SetAntialias(cairo_antialias_t antialias);
 
     // Does this device use upside-down coordinates?
     // (Upside-down means (0,0) is the top left corner of the page.)
@@ -80,6 +82,20 @@ public:
 
     //----- update text state
     virtual void updateFont(GfxState *state);
+    virtual void setDefaultCTM(double *ctm);
+    virtual void updateCTM(GfxState *state, double m11, double m12,
+            double m21, double m22, double m31, double m32);
+    virtual void updateLineDash(GfxState *state);
+    virtual void updateLineJoin(GfxState *state);
+    virtual void updateLineCap(GfxState *state);
+    virtual void updateMiterLimit(GfxState *state);
+    virtual void updateLineWidth(GfxState *state);
+    virtual void updateFillColor(GfxState *state);
+    virtual void updateStrokeColor(GfxState *state);
+    virtual void updateFillOpacity(GfxState *state);
+    virtual void updateStrokeOpacity(GfxState *state);
+    virtual void updateFillColorStop(GfxState *state, double offset);
+    virtual void updateBlendMode(GfxState *state);
 
     //----- text drawing
     virtual void beginString(GfxState *state, GooString *s);
@@ -110,22 +126,68 @@ private:
 
 
 public:
+
+    // CropBox (pixel)
+    int m_cropX;
+    int m_cropY;
+    int m_cropW;
+    int m_cropH;
+    int m_paperWidth;
+    int m_paperHeight;
+    bool m_usePDFPageSize;
+    bool m_printing;
+    bool m_useCropBox;
+    bool m_expand;
+    bool m_noShrink;
+    bool m_transp;
+    bool m_noCenter;
+    double m_resolution;
+    double m_resolutionX; 
+    double m_resolutionY;
+    int m_scaleTo;
+    int m_scaleToX;
+    int m_scaleToY;
+
+    cairo_surface_t *m_outputSurface;
+    FILE *m_outputFile;
     cairo_t *m_cairo;
-    cairo_t *m_cairo_shape;
+    cairo_matrix_t m_origMatrix;
+    cairo_t *m_cairoShape;
     cairo_path_t *m_textClipPath;
+    GfxRGB m_strokeColor;
+    GfxRGB m_fillColor;
+    double m_strokeOpacity;
+    double m_fillOpacity;
+    bool m_uncoloredPattern;
+    bool m_adjustedStrokeWidth;
+    bool m_strokeAdjust;
+    cairo_antialias_t m_antialiasEnum;
+
     bool m_use_show_text_glyphs;
-    cairo_text_cluster_t *m_cairo_text_clusters;
-    cairo_glyph_t *m_cairo_glyphs;
+    cairo_text_cluster_t *m_cairoTextClusters;
+    cairo_glyph_t *m_cairoGlyphs;
     int m_clustersCount;
     int m_glyphsCount;
     char *m_utf8;
     int m_utf8Count;
     int m_utf8Max;
-    bool m_text_matrix_valid;
+    bool m_textMatrixValid;
     ofd::OFDFontPtr m_currentFont;
     double m_currentFontSize;
     double *m_currentCTM;
-    cairo_pattern_t *m_fill_pattern, *m_stroke_pattern;
+    cairo_pattern_t *m_fillPattern, *m_strokePattern;
+    cairo_antialias_t m_antialias;
+
+private:
+    void getCropSize(double page_w, double page_h, double *width, double *height); 
+    void getOutputSize(double page_w, double page_h, double *width, double *height);
+    void getFitToPageTransform(double page_w, double page_h, double paper_w, double paper_h, cairo_matrix_t *m); 
+
+    std::tuple<cairo_surface_t*, FILE*> beforeDocument(const std::string &inputFileName, const std::string &outputFileName, double w, double h); 
+    void afterDocument();
+    void beforePage(double w, double h);
+    void afterPage(const std::string &imageFileName);
+    void renderPage(int pg, double page_w, double page_h, double output_w, double output_h); 
 
 }; // class OFDOutputDev
 
