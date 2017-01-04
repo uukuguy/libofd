@@ -72,7 +72,11 @@ namespace ofd {
         std::string GetFileName() const;
 
         bool Load(OFDPackagePtr package, bool reload = false);
+        // Defined in poppler/CharTypes.h
+        // typedef unsigned int CharCode;
+        // typedef unsigned int Unicode;
         //unsigned long GetGlyph(CharCode code, Unicode *u, int uLen) const;
+        unsigned long GetGlyph(unsigned int code, unsigned int *u, int uLen) const;
 
         void SetFontFilePath(const std::string &fontFilePath){m_fontFilePath = fontFilePath;};
         std::string GetFontFilePath() const {return m_fontFilePath;};

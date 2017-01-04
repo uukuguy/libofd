@@ -3,6 +3,8 @@
 #include <assert.h>
 
 #include <fofi/FoFiTrueType.h>
+#include <GlobalParams.h>
+#include <UnicodeMap.h>
 
 #include "OFDCommon.h"
 #include "OFDOutputDev.h"
@@ -24,6 +26,13 @@ OFDOutputDev::OFDOutputDev(ofd::OFDPackagePtr ofdPackage) :
 
     m_textPage = new TextPage(rawOrder);
     m_actualText = new ActualText(m_textPage);
+    m_textClipPath = nullptr;
+
+    m_cairo = nullptr;
+    m_cairo_shape = nullptr;
+
+    m_use_show_text_glyphs = false;
+    m_text_matrix_valid = true;
 
     if ( ofdPackage != nullptr ){
         m_ofdDocument = ofdPackage->AddNewDocument();
@@ -54,6 +63,27 @@ void OFDOutputDev::ProcessDoc(PDFDocPtr pdfDoc){
 
     for ( auto i = 0 ; i < numPages ; i++ ){
         pdfDoc->displayPage(this, i + 1, resolution, resolution, 0, useMediaBox, crop, printing);
+    }
+}
+
+void CairoOutputDev::SetCairo(cairo_t *cairo) {
+    if ( m_cairo != nullptr) {
+        cairo_status_t status = cairo_status(m_cairo);
+        if (status) {
+            LOG(ERROR) << "cairo context error: {0:s}\n" << cairo_status_to_string(status);
+        }
+        cairo_destroy (m_cairo);
+        assert(!m_cairo_shape);
+    }
+    if (cairo != nullptr) {
+        m_cairo = cairo_reference(cairo);
+        /* save the initial matrix so that we can use it for type3 fonts. */
+        //XXX: is this sufficient? could we miss changes to the matrix somehow?
+        cairo_get_matrix(cairo, &orig_matrix);
+        setContextAntialias(cairo, antialias);
+    } else {
+        m_cairo = nullptr;
+        m_cairo_shape = nullptr;
     }
 }
 
@@ -464,6 +494,9 @@ OFDFontPtr GfxFont_to_OFDFont(GfxFont *gfxFont, XRef *xref){
 void OFDOutputDev::updateFont(GfxState *state){
     GfxFont *gfxFont = state->getFont();
     if ( gfxFont != nullptr ){
+
+        m_use_show_text_glyphs = gfxFont->hasToUnicodeCMap() && cairo_surface_has_show_text_glyphs (cairo_get_target(m_cairo));
+
         Ref *ref = gfxFont->getID();
         int fontID = ref->num;
 
@@ -500,9 +533,121 @@ void OFDOutputDev::beginString(GfxState *state, GooString *s){
     //gfree(uni);
 
     //LOG(INFO) << "beginString() : " << std::string((const char *)uni);
+
+    int len = s->getLength();
+
+    //if (needFontUpdate)
+        //updateFont(state);
+
+    if (!m_currentFont)
+        return;
+
+    m_cairo_glyphs = (cairo_glyph_t *) gmallocn (len, sizeof (cairo_glyph_t));
+    m_glyphsCount = 0;
+    if (m_use_show_text_glyphs) {
+        m_cairo_text_clusters = (cairo_text_cluster_t *) gmallocn (len, sizeof (cairo_text_cluster_t));
+        m_clustersCount = 0;
+        m_utf8Max = len*2; // start with twice the number of glyphs. we will realloc if we need more.
+        m_utf8 = (char *) gmalloc (m_utf8Max);
+        m_utf8Count = 0;
+    }
 }
 
 void OFDOutputDev::endString(GfxState *state){
+
+    int render;
+
+    if (!m_currentFont)
+        return;
+
+    // endString can be called without a corresponding beginString. If this
+    // happens glyphs will be null so don't draw anything, just return.
+    // XXX: OutputDevs should probably not have to deal with this...
+    if (!m_cairo_glyphs)
+        return;
+
+    // ignore empty strings and invisible text -- this is used by
+    // Acrobat Capture
+    render = state->getRender();
+    if (render == 3 || m_glyphsCount == 0 || !m_text_matrix_valid) {
+        goto finish;
+    }
+
+    if (!(render & 1)) {
+        //LOG (printf ("fill string\n"));
+        cairo_set_source (m_cairo, m_fill_pattern);
+        if (m_use_show_text_glyphs)
+            cairo_show_text_glyphs (m_cairo, m_utf8, m_utf8Count, m_cairo_glyphs, m_glyphsCount, m_cairo_text_clusters, m_clustersCount, (cairo_text_cluster_flags_t)0);
+        else
+            cairo_show_glyphs (m_cairo, m_cairo_glyphs, m_glyphsCount);
+        if (m_cairo_shape)
+            cairo_show_glyphs (m_cairo_shape, m_cairo_glyphs, m_glyphsCount);
+    }
+
+    // stroke
+    if ((render & 3) == 1 || (render & 3) == 2) {
+        LOG(DEBUG) << "stroke string";
+        cairo_set_source (m_cairo, m_stroke_pattern);
+        cairo_glyph_path (m_cairo, m_cairo_glyphs, m_glyphsCount);
+        cairo_stroke (m_cairo);
+        if (m_cairo_shape) {
+            cairo_glyph_path (m_cairo_shape, m_cairo_glyphs, m_glyphsCount);
+            cairo_stroke (m_cairo_shape);
+        }
+    }
+
+    // clip
+    if ((render & 4)) {
+        LOG(DEBUG) << "clip string";
+        // append the glyph path to m_textClipPath.
+
+        // set textClipPath as the currentPath
+        if (m_textClipPath != nullptr ) {
+            cairo_append_path (m_cairo, m_textClipPath);
+            if (m_cairo_shape) {
+                cairo_append_path (m_cairo_shape, m_textClipPath);
+            }
+            cairo_path_destroy (m_textClipPath);
+        }
+
+        // append the glyph path
+        cairo_glyph_path (m_cairo, m_cairo_glyphs, m_glyphsCount);
+
+        // move the path back into textClipPath 
+        // and clear the current path
+        m_textClipPath = cairo_copy_path (m_cairo);
+        cairo_new_path (m_cairo);
+        if (m_cairo_shape) {
+            cairo_new_path (m_cairo_shape);
+        }
+    }
+
+finish:
+    gfree (m_cairo_glyphs);
+    m_cairo_glyphs = nullptr;
+    if (m_use_show_text_glyphs) {
+        gfree (m_cairo_text_clusters);
+        m_cairo_text_clusters = nullptr;
+        gfree (m_utf8);
+        m_utf8 =  nullptr;
+    }
+}
+
+void OFDOutputDev::beginTextObject(GfxState *state) {
+}
+
+void OFDOutputDev::endTextObject(GfxState *state) {
+    if (m_textClipPath) {
+        // clip the accumulated text path
+        cairo_append_path (m_cairo, m_textClipPath);
+        cairo_clip (m_cairo);
+        if (m_cairo_shape) {
+            cairo_append_path (m_cairo_shape, m_textClipPath);
+            cairo_clip (m_cairo_shape);
+        }
+        cairo_path_destroy (m_textClipPath);
+        m_textClipPath = NULL;
+    }
 }
 
 void OFDOutputDev::drawChar(GfxState *state, double x, double y,
@@ -519,6 +664,35 @@ void OFDOutputDev::drawChar(GfxState *state, double x, double y,
         //LOG(INFO) << "code:" << std::hex << std::setw(4) << std::setfill('0') << code << " nBytes:" << nBytes << " uLen:" << uLen;
         m_actualText->addChar(state, x, y, dx, dy, code, nBytes, u, uLen);
     }
+
+
+    if ( m_currentFont != nullptr ) {
+        m_cairo_glyphs[m_glyphsCount].index = m_currentFont->GetGlyph (code, u, uLen);
+        m_cairo_glyphs[m_glyphsCount].x = x - originX;
+        m_cairo_glyphs[m_glyphsCount].y = y - originY;
+        m_glyphsCount++;
+        if (m_use_show_text_glyphs) {
+            GooString enc("UTF-8");
+            UnicodeMap *utf8Map = globalParams->getUnicodeMap(&enc);
+            if (m_utf8Max - m_utf8Count < uLen*6) {
+                // utf8 encoded characters can be up to 6 bytes
+                if (m_utf8Max > uLen*6)
+                    m_utf8Max *= 2;
+                else
+                    m_utf8Max += 2*uLen*6;
+                m_utf8 = (char *) grealloc (m_utf8, m_utf8Max);
+            }
+            m_cairo_text_clusters[m_clustersCount].num_bytes = 0;
+            for (int i = 0; i < uLen; i++) {
+                int size = utf8Map->mapUnicode(u[i], m_utf8 + m_utf8Count, m_utf8Max - m_utf8Count);
+                m_utf8Count += size;
+                m_cairo_text_clusters[m_clustersCount].num_bytes += size;
+            }
+            m_cairo_text_clusters[m_clustersCount].num_glyphs = 1;
+            m_clustersCount++;
+        }
+    }
+
 }
 
 void OFDOutputDev::incCharCount(int nChars){

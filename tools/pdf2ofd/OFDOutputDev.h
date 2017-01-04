@@ -2,6 +2,7 @@
 #define __OFDOUTPUTDEV_H__
 
 #include <memory>
+#include <cairo/cairo-ft.h>
 #include <OutputDev.h>
 #include "TextOutputDev.h"
 #include <PDFDoc.h>
@@ -26,6 +27,8 @@ public:
     void SetTextPage(TextPage *textPage);
     TextPage *GetTextPage() const {return m_textPage;};
     TextPage *TakeTextPage();
+
+    void SetCairo(cairo_t *cairo); 
 
     // Does this device use upside-down coordinates?
     // (Upside-down means (0,0) is the top left corner of the page.)
@@ -86,6 +89,8 @@ public:
             double originX, double originY,
             CharCode code, int nBytes, Unicode *u, int uLen);
     virtual void incCharCount(int nChars);
+    virtual void beginTextObject(GfxState *state);
+    virtual void endTextObject(GfxState *state);
     //virtual void beginActualText(GfxState *state, GooString *text);
     //virtual void endActualText(GfxState *state);
 
@@ -103,11 +108,24 @@ private:
     void processTextLine(TextLine *line, ofd::OFDLayerPtr bodyLayer);
     void processTextPage(TextPage *textPage, ofd::OFDPagePtr currentOFDPage);
 
+
 public:
+    cairo_t *m_cairo;
+    cairo_t *m_cairo_shape;
+    cairo_path_t *m_textClipPath;
+    bool m_use_show_text_glyphs;
+    cairo_text_cluster_t *m_cairo_text_clusters;
+    cairo_glyph_t *m_cairo_glyphs;
+    int m_clustersCount;
+    int m_glyphsCount;
+    char *m_utf8;
+    int m_utf8Count;
+    int m_utf8Max;
+    bool m_text_matrix_valid;
     ofd::OFDFontPtr m_currentFont;
     double m_currentFontSize;
     double *m_currentCTM;
-
+    cairo_pattern_t *m_fill_pattern, *m_stroke_pattern;
 
 }; // class OFDOutputDev
 

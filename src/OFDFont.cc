@@ -330,16 +330,16 @@ bool OFDFont::Load(OFDPackagePtr package, bool reload){
     return ok;
 }
 
-//unsigned long OFDFont::GetGlyph(CharCode code, Unicode *u, int uLen) const{
-    //FT_UInt gid;
+unsigned long OFDFont::GetGlyph(unsigned int code, unsigned int *u, int uLen) const{
+    FT_UInt gid;
 
-    //if ( m_codeToGID && code < m_codeToGIDLen) {
-        //gid = (FT_UInt)codeToGID[code];
-    //} else {
-        //gid = (FT_UInt)code;
-    //}
-    //return gid;
-//}
+    if ( m_codeToGID && code < m_codeToGIDLen) {
+        gid = (FT_UInt)m_codeToGID[code];
+    } else {
+        gid = (FT_UInt)code;
+    }
+    return gid;
+}
 
 // **************** class OFDFontEngine::ImplCls ****************
 
