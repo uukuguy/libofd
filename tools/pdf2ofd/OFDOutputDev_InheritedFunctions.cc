@@ -229,14 +229,63 @@ void OFDOutputDev::endPage() {
 
 // -------- OFDOutputDev::saveState() --------
 void OFDOutputDev::saveState(GfxState *state){
-    if ( m_textPage != nullptr ){
-        m_textPage->updateFont(state);
+    //if ( m_textPage != nullptr ){
+        //m_textPage->updateFont(state);
+    //}
+
+    cairo_save(m_cairo);
+    if ( m_cairoShape != nullptr ){
+        cairo_save(m_cairoShape);
+    }
+
+    //MaskStack *ms = new MaskStack;
+    //ms->mask = cairo_pattern_reference(mask);
+    //ms->mask_matrix = mask_matrix;
+    //ms->next = maskStack;
+    //maskStack = ms;
+
+    if ( m_strokePathClip != nullptr ){
+        m_strokePathClip->ref_count++;
     }
 }
 
 // -------- OFDOutputDev::restoreState() --------
 void OFDOutputDev::restoreState(GfxState *state){
-    if ( m_textPage != nullptr ){
-        m_textPage->updateFont(state);
+    //if ( m_textPage != nullptr ){
+        //m_textPage->updateFont(state);
+    //}
+
+    cairo_restore(m_cairo);
+    if ( m_cairoShape != nullptr ){
+        cairo_restore(m_cairoShape);
+    }
+
+    m_textMatrixValid = true;
+
+    /* These aren't restored by cairo_restore() since we keep them in
+     * the output device. */
+    updateFillColor(state);
+    updateStrokeColor(state);
+    updateFillOpacity(state);
+    updateStrokeOpacity(state);
+    updateBlendMode(state);
+
+    //MaskStack* ms = maskStack;
+    //if (ms) {
+        //if ( m_maskPattern != nullptr )
+            //cairo_pattern_destroy(m_maskPattern);
+        //m_maskPattern = ms->mask;
+        //m_mask_matrix = ms->mask_matrix;
+        //maskStack = ms->next;
+        //delete ms;
+    //}
+
+    if ( m_strokePathClip && --m_strokePathClip->ref_count == 0) {
+        delete m_strokePathClip->path;
+        if ( m_strokePathClip->dashes ){
+            gfree(m_strokePathClip->dashes);
+        }
+        gfree(m_strokePathClip);
+        m_strokePathClip = nullptr;
     }
 }

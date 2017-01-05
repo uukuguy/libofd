@@ -47,11 +47,11 @@ public:
     // Does this device use functionShadedFill(), axialShadedFill(), and
     // radialShadedFill()?  If this returns false, these shaded fills
     // will be reduced to a series of other drawing operations.
-//#if CAIRO_VERSION >= CAIRO_VERSION_ENCODE(1, 12, 0)
-    //virtual GBool useShadedFills(int type) { return type <= 7; }
-//#else
-    //virtual GBool useShadedFills(int type) { return type > 1 && type < 4; }
-//#endif
+#if CAIRO_VERSION >= CAIRO_VERSION_ENCODE(1, 12, 0)
+    virtual GBool useShadedFills(int type) { return type <= 7; }
+#else
+    virtual GBool useShadedFills(int type) { return type > 1 && type < 4; }
+#endif
 
     // Does this device use FillColorStop()?
     virtual GBool useFillColorStop() { return gTrue; }
@@ -82,6 +82,7 @@ public:
 
     //----- update text state
     virtual void updateFont(GfxState *state);
+    virtual void updateAll(GfxState *state); 
     virtual void setDefaultCTM(double *ctm);
     virtual void updateCTM(GfxState *state, double m11, double m12,
             double m21, double m22, double m31, double m32);
@@ -107,8 +108,26 @@ public:
     virtual void incCharCount(int nChars);
     virtual void beginTextObject(GfxState *state);
     virtual void endTextObject(GfxState *state);
-    //virtual void beginActualText(GfxState *state, GooString *text);
-    //virtual void endActualText(GfxState *state);
+    virtual void beginActualText(GfxState *state, GooString *text);
+    virtual void endActualText(GfxState *state);
+
+    //----- path painting
+    virtual void stroke(GfxState *state);
+    virtual void fill(GfxState *state);
+    virtual void eoFill(GfxState *state);
+    virtual void clipToStrokePath(GfxState *state);
+    virtual GBool tilingPatternFill(GfxState *state, Gfx *gfx, Catalog *cat, Object *str,
+            double *pmat, int paintType, int tilingType, Dict *resDict,
+            double *mat, double *bbox,
+            int x0, int y0, int x1, int y1,
+            double xStep, double yStep);
+    virtual GBool functionShadedFill(GfxState *state, GfxFunctionShading *shading);
+    virtual GBool axialShadedFill(GfxState *state, GfxAxialShading *shading, double tMin, double tMax);
+    virtual GBool axialShadedSupportExtend(GfxState *state, GfxAxialShading *shading);
+    virtual GBool radialShadedFill(GfxState *state, GfxRadialShading *shading, double sMin, double sMax);
+    virtual GBool radialShadedSupportExtend(GfxState *state, GfxRadialShading *shading);
+    virtual GBool gouraudTriangleShadedFill(GfxState *state, GfxGouraudTriangleShading *shading);
+    virtual GBool patchMeshShadedFill(GfxState *state, GfxPatchMeshShading *shading);
 
 private:
 
@@ -152,6 +171,13 @@ public:
     FILE *m_outputFile;
     cairo_t *m_cairo;
     cairo_matrix_t m_origMatrix;
+
+    cairo_pattern_t *m_groupPattern;
+    cairo_pattern_t *m_shapePattern;
+    cairo_pattern_t *m_maskPattern;
+    cairo_matrix_t m_mask_matrix;
+    cairo_surface_t *m_cairoShapeSurface;
+
     cairo_t *m_cairoShape;
     cairo_path_t *m_textClipPath;
     GfxRGB m_strokeColor;
@@ -159,9 +185,12 @@ public:
     double m_strokeOpacity;
     double m_fillOpacity;
     bool m_uncoloredPattern;
-    bool m_adjustedStrokeWidth;
     bool m_strokeAdjust;
+    bool m_adjustedStrokeWidth;
+    bool m_alignStrokeCoords;
     bool m_needFontUpdate;
+
+    bool m_inUncoloredPattern;     // inside a uncolored pattern (PaintType = 2)
     cairo_antialias_t m_antialiasEnum;
 
     bool m_useShowTextGlyphs;
@@ -178,6 +207,24 @@ public:
     double *m_currentCTM;
     cairo_pattern_t *m_fillPattern, *m_strokePattern;
     cairo_antialias_t m_antialias;
+
+    struct StrokePathClip {
+        GfxPath *path;
+        cairo_matrix_t ctm;
+        double line_width;
+        double *dashes;
+        int dash_count;
+        double dash_offset;
+        cairo_line_cap_t cap;
+        cairo_line_join_t join;
+        double miter;
+        int ref_count;
+    } * m_strokePathClip;
+
+protected:
+    void fillToStrokePathClip(GfxState *state);
+    void doPath(cairo_t *cairo, GfxState *state, GfxPath *path);
+    void alignStrokeCoords(GfxSubpath *subpath, int i, double *x, double *y);
 
 private:
     void getCropSize(double page_w, double page_h, double *width, double *height); 

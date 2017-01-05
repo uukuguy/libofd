@@ -2,6 +2,24 @@
 #include "OFDOutputDev.h"
 #include "utils/logger.h"
 
+void OFDOutputDev::updateAll(GfxState *state){
+  updateLineDash(state);
+  updateLineJoin(state);
+  updateLineCap(state);
+  updateLineWidth(state);
+  updateFlatness(state);
+  updateMiterLimit(state);
+  updateFillColor(state);
+  updateStrokeColor(state);
+  updateFillOpacity(state);
+  updateStrokeOpacity(state);
+  updateBlendMode(state);
+  m_needFontUpdate = gTrue;
+  if (m_textPage != nullptr ){
+    m_textPage->updateFont(state);
+  }
+}
+
 void OFDOutputDev::setDefaultCTM(double *ctm) {
   cairo_matrix_t matrix;
   matrix.xx = ctm[0];

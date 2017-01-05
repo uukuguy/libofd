@@ -296,6 +296,7 @@ bool OFDFont::CreateFromData(char *fontData, size_t fontDataSize){
     std::tie(face, font_face, ok) = createCairoFontFace(fontData, fontDataSize); 
 
     m_fontFace = font_face;
+    m_bLoaded = true;
 
     return ok;
 }

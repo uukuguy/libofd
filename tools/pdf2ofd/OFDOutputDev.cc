@@ -74,18 +74,30 @@ OFDOutputDev::OFDOutputDev(ofd::OFDPackagePtr ofdPackage) :
 
     m_cairo = nullptr;
     m_cairoShape = nullptr;
+
+    m_groupPattern = nullptr;
+    m_shapePattern = nullptr;
+    m_maskPattern = nullptr;
+    m_cairoShapeSurface = nullptr;
+
     m_strokePattern = nullptr;
     m_fillPattern = nullptr;
     m_strokeOpacity = 1.0;
     m_fillOpacity = 1.0;
     m_uncoloredPattern = false;
-    m_adjustedStrokeWidth = false;
     m_strokeAdjust = globalParams->getStrokeAdjust();
+    m_adjustedStrokeWidth = false;
+    m_alignStrokeCoords = false;
+
     m_needFontUpdate = false;
     m_antialiasEnum = CAIRO_ANTIALIAS_DEFAULT;
 
+    m_inUncoloredPattern = false;
+
     m_useShowTextGlyphs = false;
     m_textMatrixValid = true;
+
+    m_strokePathClip = nullptr;
 
     if ( ofdPackage != nullptr ){
         m_ofdDocument = ofdPackage->AddNewDocument();
@@ -105,6 +117,18 @@ OFDOutputDev::~OFDOutputDev(){
 
     if ( m_fillPattern != nullptr ){
         cairo_pattern_destroy(m_fillPattern);
+    }
+
+    if ( m_groupPattern != nullptr ){
+        cairo_pattern_destroy(m_groupPattern);
+    }
+
+    if ( m_maskPattern != nullptr ){
+        cairo_pattern_destroy(m_maskPattern);
+    }
+
+    if ( m_shapePattern != nullptr ){
+        cairo_pattern_destroy(m_shapePattern);
     }
 
     if ( m_textPage != nullptr ){ 

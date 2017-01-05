@@ -187,10 +187,9 @@ void OFDOutputDev::incCharCount(int nChars){
 
 
 //#include <UTF.h>
-//void OFDOutputDev::beginActualText(GfxState *state, GooString *text) {
-    //LOG(INFO) << "********************* beginActualText() ******************";
-    //if ( m_textPage != nullptr ){
-        //m_actualText->begin(state, text);
+void OFDOutputDev::beginActualText(GfxState *state, GooString *text) {
+    if ( m_textPage != nullptr ){
+        m_actualText->begin(state, text);
 
         //GooString *aText = new GooString(text);
         //Unicode *uni = NULL;
@@ -198,11 +197,11 @@ void OFDOutputDev::incCharCount(int nChars){
         //gfree(uni);
         //delete aText;
         //LOG(INFO) << "beginActualText: " << std::string((const char*)text);
-    //}
-//}
+    }
+}
 
-//void OFDOutputDev::endActualText(GfxState *state) {
-    //if ( m_textPage != nullptr ){
-        //m_actualText->end(state);
-    //}
-//}
+void OFDOutputDev::endActualText(GfxState *state) {
+    if ( m_textPage != nullptr ){
+        m_actualText->end(state);
+    }
+}

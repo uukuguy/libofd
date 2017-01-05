@@ -180,11 +180,10 @@ OFDFontPtr GfxFont_to_OFDFont(GfxFont *gfxFont, XRef *xref){
     int fontDataSize = 0;
     char *fontData = gfxFont->readEmbFontFile(xref, &fontDataSize);
 
+    // FIXME
     ofdFont->m_fontData = fontData;
     ofdFont->m_fontDataSize = fontDataSize;
-
-    ofdFont->m_fontData = fontData;
-    ofdFont->m_fontDataSize = fontDataSize;
+    ofdFont->CreateFromData(fontData, fontDataSize);
 
     int *codeToGID = nullptr;
     size_t codeToGIDLen = 0;
