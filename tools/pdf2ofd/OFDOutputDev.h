@@ -13,6 +13,7 @@
 #include "OFDPage.h"
 #include "OFDFont.h"
 
+
 class OFDOutputDev;
 typedef std::shared_ptr<OFDOutputDev> OFDOutputDevPtr;
 typedef std::shared_ptr<PDFDoc> PDFDocPtr;
@@ -129,6 +130,44 @@ public:
     virtual GBool gouraudTriangleShadedFill(GfxState *state, GfxGouraudTriangleShading *shading);
     virtual GBool patchMeshShadedFill(GfxState *state, GfxPatchMeshShading *shading);
 
+    //----- image drawing
+
+    virtual void drawImageMask(GfxState *state, Object *ref, Stream *str,
+            int width, int height, GBool invert, GBool interpolate,
+            GBool inlineImg);
+    //virtual void setSoftMaskFromImageMask(GfxState *state,
+            //Object *ref, Stream *str,
+            //int width, int height, GBool invert,
+            //GBool inlineImg, double *baseMatrix);
+    //virtual void unsetSoftMaskFromImageMask(GfxState *state, double *baseMatrix);
+    void drawImageMaskPrescaled(GfxState *state, Object *ref, Stream *str,
+            int width, int height, GBool invert, GBool interpolate,
+            GBool inlineImg);
+    void drawImageMaskRegular(GfxState *state, Object *ref, Stream *str,
+            int width, int height, GBool invert, GBool interpolate,
+            GBool inlineImg);
+
+    virtual void drawImage(GfxState *state, Object *ref, Stream *str,
+            int width, int height, GfxImageColorMap *colorMap,
+            GBool interpolate, int *maskColors, GBool inlineImg);
+    virtual void drawSoftMaskedImage(GfxState *state, Object *ref, Stream *str,
+            int width, int height,
+            GfxImageColorMap *colorMap,
+            GBool interpolate,
+            Stream *maskStr,
+            int maskWidth, int maskHeight,
+            GfxImageColorMap *maskColorMap,
+            GBool maskInterpolate);
+
+    virtual void drawMaskedImage(GfxState *state, Object *ref, Stream *str,
+            int width, int height,
+            GfxImageColorMap *colorMap,
+            GBool interpolate,
+            Stream *maskStr,
+            int maskWidth, int maskHeight,
+            GBool maskInvert, GBool maskInterpolate);
+
+
 private:
 
     PDFDocPtr m_pdfDoc;
@@ -207,6 +246,7 @@ public:
     double *m_currentCTM;
     cairo_pattern_t *m_fillPattern, *m_strokePattern;
     cairo_antialias_t m_antialias;
+    bool m_prescaleImages;
 
     struct StrokePathClip {
         GfxPath *path;
@@ -225,6 +265,15 @@ protected:
     void fillToStrokePathClip(GfxState *state);
     void doPath(cairo_t *cairo, GfxState *state, GfxPath *path);
     void alignStrokeCoords(GfxSubpath *subpath, int i, double *x, double *y);
+    cairo_filter_t getFilterForSurface(cairo_surface_t *image, GBool interpolate);
+    void getScaledSize(const cairo_matrix_t *matrix, int orig_width, int orig_height, int *scaledWidth, int *scaledHeight);
+    GBool getStreamData (Stream *str, char **buffer, int *length);
+    void setMimeData(GfxState *state, Stream *str, Object *ref,
+            GfxImageColorMap *colorMap, cairo_surface_t *image);
+
+#if CAIRO_VERSION >= CAIRO_VERSION_ENCODE(1, 14, 0)
+    GBool setMimeDataForJBIG2Globals (Stream *str, cairo_surface_t *image);
+#endif
 
 private:
     void getCropSize(double page_w, double page_h, double *width, double *height); 

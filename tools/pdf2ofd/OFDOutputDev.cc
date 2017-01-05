@@ -93,6 +93,7 @@ OFDOutputDev::OFDOutputDev(ofd::OFDPackagePtr ofdPackage) :
     m_antialiasEnum = CAIRO_ANTIALIAS_DEFAULT;
 
     m_inUncoloredPattern = false;
+    m_prescaleImages = true;
 
     m_useShowTextGlyphs = false;
     m_textMatrixValid = true;

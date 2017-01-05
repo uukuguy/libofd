@@ -124,7 +124,6 @@ void OFDOutputDev::updateMiterLimit(GfxState *state){
   }
 }
 
-#define MIN(a,b) a <= b ? a : b
 
 void OFDOutputDev::updateLineWidth(GfxState *state){
     //LOG(DEBUG) <<  "line width: " << state->getLineWidth();
@@ -140,7 +139,7 @@ void OFDOutputDev::updateLineWidth(GfxState *state){
             /* adjust width to at least one device pixel */
             x = y = 1.0;
             cairo_device_to_user_distance(m_cairo, &x, &y);
-            width = MIN(fabs(x),fabs(y));
+            width = std::min(fabs(x),fabs(y));
             m_adjustedStrokeWidth = true;
         }
     } else if (width == 0.0) {
@@ -155,7 +154,7 @@ void OFDOutputDev::updateLineWidth(GfxState *state){
             y = 72.0/600;
         }
         cairo_device_to_user_distance(m_cairo, &x, &y);
-        width = MIN(fabs(x),fabs(y));
+        width = std::min(fabs(x),fabs(y));
     }
     cairo_set_line_width(m_cairo, width);
     if (m_cairoShape){
