@@ -183,6 +183,7 @@ private:
     void getCropSize(double page_w, double page_h, double *width, double *height); 
     void getOutputSize(double page_w, double page_h, double *width, double *height);
     void getFitToPageTransform(double page_w, double page_h, double paper_w, double paper_h, cairo_matrix_t *m); 
+    std::tuple<double, double> getPageSize(PDFDocPtr pdfDoc, int pg, int firstPage);
 
     void writePageImage(const std::string &filename);
 
