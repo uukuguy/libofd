@@ -83,9 +83,10 @@ OFDOutputDev::OFDOutputDev(ofd::OFDPackagePtr ofdPackage) :
     m_uncoloredPattern = false;
     m_adjustedStrokeWidth = false;
     m_strokeAdjust = globalParams->getStrokeAdjust();
+    m_needFontUpdate = false;
     m_antialiasEnum = CAIRO_ANTIALIAS_DEFAULT;
 
-    m_use_show_text_glyphs = false;
+    m_useShowTextGlyphs = false;
     m_textMatrixValid = true;
 
     if ( ofdPackage != nullptr ){
@@ -230,13 +231,13 @@ void OFDOutputDev::ProcessDoc(PDFDocPtr pdfDoc){
         double output_w, output_h;
         getOutputSize(pg_w, pg_h, &output_w, &output_h);
 
+
         if ( pg == firstPage ){
             cairo_surface_t *outputSurface = nullptr;
             FILE *outputFile = nullptr;
 
-            std::string inputFileName;
-            std::string outputFileName;
-            std::tie(outputSurface, outputFile) = beforeDocument(inputFileName, outputFileName, output_w, output_h);
+            std::string outputFileName = "output.pdf";
+            std::tie(outputSurface, outputFile) = beforeDocument(outputFileName, output_w, output_h);
 
             m_outputSurface = outputSurface;
             m_outputFile = outputFile;
@@ -247,9 +248,9 @@ void OFDOutputDev::ProcessDoc(PDFDocPtr pdfDoc){
         renderPage(pg, pg_w, pg_h, output_w, output_h);
         //pdfDoc->displayPage(this, pg, resolution, resolution, 0, useMediaBox, crop, printing);
 
-        std::string imageFileName;
-        assert(!imageFileName.empty());
+        std::string imageFileName = std::string("Page_") + std::to_string(pg) + ".jpeg";
         afterPage(imageFileName);
+
     }
     afterDocument();
 }
@@ -263,7 +264,7 @@ static cairo_status_t writeStream(void *closure, const unsigned char *data, unsi
         return CAIRO_STATUS_WRITE_ERROR;
 }
 
-std::tuple<cairo_surface_t*, FILE*> OFDOutputDev::beforeDocument(const std::string &inputFileName, const std::string &outputFileName, double w, double h) {
+std::tuple<cairo_surface_t*, FILE*> OFDOutputDev::beforeDocument(const std::string &outputFileName, double w, double h) {
 
     cairo_surface_t *outputSurface = nullptr;
     FILE *outputFile = nullptr;
@@ -358,7 +359,7 @@ void OFDOutputDev::afterPage(const std::string &imageFileName){
         cairo_surface_show_page(m_outputSurface);
     } else {
         // TODO
-        //writePageImage(imageFileName);
+        writePageImage(imageFileName);
         cairo_surface_finish(m_outputSurface);
         cairo_status_t status = cairo_surface_status(m_outputSurface);
         if (status){
@@ -398,14 +399,19 @@ void OFDOutputDev::renderPage(int pg, double page_w, double page_h, double outpu
         cairo_scale (cr, m_resolutionX/72.0, m_resolutionY/72.0);
     }
 
-    m_pdfDoc->displayPageSlice(this,
-            pg,
-            72.0, 72.0,
-            0, /* rotate */
-            !m_useCropBox, /* useMediaBox */
-            gFalse, /* Crop */
-            m_printing,
-            -1, -1, -1, -1);
+    double resolution = 72.0;
+    GBool useMediaBox = !m_useCropBox;
+    GBool crop = m_useCropBox;
+    GBool printing = m_printing;
+    m_pdfDoc->displayPage(this, pg, resolution, resolution, 0, useMediaBox, crop, printing);
+    //m_pdfDoc->displayPageSlice(this,
+            //pg,
+            //72.0, 72.0,
+            //0, [> rotate <]
+            //!m_useCropBox, [> useMediaBox <]
+            //gFalse, [> Crop <]
+            //m_printing,
+            //-1, -1, -1, -1);
     cairo_restore(cr);
     this->SetCairo(nullptr);
 
@@ -502,6 +508,20 @@ TextPage *OFDOutputDev::TakeTextPage(){
 }
 
 void OFDOutputDev::startPage(int pageNum, GfxState *state, XRef *xrefA) {
+
+    /* set up some per page defaults */
+    if ( m_fillPattern != nullptr ){
+        cairo_pattern_destroy(m_fillPattern);
+    }
+    if ( m_strokePattern != nullptr ){
+        cairo_pattern_destroy(m_strokePattern);
+    }
+
+    m_fillPattern = cairo_pattern_create_rgb(0., 0., 0.);
+    m_fillColor.r = m_fillColor.g = m_fillColor.b = 0;
+    m_strokePattern = cairo_pattern_reference(m_fillPattern);
+    m_strokeColor.r = m_strokeColor.g = m_strokeColor.b = 0;
+
     if ( m_textPage != nullptr ){
         delete m_actualText;
         m_textPage->decRefCnt();
@@ -873,15 +893,66 @@ OFDFontPtr GfxFont_to_OFDFont(GfxFont *gfxFont, XRef *xref){
     return ofdFont;
 }
 
+double getSubstitutionCorrection(OFDFontPtr ofdFont, GfxFont *gfxFont){
+    double w1, w2, w3;
+    CharCode code;
+    char *name;
+
+    // for substituted fonts: adjust the font matrix -- compare the
+    // width of 'm' in the original font and the substituted font
+    if ( ofdFont->IsSubstitute() && !gfxFont->isCIDFont()) {
+        for (code = 0; code < 256; ++code) {
+            if ((name = ((Gfx8BitFont *)gfxFont)->getCharName(code)) &&
+                    name[0] == 'm' && name[1] == '\0') {
+                break;
+            }
+        }
+        if (code < 256) {
+            w1 = ((Gfx8BitFont *)gfxFont)->getWidth(code);
+            {
+                cairo_matrix_t m;
+                cairo_matrix_init_identity(&m);
+                cairo_font_options_t *options = cairo_font_options_create();
+                cairo_font_options_set_hint_style(options, CAIRO_HINT_STYLE_NONE);
+                cairo_font_options_set_hint_metrics(options, CAIRO_HINT_METRICS_OFF);
+                cairo_scaled_font_t *scaled_font = cairo_scaled_font_create(ofdFont->GetFontFace(), &m, &m, options);
+
+                cairo_text_extents_t extents;
+                cairo_scaled_font_text_extents(scaled_font, "m", &extents);
+
+                cairo_scaled_font_destroy(scaled_font);
+                cairo_font_options_destroy(options);
+                w2 = extents.x_advance;
+            }
+            w3 = ((Gfx8BitFont *)gfxFont)->getWidth(0);
+            if (!gfxFont->isSymbolic() && w2 > 0 && w1 > w3) {
+                // if real font is substantially narrower than substituted
+                // font, reduce the font size accordingly
+                if (w1 > 0.01 && w1 < 0.9 * w2) {
+                    w1 /= w2;
+                    return w1;
+                }
+            }
+        }
+    }
+    return 1.0;
+}
+
 void OFDOutputDev::updateFont(GfxState *state){
     GfxFont *gfxFont = state->getFont();
-    if ( gfxFont != nullptr ){
+    m_needFontUpdate = false;
+    if ( m_textPage != nullptr ){
+        m_textPage->updateFont(state);
+    }
 
-        m_use_show_text_glyphs = gfxFont->hasToUnicodeCMap() && cairo_surface_has_show_text_glyphs (cairo_get_target(m_cairo));
+    if ( gfxFont != nullptr ){
+        m_useShowTextGlyphs = gfxFont->hasToUnicodeCMap() && cairo_surface_has_show_text_glyphs (cairo_get_target(m_cairo));
 
         Ref *ref = gfxFont->getID();
         int fontID = ref->num;
 
+        // FIXME
+        // LoadFont!!!
         OFDFontPtr ofdFont = nullptr;
         OFDDocument::CommonData &commonData = m_ofdDocument->GetCommonData();
         assert(commonData.DocumentRes != nullptr );
@@ -895,11 +966,56 @@ void OFDOutputDev::updateFont(GfxState *state){
 
         m_currentFont = ofdFont;
 
-        m_currentFontSize = state->getFontSize();
-        m_currentCTM = state->getTextMat();
+
+        cairo_font_face_t *font_face;
+        cairo_matrix_t matrix, invert_matrix;
+
+        // FIXME
+        font_face = m_currentFont->GetFontFace();
+        cairo_set_font_face(m_cairo, font_face);
+
+        m_useShowTextGlyphs = state->getFont()->hasToUnicodeCMap() &&
+            cairo_surface_has_show_text_glyphs(cairo_get_target(m_cairo));
+
+        double fontSize = state->getFontSize();
+        double *m = state->getTextMat();
+        m_currentFontSize = fontSize;
+        //m_currentCTM = m;
+
         //LOG(INFO) << "UpdateFont() fontSize: " << fontSize << " sizeof(ctm): " << sizeof(ctm);
         //LOG(INFO) << "ctm: [" << ctm[0] << ", " << ctm[1] << ", " << ctm[2] << ", "
             //<< ctm[3] << ", " << ctm[4] << ", " << ctm[5] << "]";
+
+        /* NOTE: adjusting by a constant is hack. The correct solution
+         * is probably to use user-fonts and compute the scale on a per
+         * glyph basis instead of for the entire font */
+
+        //double w = m_currentFont->GetSubstitutionCorrection(state->getFont());
+        double w = getSubstitutionCorrection(m_currentFont, state->getFont());
+        matrix.xx = m[0] * fontSize * state->getHorizScaling() * w;
+        matrix.yx = m[1] * fontSize * state->getHorizScaling() * w;
+        matrix.xy = -m[2] * fontSize;
+        matrix.yy = -m[3] * fontSize;
+        matrix.x0 = 0;
+        matrix.y0 = 0;
+
+        LOG(DEBUG) << "font matrix: " << matrix.xx << ", " << matrix.yx << ", " << matrix.xy << ", " << matrix.yy;
+
+        /* Make sure the font matrix is invertible before setting it.  cairo
+         * will blow up if we give it a matrix that's not invertible, so we
+         * need to check before passing it to cairo_set_font_matrix. Ignoring it
+         * is likely to give better results than not rendering anything at
+         * all. See #18254.
+         */
+        invert_matrix = matrix;
+        if (cairo_matrix_invert(&invert_matrix)) {
+            LOG(ERROR) << "font matrix not invertible";
+            m_textMatrixValid = false;
+            return;
+        }
+
+        cairo_set_font_matrix(m_cairo, &matrix);
+        m_textMatrixValid = true;
     }
 }
 
@@ -1010,39 +1126,41 @@ void OFDOutputDev::updateMiterLimit(GfxState *state){
 #define MIN(a,b) a <= b ? a : b
 
 void OFDOutputDev::updateLineWidth(GfxState *state){
-  LOG(DEBUG) <<  "line width: " << state->getLineWidth();
-  m_adjustedStrokeWidth = false;
-  double width = state->getLineWidth();
-  if ( m_strokeAdjust && !m_printing ) {
-    double x, y;
-    x = y = width;
+    //LOG(DEBUG) <<  "line width: " << state->getLineWidth();
+    m_adjustedStrokeWidth = false;
+    double width = state->getLineWidth();
+    if ( m_strokeAdjust && !m_printing ) {
+        double x, y;
+        x = y = width;
 
-    /* find out line width in device units */
-    cairo_user_to_device_distance(m_cairo, &x, &y);
-    if (fabs(x) <= 1.0 && fabs(y) <= 1.0) {
-      /* adjust width to at least one device pixel */
-      x = y = 1.0;
-      cairo_device_to_user_distance(m_cairo, &x, &y);
-      width = MIN(fabs(x),fabs(y));
-      m_adjustedStrokeWidth = true;
+        /* find out line width in device units */
+        cairo_user_to_device_distance(m_cairo, &x, &y);
+        if (fabs(x) <= 1.0 && fabs(y) <= 1.0) {
+            /* adjust width to at least one device pixel */
+            x = y = 1.0;
+            cairo_device_to_user_distance(m_cairo, &x, &y);
+            width = MIN(fabs(x),fabs(y));
+            m_adjustedStrokeWidth = true;
+        }
+    } else if (width == 0.0) {
+        /* Cairo does not support 0 line width == 1 device pixel. Find out
+         * how big pixels (device unit) are in the x and y
+         * directions. Choose the smaller of the two as our line width.
+         */
+        double x = 1.0, y = 1.0;
+        if (m_printing) {
+            // assume printer pixel size is 1/600 inch
+            x = 72.0/600;
+            y = 72.0/600;
+        }
+        cairo_device_to_user_distance(m_cairo, &x, &y);
+        width = MIN(fabs(x),fabs(y));
     }
-  } else if (width == 0.0) {
-    /* Cairo does not support 0 line width == 1 device pixel. Find out
-     * how big pixels (device unit) are in the x and y
-     * directions. Choose the smaller of the two as our line width.
-     */
-    double x = 1.0, y = 1.0;
-    if (m_printing) {
-      // assume printer pixel size is 1/600 inch
-      x = 72.0/600;
-      y = 72.0/600;
+    cairo_set_line_width(m_cairo, width);
+    if (m_cairoShape){
+        cairo_set_line_width(m_cairoShape, cairo_get_line_width (m_cairo));
     }
-    cairo_device_to_user_distance(m_cairo, &x, &y);
-    width = MIN(fabs(x),fabs(y));
-  }
-  cairo_set_line_width(m_cairo, width);
-  if (m_cairoShape)
-    cairo_set_line_width(m_cairoShape, cairo_get_line_width (m_cairo));
+
 }
 
 void OFDOutputDev::updateFillColor(GfxState *state){
@@ -1208,15 +1326,16 @@ void OFDOutputDev::beginString(GfxState *state, GooString *s){
 
     int len = s->getLength();
 
-    //if (needFontUpdate)
-        //updateFont(state);
+    if ( m_needFontUpdate ){
+        updateFont(state);
+    }
 
     if (!m_currentFont)
         return;
 
     m_cairoGlyphs = (cairo_glyph_t *) gmallocn (len, sizeof (cairo_glyph_t));
     m_glyphsCount = 0;
-    if (m_use_show_text_glyphs) {
+    if (m_useShowTextGlyphs) {
         m_cairoTextClusters = (cairo_text_cluster_t *) gmallocn (len, sizeof (cairo_text_cluster_t));
         m_clustersCount = 0;
         m_utf8Max = len*2; // start with twice the number of glyphs. we will realloc if we need more.
@@ -1248,7 +1367,7 @@ void OFDOutputDev::endString(GfxState *state){
     if (!(render & 1)) {
         //LOG (printf ("fill string\n"));
         cairo_set_source (m_cairo, m_fillPattern);
-        if (m_use_show_text_glyphs)
+        if (m_useShowTextGlyphs)
             cairo_show_text_glyphs (m_cairo, m_utf8, m_utf8Count, m_cairoGlyphs, m_glyphsCount, m_cairoTextClusters, m_clustersCount, (cairo_text_cluster_flags_t)0);
         else
             cairo_show_glyphs (m_cairo, m_cairoGlyphs, m_glyphsCount);
@@ -1297,7 +1416,7 @@ void OFDOutputDev::endString(GfxState *state){
 finish:
     gfree (m_cairoGlyphs);
     m_cairoGlyphs = nullptr;
-    if (m_use_show_text_glyphs) {
+    if (m_useShowTextGlyphs) {
         gfree (m_cairoTextClusters);
         m_cairoTextClusters = nullptr;
         gfree (m_utf8);
@@ -1318,7 +1437,7 @@ void OFDOutputDev::endTextObject(GfxState *state) {
             cairo_clip (m_cairoShape);
         }
         cairo_path_destroy (m_textClipPath);
-        m_textClipPath = NULL;
+        m_textClipPath = nullptr;
     }
 }
 
@@ -1326,6 +1445,7 @@ void OFDOutputDev::drawChar(GfxState *state, double x, double y,
         double dx, double dy,
         double originX, double originY,
         CharCode code, int nBytes, Unicode *u, int uLen){
+
     //LOG(DEBUG) << "(x,y,dx,dy):" << std::setprecision(3) << "(" << x << ", " << y << ", " << dx << ", " << dy << ")" 
         //<< " (originX, originY):" << "(" << originX << ", " << originY << ")"
         //<< " code:" << std::hex << std::setw(4) << std::setfill('0') << code
@@ -1343,7 +1463,7 @@ void OFDOutputDev::drawChar(GfxState *state, double x, double y,
         m_cairoGlyphs[m_glyphsCount].x = x - originX;
         m_cairoGlyphs[m_glyphsCount].y = y - originY;
         m_glyphsCount++;
-        if (m_use_show_text_glyphs) {
+        if (m_useShowTextGlyphs) {
             GooString enc("UTF-8");
             UnicodeMap *utf8Map = globalParams->getUnicodeMap(&enc);
             if (m_utf8Max - m_utf8Count < uLen*6) {

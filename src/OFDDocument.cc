@@ -72,7 +72,6 @@ OFDDocument::ImplCls::~ImplCls(){
 }
 
 void OFDDocument::ImplCls::Init_After_Construct(){
-    LOG(INFO) << "-------- 0 -------";
     m_commonData.PublicRes = OFDRes::CreateNewRes(m_ofdPackage.lock());
     //m_commonData.PublicRes = std::make_shared<OFDRes>(m_ofdPackage.lock(), nullptr, nullptr);
     //m_commonData.PublicRes = std::make_shared<OFDRes>(m_ofdPackage.lock());
@@ -91,7 +90,6 @@ void OFDDocument::ImplCls::Init_After_Construct(){
     //m_commonData.DocumentRes = OFDRes::CreateNewRes(m_ofdDocument->GetSelf());
     //m_commonData.DocumentRes = std::make_shared<OFDRes>(m_ofdDocument->GetSelf());
     m_commonData.DocumentRes = OFDRes::CreateNewRes(m_ofdDocument->GetSelf()); 
-    LOG(INFO) << "-------- 2 -------";
 }
 
 std::string OFDDocument::ImplCls::to_string() const{

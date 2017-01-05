@@ -288,6 +288,18 @@ std::tuple<FT_Face, cairo_font_face_t*, bool> createCairoFontFace(char *fontData
     return std::make_tuple(face, font_face, ok);
 }
 
+bool OFDFont::CreateFromData(char *fontData, size_t fontDataSize){
+    bool ok = true;
+
+    FT_Face face;
+    cairo_font_face_t *font_face;
+    std::tie(face, font_face, ok) = createCairoFontFace(fontData, fontDataSize); 
+
+    m_fontFace = font_face;
+
+    return ok;
+}
+
 bool OFDFont::Load(OFDPackagePtr package, bool reload){
     if ( !reload && m_bLoaded ) return true;
     if ( m_fontData != nullptr ){

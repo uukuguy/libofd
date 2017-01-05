@@ -72,6 +72,7 @@ namespace ofd {
         std::string GetFileName() const;
 
         bool Load(OFDPackagePtr package, bool reload = false);
+        bool CreateFromData(char *fontData, size_t fontDataSize);
         // Defined in poppler/CharTypes.h
         // typedef unsigned int CharCode;
         // typedef unsigned int Unicode;
@@ -80,6 +81,8 @@ namespace ofd {
 
         void SetFontFilePath(const std::string &fontFilePath){m_fontFilePath = fontFilePath;};
         std::string GetFontFilePath() const {return m_fontFilePath;};
+        _cairo_font_face* GetFontFace() {return m_fontFace;};
+        bool IsSubstitute() const {return m_substitute;};
         
     private:
         bool              m_bLoaded;

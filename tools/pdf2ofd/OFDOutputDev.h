@@ -161,9 +161,10 @@ public:
     bool m_uncoloredPattern;
     bool m_adjustedStrokeWidth;
     bool m_strokeAdjust;
+    bool m_needFontUpdate;
     cairo_antialias_t m_antialiasEnum;
 
-    bool m_use_show_text_glyphs;
+    bool m_useShowTextGlyphs;
     cairo_text_cluster_t *m_cairoTextClusters;
     cairo_glyph_t *m_cairoGlyphs;
     int m_clustersCount;
@@ -183,7 +184,9 @@ private:
     void getOutputSize(double page_w, double page_h, double *width, double *height);
     void getFitToPageTransform(double page_w, double page_h, double paper_w, double paper_h, cairo_matrix_t *m); 
 
-    std::tuple<cairo_surface_t*, FILE*> beforeDocument(const std::string &inputFileName, const std::string &outputFileName, double w, double h); 
+    void writePageImage(const std::string &filename);
+
+    std::tuple<cairo_surface_t*, FILE*> beforeDocument(const std::string &outputFileName, double w, double h); 
     void afterDocument();
     void beforePage(double w, double h);
     void afterPage(const std::string &imageFileName);
