@@ -11,24 +11,21 @@ using namespace ofd;
 
 class OFDCairoRender::ImplCls {
 public:
-    ImplCls(cairo_surface_t *surface);
+    ImplCls(OFDCairoRender *cairoRender, cairo_surface_t *surface);
     ~ImplCls();
 
     void Draw(OFDPage *page, Render::DrawParams drawParams);
 
-    cairo_surface_t *m_surface;
-    double           m_offsetX;
-    double           m_offsetY;
-    double           m_scaling;
-
 public:
     OFDCairoRender *m_cairoRender;
+    cairo_surface_t *m_surface;
+
 
 
 }; // class OFDCairoRender::ImplCls
 
-OFDCairoRender::ImplCls::ImplCls(cairo_surface_t *surface) : 
-    m_surface(surface), m_offsetX(0.0), m_offsetY(0.0), m_scaling(1.0){
+OFDCairoRender::ImplCls::ImplCls(OFDCairoRender *cairoRender, cairo_surface_t *surface) : 
+    m_cairoRender(cairoRender), m_surface(surface){
 }
 
 
@@ -138,11 +135,11 @@ void OFDCairoRender::ImplCls::Draw(OFDPage *page, Render::DrawParams drawParams)
 // **************** class OFDCairoRender ****************
 
 OFDCairoRender::OFDCairoRender(){
-    m_impl = std::unique_ptr<OFDCairoRender::ImplCls>(new OFDCairoRender::ImplCls(nullptr));
+    m_impl = std::unique_ptr<OFDCairoRender::ImplCls>(new OFDCairoRender::ImplCls(this, nullptr));
 }
 
 OFDCairoRender::OFDCairoRender(cairo_surface_t *surface){
-    m_impl = std::unique_ptr<OFDCairoRender::ImplCls>(new OFDCairoRender::ImplCls(surface));
+    m_impl = std::unique_ptr<OFDCairoRender::ImplCls>(new OFDCairoRender::ImplCls(this, surface));
 }
 
 OFDCairoRender::~OFDCairoRender(){

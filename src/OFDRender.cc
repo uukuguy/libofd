@@ -3,7 +3,7 @@
 
 using namespace ofd;
 
-OFDRender::OFDRender(){
+OFDRender::OFDRender() : m_drawParams(std::make_tuple(0.0, 0.0, 1.0)){
 }
 
 OFDRender::~OFDRender(){
