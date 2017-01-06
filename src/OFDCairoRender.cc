@@ -14,16 +14,21 @@ public:
     ImplCls(cairo_surface_t *surface);
     ~ImplCls();
 
-    void Draw(OFDPage *page);
+    void Draw(OFDPage *page, Render::DrawParams drawParams);
 
     cairo_surface_t *m_surface;
+    double           m_offsetX;
+    double           m_offsetY;
+    double           m_scaling;
 
 public:
     OFDCairoRender *m_cairoRender;
 
+
 }; // class OFDCairoRender::ImplCls
 
-OFDCairoRender::ImplCls::ImplCls(cairo_surface_t *surface) : m_surface(surface){
+OFDCairoRender::ImplCls::ImplCls(cairo_surface_t *surface) : 
+    m_surface(surface), m_offsetX(0.0), m_offsetY(0.0), m_scaling(1.0){
 }
 
 
@@ -34,29 +39,25 @@ void OFDCairoRender::SetCairoSurface(cairo_surface_t *surface){
     m_impl->m_surface = surface;
 }
 
-// ======== OFDCairoRender::ImplCls::Draw() ========
-void OFDCairoRender::ImplCls::Draw(OFDPage *page){
-    if ( m_surface == nullptr ) return;
+void TestDrawPage(OFDPage *page, cairo_surface_t *surface) {
 
-    cairo_t *cr = cairo_create(m_surface);
+    const OFDLayerPtr bodyLayer = page->GetBodyLayer(); 
+    if ( bodyLayer == nullptr ) {
+        LOG(WARNING) << "page->GetBodyLayer() return nullptr. Maybe NULL content.";
+        return;
+    }
+    size_t numObjects = bodyLayer->GetObjectsCount();
+    if ( numObjects == 0 ){
+        return;
+    }
+
+    cairo_t *cr = cairo_create(surface);
     cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
     cairo_paint(cr);
     cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
 
     cairo_rectangle(cr, 0, 0 + 0.5, 18.1944, 18.1944 + 0.5);
     cairo_stroke(cr);
-
-    if ( page == nullptr ) return;
-    //size_t numLayers = page->GetLayersCount();
-    const OFDLayerPtr bodyLayer = page->GetBodyLayer(); 
-    if ( bodyLayer == nullptr ) {
-        //LOG(WARNING) << "page->GetBodyLayer() return nullptr. Maybe NULL content.";
-        return;
-    }
-    size_t numObjects = bodyLayer->GetObjectsCount();
-    if ( numObjects == 0 ) return;
-    //LOG(DEBUG) << numLayers << " layers in page.";
-    //LOG(DEBUG) << numObjects << " objects in body layer.";
 
     double mm_per_inch = 25.4;
     double dpi = 96;
@@ -119,9 +120,19 @@ void OFDCairoRender::ImplCls::Draw(OFDPage *page){
                 //LOG(DEBUG) << "X: " << X1 << " Y: " << Y1 << " Text: " << text;
             }
         }
-        
     }
+}
 
+// ======== OFDCairoRender::ImplCls::Draw() ========
+void OFDCairoRender::ImplCls::Draw(OFDPage *page, Render::DrawParams drawParams){
+    if ( page == nullptr ) return;
+    if ( m_surface == nullptr ) return;
+    double offsetX;
+    double offsetY;
+    double scaling;
+    std::tie(offsetX, offsetY, scaling) = m_cairoRender->GetDrawParams();
+
+    TestDrawPage(page, m_surface);
 }
 
 // **************** class OFDCairoRender ****************
@@ -137,7 +148,8 @@ OFDCairoRender::OFDCairoRender(cairo_surface_t *surface){
 OFDCairoRender::~OFDCairoRender(){
 }
 
-void OFDCairoRender::Draw(OFDPage *page){
-    m_impl->Draw(page);
+void OFDCairoRender::Draw(OFDPage *page, Render::DrawParams drawParams){
+    OFDRender::Draw(page, drawParams);
+    m_impl->Draw(page, drawParams);
 }
 

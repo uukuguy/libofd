@@ -356,8 +356,9 @@ void MySDLApp::OnRender(cairo_surface_t *surface){
             OFDPagePtr currentPage = m_document->GetPage(m_pageIndex);
             if ( currentPage->Open() ){
                 std::unique_ptr<OFDCairoRender> cairoRender(new OFDCairoRender(surface));
-                cairoRender->Draw(currentPage.get());
-                //currentPage->Render(surface);
+
+                ofd::Render::DrawParams drawParams = std::make_tuple(0.0, 0.0, 1.0);
+                cairoRender->Draw(currentPage.get(), drawParams);
             } else {
                 LOG(ERROR) << "currentPage->Open() failed. pageIndex=" << m_pageIndex;
             }

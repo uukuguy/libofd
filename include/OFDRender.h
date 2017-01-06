@@ -2,10 +2,15 @@
 #define __OFD_RENDER_H__
 
 #include <memory>
+#include <tuple>
 
 namespace ofd{
 
     class OFDPage;
+
+    namespace Render{
+        typedef std::tuple<double, double, double> DrawParams;
+    }; // namespace Render
 
     // ======== class OFDRender ========
     class OFDRender {
@@ -13,7 +18,12 @@ namespace ofd{
         OFDRender();
         virtual ~OFDRender();
 
-        virtual void Draw(OFDPage *page) = 0;
+        virtual void Draw(OFDPage *page, Render::DrawParams draParams);
+        Render::DrawParams GetDrawParams() const;
+        void SetDrawParams(Render::DrawParams drawParams);
+
+    private:
+        Render::DrawParams m_drawParams;
 
     }; // class OFDRender
 

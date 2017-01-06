@@ -15,7 +15,10 @@ namespace ofd{
         virtual ~OFDCairoRender();
 
         void SetCairoSurface(cairo_surface_t *surface);
-        virtual void Draw(OFDPage *page) override;
+        cairo_surface_t *GetCairoSurface() const;
+
+        virtual void Draw(OFDPage *page, Render::DrawParams drawParams) override;
+
 
     private:
         class ImplCls;

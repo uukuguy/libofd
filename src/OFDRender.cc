@@ -9,7 +9,16 @@ OFDRender::OFDRender(){
 OFDRender::~OFDRender(){
 }
 
-void OFDRender::Draw(OFDPage *page){
+void OFDRender::Draw(OFDPage *page, Render::DrawParams drawParams){
+    m_drawParams = drawParams;
+}
+
+Render::DrawParams OFDRender::GetDrawParams() const{
+    return m_drawParams;
+}
+
+void OFDRender::SetDrawParams(Render::DrawParams drawParams){
+    m_drawParams = drawParams;
 }
 
 OFDRenderPtr OFDRenderFactory::CreateRenderInstance(RenderType renderType){
