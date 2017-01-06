@@ -14,7 +14,9 @@ public:
     ImplCls(OFDCairoRender *cairoRender, cairo_surface_t *surface);
     ~ImplCls();
 
-    void Draw(OFDPage *page, Render::DrawParams drawParams);
+    void Draw(OFDPagePtr page, Render::DrawParams drawParams);
+
+private:
 
 public:
     OFDCairoRender *m_cairoRender;
@@ -36,7 +38,7 @@ void OFDCairoRender::SetCairoSurface(cairo_surface_t *surface){
     m_impl->m_surface = surface;
 }
 
-void TestDrawPage(OFDPage *page, cairo_surface_t *surface) {
+void TestDrawPage(OFDPagePtr page, cairo_surface_t *surface) {
 
     const OFDLayerPtr bodyLayer = page->GetBodyLayer(); 
     if ( bodyLayer == nullptr ) {
@@ -120,8 +122,11 @@ void TestDrawPage(OFDPage *page, cairo_surface_t *surface) {
     }
 }
 
+void DrawPage(){
+}
+
 // ======== OFDCairoRender::ImplCls::Draw() ========
-void OFDCairoRender::ImplCls::Draw(OFDPage *page, Render::DrawParams drawParams){
+void OFDCairoRender::ImplCls::Draw(OFDPagePtr page, Render::DrawParams drawParams){
     if ( page == nullptr ) return;
     if ( m_surface == nullptr ) return;
     double offsetX;
@@ -145,7 +150,7 @@ OFDCairoRender::OFDCairoRender(cairo_surface_t *surface){
 OFDCairoRender::~OFDCairoRender(){
 }
 
-void OFDCairoRender::Draw(OFDPage *page, Render::DrawParams drawParams){
+void OFDCairoRender::Draw(OFDPagePtr page, Render::DrawParams drawParams){
     OFDRender::Draw(page, drawParams);
     m_impl->Draw(page, drawParams);
 }

@@ -3,10 +3,9 @@
 
 #include <memory>
 #include <tuple>
+#include "OFDCommon.h"
 
 namespace ofd{
-
-    class OFDPage;
 
     namespace Render{
         typedef std::tuple<double, double, double> DrawParams;
@@ -18,7 +17,7 @@ namespace ofd{
         OFDRender();
         virtual ~OFDRender();
 
-        virtual void Draw(OFDPage *page, Render::DrawParams draParams);
+        virtual void Draw(OFDPagePtr page, Render::DrawParams draParams);
         Render::DrawParams GetDrawParams() const;
         void SetDrawParams(Render::DrawParams drawParams);
 
