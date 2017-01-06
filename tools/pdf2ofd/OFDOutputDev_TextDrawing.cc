@@ -56,6 +56,7 @@ void OFDOutputDev::endString(GfxState *state){
         goto finish;
     }
 
+    // fill
     if (!(render & 1)) {
         //LOG (printf ("fill string\n"));
         cairo_set_source (m_cairo, m_fillPattern);

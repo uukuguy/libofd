@@ -130,6 +130,10 @@ public:
     virtual GBool gouraudTriangleShadedFill(GfxState *state, GfxGouraudTriangleShading *shading);
     virtual GBool patchMeshShadedFill(GfxState *state, GfxPatchMeshShading *shading);
 
+    //----- path clipping
+    virtual void clip(GfxState *state);
+    virtual void eoClip(GfxState *state);
+
     //----- image drawing
 
     virtual void drawImageMask(GfxState *state, Object *ref, Stream *str,
@@ -167,6 +171,18 @@ public:
             int maskWidth, int maskHeight,
             GBool maskInvert, GBool maskInterpolate);
 
+
+    //----- transparency groups and soft masks
+    virtual void beginTransparencyGroup(GfxState * /*state*/, double * /*bbox*/,
+            GfxColorSpace * /*blendingColorSpace*/,
+            GBool /*isolated*/, GBool /*knockout*/,
+            GBool /*forSoftMask*/);
+    virtual void endTransparencyGroup(GfxState * /*state*/);
+    void popTransparencyGroup();
+    virtual void paintTransparencyGroup(GfxState * /*state*/, double * /*bbox*/);
+    virtual void setSoftMask(GfxState * /*state*/, double * /*bbox*/, GBool /*alpha*/,
+            Function * /*transferFunc*/, GfxColor * /*backdropColor*/);
+    virtual void clearSoftMask(GfxState * /*state*/);
 
 private:
 
@@ -247,6 +263,7 @@ public:
     cairo_pattern_t *m_fillPattern, *m_strokePattern;
     cairo_antialias_t m_antialias;
     bool m_prescaleImages;
+    int m_knockoutCount;
 
     struct StrokePathClip {
         GfxPath *path;
@@ -260,6 +277,19 @@ public:
         double miter;
         int ref_count;
     } * m_strokePathClip;
+
+    struct ColorSpaceStack {
+        GBool knockout;
+        GfxColorSpace *cs;
+        cairo_matrix_t group_matrix;
+        struct ColorSpaceStack *next;
+    } * m_groupColorSpaceStack;
+
+    struct MaskStack {
+        cairo_pattern_t *mask;
+        cairo_matrix_t mask_matrix;
+        struct MaskStack *next;
+    } * m_maskStack;
 
 protected:
     void fillToStrokePathClip(GfxState *state);

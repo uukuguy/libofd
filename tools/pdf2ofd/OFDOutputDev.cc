@@ -99,6 +99,7 @@ OFDOutputDev::OFDOutputDev(ofd::OFDPackagePtr ofdPackage) :
     m_textMatrixValid = true;
 
     m_strokePathClip = nullptr;
+    m_knockoutCount = 0;
 
     if ( ofdPackage != nullptr ){
         m_ofdDocument = ofdPackage->AddNewDocument();

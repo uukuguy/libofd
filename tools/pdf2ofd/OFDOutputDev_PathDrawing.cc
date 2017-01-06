@@ -386,6 +386,28 @@ GBool OFDOutputDev::functionShadedFill(GfxState *state, GfxFunctionShading *shad
     return gTrue;
 }
 
+void OFDOutputDev::clip(GfxState *state) {
+    doPath(m_cairo, state, state->getPath());
+    cairo_set_fill_rule(m_cairo, CAIRO_FILL_RULE_WINDING);
+    cairo_clip(m_cairo);
+    if ( m_cairoShape != nullptr ) {
+        doPath(m_cairoShape, state, state->getPath());
+        cairo_set_fill_rule(m_cairoShape, CAIRO_FILL_RULE_WINDING);
+        cairo_clip(m_cairoShape);
+    }
+}
+
+void OFDOutputDev::eoClip(GfxState *state) {
+    doPath(m_cairo, state, state->getPath());
+    cairo_set_fill_rule(m_cairo, CAIRO_FILL_RULE_EVEN_ODD);
+    cairo_clip(m_cairo);
+    if ( m_cairoShape != nullptr ) {
+        doPath(m_cairoShape, state, state->getPath());
+        cairo_set_fill_rule(m_cairoShape, CAIRO_FILL_RULE_EVEN_ODD);
+        cairo_clip(m_cairoShape);
+    }
+}
+
 void OFDOutputDev::clipToStrokePath(GfxState *state){
     m_strokePathClip = (StrokePathClip*)gmalloc (sizeof(*m_strokePathClip));
     m_strokePathClip->path = state->getPath()->copy();
