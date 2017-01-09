@@ -149,7 +149,7 @@ void test_freetype(int argc, char *argv[]){
     cairo_show_text(cr, text.c_str());
 
     // -------- cairo_surface_write_to_png()
-    std::string png_filename = "test_freetype.png";
+    std::string png_filename = "output/ofdtest/test_freetype.png";
     cairo_surface_write_to_png(imageSurface, png_filename.c_str());
 
     // -------- cairo_surface_destroy()

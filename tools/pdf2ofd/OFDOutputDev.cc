@@ -226,7 +226,7 @@ void OFDOutputDev::ProcessDoc(PDFDocPtr pdfDoc){
         renderPage(pg, pg_w, pg_h, output_w, output_h);
 
         // -------- afterPage()
-        std::string imageFileName = std::string("Page_") + std::to_string(pg) + ".jpeg";
+        std::string imageFileName = std::string("output/pdf2ofd/Page_") + std::to_string(pg) + ".jpeg";
         afterPage(imageFileName);
 
     }

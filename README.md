@@ -9,6 +9,15 @@ The libofd is the first open-source C++ development library for OFD. It was esta
 
 ## Release Notes
 
+### v0.6
+2017.01.09
+
+- ofdviewer cant view ofd file, including simple navigate by up/down arrow.
+- Use command "make sample0" to build ./output/sample0.ofd from ./data/sample0.pdf.
+- Use command "make sample2" to build ./output/sample2.ofd from ./data/sample2.pdf.
+- Use command "make view0" to view ./output/sample0.ofd by ofdviewer.
+- Use command "make view2" to view ./output/sample2.ofd by ofdviewer.
+
 ### v0.5
 
 2016.12.16

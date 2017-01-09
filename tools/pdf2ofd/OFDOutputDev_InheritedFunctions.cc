@@ -245,7 +245,7 @@ void OFDOutputDev::processTextPage(TextPage *textPage, OFDPagePtr currentOFDPage
         }
     }
 
-    std::string png_filename = std::string("Page") + std::to_string(pageID) + ".png";
+    std::string png_filename = std::string("output/pdf2ofd/Page") + std::to_string(pageID) + ".png";
     cairo_surface_write_to_png(imageSurface, png_filename.c_str());
 
     cairo_surface_destroy(imageSurface);

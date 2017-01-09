@@ -117,7 +117,7 @@ int enc_get_utf8_size(const unsigned char pInput)
  ****************************************************************************/  
 int enc_utf8_to_unicode_one(const unsigned char* pInput, unsigned long *Unic)  
 {  
-    assert(pInput != NULL && Unic != NULL);  
+    assert(pInput != nullptr && Unic != nullptr);  
   
     // b1 表示UTF-8编码的pInput中的高字节, b2 表示次高字节, ...  
     char b1, b2, b3, b4, b5, b6;  

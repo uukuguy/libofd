@@ -1,5 +1,7 @@
 build/*
 logs/*
+output/*/*
+output/*.ofd
 
 # Compiled Object files
 *.slo
