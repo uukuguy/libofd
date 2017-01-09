@@ -1,3 +1,4 @@
+#include <iomanip>
 #include <GlobalParams.h>
 #include <UnicodeMap.h>
 #include "OFDOutputDev.h"
@@ -134,15 +135,38 @@ void OFDOutputDev::endTextObject(GfxState *state) {
     }
 }
 
+//#include <UnicodeMap.h>
+//#include <UTF8.h>
+
+#include "utils/unicode.h"
 void OFDOutputDev::drawChar(GfxState *state, double x, double y,
         double dx, double dy,
         double originX, double originY,
         CharCode code, int nBytes, Unicode *u, int uLen){
 
-    //LOG(DEBUG) << "(x,y,dx,dy):" << std::setprecision(3) << "(" << x << ", " << y << ", " << dx << ", " << dy << ")" 
-        //<< " (originX, originY):" << "(" << originX << ", " << originY << ")"
-        //<< " code:" << std::hex << std::setw(4) << std::setfill('0') << code
-        //<< " nBytes:" << nBytes << " uLen:" << uLen;
+    
+      ////UnicodeMap *map = new UnicodeMap("UTF-8", gTrue, &mapUTF8);
+      //GooString enc("UTF-8");
+      //UnicodeMap *utf8Map = globalParams->getUnicodeMap(&enc);
+      //char buf[6];
+      ////mapUCS2( *u, buf, 5);
+      //int tLen = utf8Map->mapUnicode( *u, buf, 5);
+      //buf[tLen] = '\0';
+
+
+      unsigned char buf[8];
+      int tLen = enc_unicode_to_utf8_one(*u, buf, 7); 
+      buf[tLen] = '\0';
+
+      unsigned long unic;
+      int ucLen = enc_utf8_to_unicode_one(buf, &unic);  
+
+    LOG(DEBUG) << "(x,y,dx,dy):" << std::setprecision(3) << "(" << x << ", " << y << ", " << dx << ", " << dy << ")" 
+        << " (originX, originY):" << "(" << originX << ", " << originY << ")"
+        << " mapUnicode() = \"" << buf << "\" tlen:" << tLen << " tounicode() = " << std::hex << unic << " ucLen=" <<ucLen
+        << " code:" << std::hex << std::setw(4) << std::setfill('0') << code
+        << " unicode:" << std::hex << std::setw(4) << std::setfill('0') << *u
+        << " nBytes:" << nBytes << " uLen:" << uLen;
 
     //LOG(DEBUG) << "code:" << std::hex << std::setw(4) << std::setfill('0') << code << " nBytes:" << nBytes << " uLen:" << uLen;
     if ( m_textPage != nullptr ){
@@ -206,3 +230,21 @@ void OFDOutputDev::endActualText(GfxState *state) {
         m_actualText->end(state);
     }
 }
+
+#include "utils/unicode.h"
+void OFDOutputDev::drawString(GfxState *state, GooString * s){
+    char *buf = s->getCString();
+    size_t len = s->getLength();
+
+    unsigned char utf8[8];
+    int tLen = enc_unicode_to_utf8_one(*((unsigned long*)buf), utf8, 7); 
+    utf8[tLen] = '\0';
+
+    char bb[1024];
+    sprintf(bb, "[%02X%02X]", buf[0], buf[1]);
+    std::stringstream ss;
+    ss << "======== " << bb;
+    LOG(DEBUG) << ss.str();
+    LOG(DEBUG) << "======== drawString() len=" << len << " tLen=" << tLen << " string: " << utf8[0];
+}
+

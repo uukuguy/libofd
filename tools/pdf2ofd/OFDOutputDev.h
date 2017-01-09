@@ -12,6 +12,7 @@
 #include "OFDDocument.h"
 #include "OFDPage.h"
 #include "OFDFont.h"
+#include "OFDCairoRender.h"
 
 
 class OFDOutputDev;
@@ -38,6 +39,7 @@ public:
     virtual GBool upsideDown() { return gTrue; }
 
     // Does this device use drawChar() or drawString()?
+    //virtual GBool useDrawChar() { return gTrue; }
     virtual GBool useDrawChar() { return gTrue; }
 
     // Does this device use tilingPatternFill()?  If this returns false,
@@ -111,6 +113,9 @@ public:
     virtual void endTextObject(GfxState *state);
     virtual void beginActualText(GfxState *state, GooString *text);
     virtual void endActualText(GfxState *state);
+
+
+    virtual void drawString(GfxState *state, GooString * s); 
 
     //----- path painting
     virtual void stroke(GfxState *state);
@@ -195,7 +200,7 @@ private:
     ofd::OFDDocumentPtr m_ofdDocument;
     ofd::OFDPagePtr m_currentOFDPage;
 
-    void processTextLine(TextLine *line, ofd::OFDLayerPtr bodyLayer);
+    void processTextLine(TextLine *line, ofd::OFDLayerPtr bodyLayer, ofd::OFDCairoRenderPtr cairoRender);
     void processTextPage(TextPage *textPage, ofd::OFDPagePtr currentOFDPage);
 
 

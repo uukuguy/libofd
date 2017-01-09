@@ -16,15 +16,17 @@ namespace ofd{
 
         void SetCairoSurface(cairo_surface_t *surface);
         cairo_surface_t *GetCairoSurface() const;
+        cairo_t *GetCairoContext() const;
 
         virtual void Draw(OFDPagePtr page, Render::DrawParams drawParams) override;
-
+        void DrawObject(OFDObjectPtr object);
 
     private:
         class ImplCls;
         std::unique_ptr<ImplCls> m_impl;
 
     }; // class OFDCairoRender
+    typedef std::shared_ptr<OFDCairoRender> OFDCairoRenderPtr;
 
 }; // namespace ofd
 

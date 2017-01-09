@@ -63,6 +63,8 @@ void showGfxFont(GfxFont *gfxFont){
     std::string fontTypeName = "()";
     if ( fontType == fontCIDType2 ){
         fontTypeName = "(fontCIDType2)";
+    } else if ( fontType == fontTrueType ){
+        fontTypeName = "(fontTrueType)";
     }
 
     LOG(INFO) << "UpdateFont() \n"
@@ -181,8 +183,8 @@ OFDFontPtr GfxFont_to_OFDFont(GfxFont *gfxFont, XRef *xref){
     char *fontData = gfxFont->readEmbFontFile(xref, &fontDataSize);
 
     // FIXME
-    ofdFont->m_fontData = fontData;
-    ofdFont->m_fontDataSize = fontDataSize;
+    //ofdFont->m_fontData = fontData;
+    //ofdFont->m_fontDataSize = fontDataSize;
     ofdFont->CreateFromData(fontData, fontDataSize);
 
     int *codeToGID = nullptr;
@@ -283,9 +285,9 @@ void OFDOutputDev::updateFont(GfxState *state){
         m_currentFontSize = fontSize;
         //m_currentCTM = m;
 
-        //LOG(INFO) << "UpdateFont() fontSize: " << fontSize << " sizeof(ctm): " << sizeof(ctm);
-        //LOG(INFO) << "ctm: [" << ctm[0] << ", " << ctm[1] << ", " << ctm[2] << ", "
-            //<< ctm[3] << ", " << ctm[4] << ", " << ctm[5] << "]";
+        LOG(INFO) << "UpdateFont() ID: " << fontID << " FontName: " << ofdFont->FontName << " fontSize: " << fontSize << " sizeof(m): " << sizeof(m);
+        LOG(INFO) << "TextMat: [" << m[0] << ", " << m[1] << ", " << m[2] << ", "
+            << m[3] << ", " << m[4] << ", " << m[5] << "]";
 
         /* NOTE: adjusting by a constant is hack. The correct solution
          * is probably to use user-fonts and compute the scale on a per
@@ -297,6 +299,7 @@ void OFDOutputDev::updateFont(GfxState *state){
         matrix.yx = m[1] * fontSize * state->getHorizScaling() * w;
         matrix.xy = -m[2] * fontSize;
         matrix.yy = -m[3] * fontSize;
+
         matrix.x0 = 0;
         matrix.y0 = 0;
 
@@ -319,3 +322,5 @@ void OFDOutputDev::updateFont(GfxState *state){
         m_textMatrixValid = true;
     }
 }
+
+

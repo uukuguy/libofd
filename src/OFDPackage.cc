@@ -343,8 +343,34 @@ bool OFDPackage::ImplCls::Save(const std::string &filename){
         zip->AddFile(Doc_N + "/PublicRes.xml", strPublicResXML); 
 
         // Doc_N/DocumentRes.xml
+
+
         std::string strDocumentResXML;
         if ( commonData.DocumentRes != nullptr ){
+
+            // -------- Default Font --------
+            // FIXME
+            // Default font. fontID=0, AdobeSongStd-Light.otf
+            OFDFontPtr defaultFont = commonData.DocumentRes->GetFont(0);
+            if ( defaultFont == nullptr ){
+                defaultFont = std::make_shared<OFDFont>();
+                defaultFont->ID = 0;
+                defaultFont->FontName = "Default";
+                defaultFont->FontType = Font::Type::TrueType;
+                defaultFont->FontLoc = Font::Location::Embedded;
+                commonData.DocumentRes->AddFont(defaultFont);
+
+                char *data = nullptr;
+                size_t dataSize = 0;
+                bool dataOK = false;
+                std::tie(data, dataSize, dataOK) = utils::ReadFileData("data/default.otf");
+                if ( dataOK ){
+                    defaultFont->CreateFromData(data, dataSize);
+                } else {
+                    LOG(ERROR) << "Read default font data failed.";
+                }
+            }
+
             strDocumentResXML = commonData.DocumentRes->GenerateResXML();
         }
         zip->AddFile(Doc_N + "/DocumentRes.xml", strDocumentResXML); 
@@ -430,7 +456,9 @@ bool OFDPackage::ImplCls::Save(const std::string &filename){
             auto font = iter.second;
             if ( font->m_fontData != nullptr && font->m_fontDataSize > 0 ){
                 std::string fontFileName = resDir + "/" + font->GetFileName();
+
                 zip->AddFile(fontFileName, font->m_fontData, font->m_fontDataSize);
+
             }
         }
 

@@ -1,4 +1,6 @@
 #include <iomanip>
+#include <UTF.h>
+#include <cairo.h>
 #include "OFDOutputDev.h"
 #include "OFDTextObject.h"
 #include "utils/logger.h"
@@ -100,7 +102,7 @@ void OFDOutputDev::startPage(int pageNum, GfxState *state, XRef *xrefA) {
 }
 
 // -------- OFDOutputDev::processTextLine() --------
-void OFDOutputDev::processTextLine(TextLine *line, OFDLayerPtr bodyLayer){
+void OFDOutputDev::processTextLine(TextLine *line, OFDLayerPtr bodyLayer, OFDCairoRenderPtr cairoRender){
     double xMin, yMin, xMax, yMax;
     double lineXMin = 0, lineYMin = 0, lineXMax = 0, lineYMax = 0;
     TextWord *word;
@@ -117,45 +119,57 @@ void OFDOutputDev::processTextLine(TextLine *line, OFDLayerPtr bodyLayer){
 
         const std::string myString = word->getText()->getCString();
 
-        int charPos = word->getCharPos();
-        int charLen = word->getCharLen();
-        LOG(INFO) << "TextWord charPos: " << charPos << " charLen: " << charLen;
+        //int charPos = word->getCharPos();
+        //int charLen = word->getCharLen();
+        //LOG(INFO) << "TextWord charPos: " << charPos << " charLen: " << charLen;
 
         // TextWord Rotation
-        int rotation = word->getRotation();
+        //int rotation = word->getRotation();
 
-        double baseLine = word->getBaseline();
+        //double baseLine = word->getBaseline();
         
         // TextWord Color
-        double red, green, blue;
-        word->getColor(&red, &green, &blue);
-        LOG(INFO) << "TextWord Baseline: " << baseLine << " Rotation: " << rotation << " Color: (" << red << ", " << green << ", " << blue << ")";
+        //double red, green, blue;
+        //word->getColor(&red, &green, &blue);
+        //LOG(INFO) << "TextWord Baseline: " << baseLine << " Rotation: " << rotation << " Color: (" << red << ", " << green << ", " << blue << ")";
+
         // TextWord Font
         double fontSize = word->getFontSize();
         int numChars = word->getLength();
-        LOG(INFO) << "TextWord FontSize=" << fontSize << " numChars=" << numChars << " len(string)=" << myString.length() << " size(string)=" << myString.size();
+        //LOG(INFO) << "TextWord FontSize=" << fontSize << " numChars=" << numChars << " len(string)=" << myString.length() << " size(string)=" << myString.size();
         for ( int k = 0 ; k < numChars ; k++ ){
-            TextFontInfo *fontInfo = word->getFontInfo(k);
+            //TextFontInfo *fontInfo = word->getFontInfo(k);
 
-            Ref *ref = fontInfo->gfxFont->getID();
-            uint64_t fontID = ref->num;
+            //Ref *ref = fontInfo->gfxFont->getID();
+            //uint64_t fontID = ref->num;
 
-            GooString *fontName = fontInfo->getFontName();
+            //GooString *fontName = fontInfo->getFontName();
             char tCh[4];
             tCh[0] = myString[k*3];
             tCh[1] = myString[k*3+1];
             tCh[2] = myString[k*3+2];
             tCh[3] = '\0';
 
-            double ascent = fontInfo->getAscent();
-            double descent = fontInfo->getDescent();
+            //double ascent = fontInfo->getAscent();
+            //double descent = fontInfo->getDescent();
 
-            double xMinA, yMinA, xMaxA, yMaxA;
-            word->getCharBBox(k, &xMinA, &yMinA, &xMaxA, &yMaxA);
+            //double xMinA, yMinA, xMaxA, yMaxA;
+            //word->getCharBBox(k, &xMinA, &yMinA, &xMaxA, &yMaxA);
 
-            double edge = word->getEdge(k);
+            //double edge = word->getEdge(k);
 
-            LOG(INFO) << tCh << "(" << xMinA << ", " << yMinA << ", " << xMaxA << ", " << yMaxA << ") " << " Edge: " << edge << " Ascent: " << ascent << " Descent: " << descent << " Font[" << k << "] name: " << std::string(fontName->getCString()) << " (" << fontID << ")";
+
+            GooString *aText = new GooString(tCh);
+            //Unicode *uni = NULL;
+            //__attribute__((unused)) int length = TextStringToUCS4(aText, &uni);
+
+
+            //LOG(INFO) << tCh << "(" << xMinA << ", " << yMinA << ", " << xMaxA << ", " << yMaxA << ") " << " Edge: " << edge << " Ascent: " << ascent << " Descent: " << descent << " Font[" << k << "] name: " << std::string(fontName->getCString()) << " (" << fontID << ")";
+
+            //LOG(DEBUG) << "UCS code:" << std::hex << std::setw(4) << std::setfill('0') << *uni;
+            
+            //gfree(uni);
+            delete aText;
         }
 
         TextFontInfo *fontInfo = word->getFontInfo(0);
@@ -191,6 +205,8 @@ void OFDOutputDev::processTextLine(TextLine *line, OFDLayerPtr bodyLayer){
 
             OFDObjectPtr object = std::shared_ptr<OFDObject>(textObject);
             bodyLayer->AddObject(object);
+
+            cairoRender->DrawObject(object);
         }
     }
 
@@ -204,17 +220,35 @@ void OFDOutputDev::processTextPage(TextPage *textPage, OFDPagePtr currentOFDPage
         bodyLayer = currentOFDPage->GetBodyLayer();
     }
 
-    LOG(DEBUG) << "processTextPage(). page ID: " << currentOFDPage->GetID();
+    uint64_t pageID = currentOFDPage->GetID();
+    LOG(DEBUG) << "processTextPage(). page ID: " << pageID;
+
+
+    // OFDCairoRender
+
+    int imageWidth = 794;
+    int imageHeight = 1122;
+    cairo_surface_t *imageSurface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, imageWidth, imageHeight);
+    if ( imageSurface == nullptr ){
+        LOG(ERROR) << "create_image_surface() failed. ";
+        return;
+    }
+    OFDCairoRenderPtr cairoRender(new OFDCairoRender(imageSurface));
 
     double xMin, yMin, xMax, yMax;
     for ( auto flow = textPage->getFlows(); flow != nullptr ; flow = flow->getNext()){
         for ( auto blk = flow->getBlocks(); blk != nullptr ; blk = blk->getNext()){
             blk->getBBox(&xMin, &yMin, &xMax, &yMax);
             for ( auto line = blk->getLines(); line != nullptr ; line = line->getNext()){
-                processTextLine(line, bodyLayer);
+                processTextLine(line, bodyLayer, cairoRender);
             }
         }
     }
+
+    std::string png_filename = std::string("Page") + std::to_string(pageID) + ".png";
+    cairo_surface_write_to_png(imageSurface, png_filename.c_str());
+
+    cairo_surface_destroy(imageSurface);
 }
 
 // -------- OFDOutputDev::endPage() --------

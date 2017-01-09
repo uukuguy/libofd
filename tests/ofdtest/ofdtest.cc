@@ -8,6 +8,7 @@
 
 //using namespace ofd;
 
+void test_freetype(int argc, char *argv[]);
 void test_libofd(int argc, char *argv[]);
 void test_poppler(int argc, char *argv[]);
 void test_mupdf(int argc, char *argv[]);
@@ -28,8 +29,8 @@ void test_mupdf(int argc, char *argv[]);
 #include <harfbuzz/hb-icu.h>
 //#include <harfbuzz/hb-glib.h>
 
-// -------- test_freetype() --------
-void test_freetype(int argc, char *argv[]){
+// -------- test_freetype_old() --------
+void test_freetype_old(int argc, char *argv[]){
     if ( argc < 2 ){
         LOG(WARNING) << "Usage: " << argv[0] << " <freetype_filename>";
         return;
@@ -128,10 +129,10 @@ int main(int argc, char *argv[]){
 
     LOG(INFO) << "Start " << argv[0];
 
-    test_libofd(argc, argv);
+    //test_libofd(argc, argv);
     //test_poppler(argc, argv);
     //test_mupdf(argc, argv);
-    //test_freetype(argc, argv);
+    test_freetype(argc, argv);
 
     LOG(INFO) << "Done.";
 

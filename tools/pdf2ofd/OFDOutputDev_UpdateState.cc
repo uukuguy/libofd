@@ -29,6 +29,9 @@ void OFDOutputDev::setDefaultCTM(double *ctm) {
   matrix.x0 = ctm[4];
   matrix.y0 = ctm[5];
 
+  LOG(INFO) << "setDefaultCTM (" << ctm[0] << ", " << ctm[1] << ", " << ctm[2]
+      << ", " << ctm[3] << ", " << ctm[4] << ", " << ctm[5] << ")";
+
   cairo_transform(m_cairo, &matrix);
   if (m_cairoShape){
       cairo_transform(m_cairoShape, &matrix);
@@ -45,6 +48,9 @@ void OFDOutputDev::updateCTM(GfxState *state, double m11, double m12, double m21
   matrix.yy = m22;
   matrix.x0 = m31;
   matrix.y0 = m32;
+
+  LOG(INFO) << "updateCTM (" << m11 << ", " << m12 << ", " << m21 
+      << ", " << m22 << ", " << m31 << ", " << m32 << ")";
 
   /* Make sure the matrix is invertible before setting it.
    * cairo will blow up if we give it a matrix that's not

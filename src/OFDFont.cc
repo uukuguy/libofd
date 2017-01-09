@@ -291,9 +291,18 @@ std::tuple<FT_Face, cairo_font_face_t*, bool> createCairoFontFace(char *fontData
 bool OFDFont::CreateFromData(char *fontData, size_t fontDataSize){
     bool ok = true;
 
+    LOG(INFO) << "@@@@@@@@ ID: " << ID << " FontName: " << FontName << " fontDataSize: " << fontDataSize;
     FT_Face face;
     cairo_font_face_t *font_face;
     std::tie(face, font_face, ok) = createCairoFontFace(fontData, fontDataSize); 
+
+    if ( m_fontData != nullptr ){
+        delete m_fontData;
+        m_fontData = nullptr;
+    }
+    m_fontDataSize = fontDataSize;
+    m_fontData = new char[fontDataSize];
+    memcpy(m_fontData, fontData, fontDataSize);
 
     m_fontFace = font_face;
     m_bLoaded = true;
@@ -319,21 +328,26 @@ bool OFDFont::Load(OFDPackagePtr package, bool reload){
     bool readOK = false;
     std::tie(fontData, fontDataSize, readOK) = package->ReadZipFileRaw(fontFilePath);
     if ( readOK ){
-        m_fontData = fontData;
-        m_fontDataSize = fontDataSize;
-
-        FT_Face face;
-        cairo_font_face_t *font_face;
-        std::tie(face, font_face, ok) = createCairoFontFace(fontData, fontDataSize); 
-
-        m_fontFace = font_face;
-
-        if ( ok ){
-            m_bLoaded = true;
+        if ( CreateFromData(fontData, fontDataSize) ){
             LOG(INFO) << "Font " << FontName << "(ID=" << ID << ") loaded.";
         } else {
             LOG(ERROR) << "createCairoFontFace() in OFDFont::Load() failed.";
         }
+        //m_fontData = fontData;
+        //m_fontDataSize = fontDataSize;
+
+        //FT_Face face;
+        //cairo_font_face_t *font_face;
+        //std::tie(face, font_face, ok) = createCairoFontFace(fontData, fontDataSize); 
+
+        //m_fontFace = font_face;
+
+        //if ( ok ){
+            //m_bLoaded = true;
+            //LOG(INFO) << "Font " << FontName << "(ID=" << ID << ") loaded.";
+        //} else {
+            //LOG(ERROR) << "createCairoFontFace() in OFDFont::Load() failed.";
+        //}
 
     } else {
         ok = false;

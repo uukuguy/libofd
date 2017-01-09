@@ -25,7 +25,8 @@ ofdviewer: sample0.ofd ${OFDVIEWER}
 	${OFDVIEWER} --v=1 sample0.ofd
 
 ofdtest: sample0.ofd ${OFDTEST} 
-	${OFDTEST} --v=1 sample0.ofd
+	#${OFDTEST} --v=1 ~/Arsenal/Fonts/simhei.ttf
+	${OFDTEST} --v=1 ./sample0/Doc_0/Res/Font_19.ttf
 
 check:
 	cat sample0/OFD.xml | xmllint --format -

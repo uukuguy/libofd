@@ -72,6 +72,7 @@ namespace ofd {
         std::string GetFileName() const;
 
         bool Load(OFDPackagePtr package, bool reload = false);
+        bool IsLoaded() const{return m_bLoaded;};
         bool CreateFromData(char *fontData, size_t fontDataSize);
         // Defined in poppler/CharTypes.h
         // typedef unsigned int CharCode;
