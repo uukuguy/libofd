@@ -38,7 +38,8 @@ bool Zip::ImplCls::Open(const std::string &filename, bool bWrite){
     int error = 0;
 
     if ( bWrite ){
-        m_archive = zip_open(filename.c_str(), ZIP_CREATE | ZIP_EXCL, &error);
+        //m_archive = zip_open(filename.c_str(), ZIP_CREATE | ZIP_EXCL, &error);
+        m_archive = zip_open(filename.c_str(), ZIP_CREATE, &error);
     } else {
         m_archive = zip_open(filename.c_str(), 0, &error);
     }
