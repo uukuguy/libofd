@@ -20,6 +20,7 @@ namespace utils{
 
 
     std::tuple<char*, size_t, bool> ReadFileData(const std::string &filename);
+    bool WriteFileData(const std::string &filename, const char *data, size_t dataSize); 
 }
 
 

@@ -42,6 +42,18 @@ namespace utils{
 
         return std::make_tuple(fontData, fontDataSize, ok);
     }
+
+
+    bool WriteFileData(const std::string &filename, const char *data, size_t dataSize){
+        bool ok = true;
+
+        std::ofstream ofile;
+        ofile.open(filename, std::ios::binary | std::ios::trunc);
+        ofile.write(data, dataSize);
+        ofile.close();
+
+        return ok;
+    }
 }
 
 

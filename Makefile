@@ -25,6 +25,7 @@ sample0.ofd: ${PDF2OFD}
 
 ofdtest: sample0.ofd ${OFDTEST} 
 	#${OFDTEST} --v=1 ~/Arsenal/Fonts/simhei.ttf
+	mkdir -p output/ofdtest
 	${OFDTEST} --v=1 ./output/sample0/Doc_0/Res/Font_19.ttf
 
 sample0: ${PDF2OFD}

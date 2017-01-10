@@ -1,4 +1,5 @@
 #include <fofi/FoFiTrueType.h>
+#include <fstream>
 #include "OFDOutputDev.h"
 #include "OFDFont.h"
 #include "utils/logger.h"
@@ -186,6 +187,13 @@ OFDFontPtr GfxFont_to_OFDFont(GfxFont *gfxFont, XRef *xref){
     //ofdFont->m_fontData = fontData;
     //ofdFont->m_fontDataSize = fontDataSize;
     ofdFont->CreateFromData(fontData, fontDataSize);
+
+    //// FIXME
+    //// Export running font data.
+    //{
+        //std::string fontfile = std::string("font_running_") + std::to_string(ofdFont->ID) + ".ttf";
+        //utils::WriteFileData(fontfile, fontData, fontDataSize);
+    //}
 
     int *codeToGID = nullptr;
     size_t codeToGIDLen = 0;

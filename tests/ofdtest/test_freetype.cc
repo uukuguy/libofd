@@ -137,7 +137,8 @@ void test_freetype(int argc, char *argv[]){
     // -------- Draw Text --------
     double X = 100;
     double Y = 150;
-    std::string text = "矢量图形abc123";
+    //std::string text = "矢量图形abc123";
+    std::string text = "上海市人民政府";
 
     double X1 = X * dpi / 72;
     double Y1 = Y * dpi / 72;
