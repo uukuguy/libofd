@@ -13,6 +13,7 @@
 #include "OFDPage.h"
 #include "OFDFont.h"
 #include "OFDCairoRender.h"
+#include "Preprocessor.h"
 
 
 class OFDOutputDev;
@@ -349,6 +350,7 @@ private:
     void afterPage(const std::string &imageFileName);
     void renderPage(int pg, double page_w, double page_h, double output_w, double output_h); 
 
+    Preprocessor *m_preprocessor;
 }; // class OFDOutputDev
 
 #endif // __OFDOUTPUTDEV_H__

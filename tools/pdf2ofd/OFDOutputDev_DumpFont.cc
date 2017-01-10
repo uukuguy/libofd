@@ -293,12 +293,13 @@ std::string get_suffix(const std::string & path) {
 }
 
 #include <math.h>
-const double EPS=0.00000001;
 static inline bool equal(double x, double y) { return fabs(x-y) <= EPS; };
 
 std::vector<int32_t> cur_mapping; 
 //std::vector<char*> cur_mapping2;
 std::vector<int> width_list; // width of each char
+
+long long hash_ref(const Ref * id);
 
 void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo & info, bool get_metric_only)
 {
@@ -364,7 +365,7 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
     }
 
     // FIXME
-    //used_map = preprocessor.get_code_map(hash_ref(font->getID()));
+    used_map = m_preprocessor->get_code_map(hash_ref(font->getID()));
 
     /*
      * Step 1
