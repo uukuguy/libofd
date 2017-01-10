@@ -47,22 +47,33 @@ pdf2ofd is a tool translating a PDF file to a OFD file.
 
 ## Dependencies
 
+### fontforge
+
+```
+$ sudo add-apt-repository ppa:fontforge/fontforge
+$ sudo apt-get update
+$ sudo apt-get insatll fontforge
+```
+### libsdl
+
+- libsdl2-dev
+- libsdl2-image-dev
+- libsdl2-ttf-dev
+- libsdl2-mixer-dev
+- libsdl2-net-dev
+- libsdl2-gfx-dev
+
+### freetype
+
+- libfreetype6-dev
+- libharfbuzz-dev
+- libicu-dev
 - libcairo2-dev http://cairographics.org
-- libtinyxml2-dev https://github.com/leethomason/tinyxml2  
 - libzip-dev https://github.com/nih-at/libzip 
 - easylogging++ https://github.com/easylogging/easyloggingpp
 
-libsdl2-dev
-libsdl2-image-dev
-libsdl2-ttf-dev
-libsdl2-mixer-dev
-libsdl2-net-dev
-libsdl2-gfx-dev
 
-libharfbuzz-dev
-libicu-dev
 
-libfreetype6-dev
 
 ## Build
 

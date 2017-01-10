@@ -270,6 +270,7 @@ void OFDOutputDev::updateFont(GfxState *state){
         ofdFont = commonData.DocumentRes->GetFont(fontID);
 
         if ( ofdFont == nullptr ){
+            dump_embedded_font(gfxFont, m_xref);
             ofdFont = GfxFont_to_OFDFont(gfxFont, m_xref);
             commonData.DocumentRes->AddFont(ofdFont);
             showGfxFont(gfxFont);
