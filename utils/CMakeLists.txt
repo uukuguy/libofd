@@ -7,9 +7,10 @@ FIND_PACKAGE(LibXml2 REQUIRED)
 INCLUDE_DIRECTORIES(${LIBXML2_INCLUDE_DIR})
 
 # -------- libuuid --------
-if(LINUX)
-    SET(LIBUUID_LIBRARIES, uuid)
-endif()
+#if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+if (UNIX) 
+    SET(LIBUUID_LIBRARIES uuid)
+endif ()
 
 # -------- GLIB --------
 FIND_PACKAGE(GLIB REQUIRED)

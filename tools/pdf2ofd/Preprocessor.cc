@@ -15,8 +15,7 @@
 #include <GfxFont.h>
 
 #include "Preprocessor.h"
-//#include "util/misc.h"
-//#include "util/const.h"
+#include "utils/logger.h"
 
 using std::cerr;
 using std::endl;
@@ -27,9 +26,9 @@ inline long long hash_ref(const Ref * id) {
     return (((long long)(id->num)) << (sizeof(id->gen)*8)) | (id->gen);
 }
 
-Preprocessor::Preprocessor(const Param & param)
+Preprocessor::Preprocessor()
     : OutputDev()
-    , param(param)
+    , m_useCropBox(false)
     , max_width(0)
     , max_height(0)
     , cur_font_id(0)
@@ -42,23 +41,19 @@ Preprocessor::~Preprocessor(void)
         delete [] p.second;
 }
 
-void Preprocessor::process(PDFDoc * doc)
-{
-    int page_count = (param.last_page - param.first_page + 1);
-    for(int i = param.first_page; i <= param.last_page ; ++i) 
-    {
-        cerr << "Preprocessing: " << (i-param.first_page) << "/" << page_count << '\r' << flush;
+void Preprocessor::ProcessDoc(PDFDoc * doc) {
 
+    auto numPages = doc->getNumPages();
+    for ( auto i = 1 ; i <= numPages ; i++ ){
         doc->displayPage(this, i, DEFAULT_DPI, DEFAULT_DPI,
                 0, 
-                (!(param.use_cropbox)),
-                true,  // crop
+                (!m_useCropBox),
+                m_useCropBox,  // crop
                 false, // printing
                 nullptr, nullptr, nullptr, nullptr);
     }
-    if(page_count >= 0)
-        cerr << "Preprocessing: " << page_count << "/" << page_count;
-    cerr << endl;
+    if( numPages >= 0 )
+        LOG(INFO) << "Preprocessing: " << numPages << "/" << numPages;
 }
 
 void Preprocessor::drawChar(GfxState *state, double x, double y,
@@ -75,8 +70,7 @@ void Preprocessor::drawChar(GfxState *state, double x, double y,
     {
         cur_font_id = fn_id;
         auto p = code_maps.insert(std::make_pair(cur_font_id, (char*)nullptr));
-        if(p.second)
-        {
+        if(p.second) {
             // this is a new font
             int len = font->isCIDFont() ? 0x10000 : 0x100;
             p.first->second = new char [len];

@@ -2,6 +2,7 @@
 #define __OFD_COLOR_H__
 
 #include <memory>
+#include <string.h>
 #include <stdint.h>
 
 namespace ofd {

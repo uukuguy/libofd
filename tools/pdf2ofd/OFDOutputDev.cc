@@ -189,6 +189,8 @@ void OFDOutputDev::ProcessDoc(PDFDocPtr pdfDoc){
     if ( pdfDoc == nullptr ) return;
     m_pdfDoc = pdfDoc;
 
+    m_preprocessor.ProcessDoc(m_pdfDoc.get());
+
     //double resolution = 72.0;
     //GBool useMediaBox = gTrue;
     //GBool crop = gFalse;

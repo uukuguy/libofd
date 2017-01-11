@@ -24,10 +24,10 @@
 
 class Preprocessor : public OutputDev {
 public:
-    Preprocessor(const Param & param);
+    Preprocessor();
     virtual ~Preprocessor(void);
 
-    void process(PDFDoc * doc);
+    void ProcessDoc(PDFDoc * doc);
 
     virtual GBool upsideDown() { return gFalse; }
     virtual GBool useDrawChar() { return gTrue; }
@@ -50,8 +50,7 @@ public:
     double get_max_height (void) const { return max_height; }
 
 protected:
-    const Param & param;
-
+    bool m_useCropBox;
     double max_width, max_height;
 
     long long cur_font_id;

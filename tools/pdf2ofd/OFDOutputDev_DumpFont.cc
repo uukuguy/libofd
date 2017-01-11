@@ -7,6 +7,7 @@
 #include <CharCodeToUnicode.h>
 #include <fofi/FoFiTrueType.h>
 #include "OFDOutputDev.h"
+#include "utils/logger.h"
 
 using namespace std;
 
@@ -301,8 +302,21 @@ std::vector<int> width_list; // width of each char
 
 long long hash_ref(const Ref * id);
 
-void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo & info, bool get_metric_only)
-{
+void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo & info, bool get_metric_only) {
+
+    // Params
+    int tounicode            = 0;      // how to handle ToUnicode CMaps. 
+                                       // (0=auto, 1=force, -1=ignore)
+    int stretch_narrow_glyph = 0;      // stretch narrow glyphs instead of padding them.
+    int squeeze_wide_glyph   = 1;      // shrink wide glyphs instaed of truncating them.
+    std::string tmp_dir      = "/tmp";
+    std::string dest_dir     = ".";
+    std::string external_hint_tool = ""; // external tool for hinting fonts (overrides --auto-hint)
+    bool auto_hint = true;            // use fontforge autohint on fonts without hints
+    bool override_fstype = false;     // clear the fstype bits in TTF/OTF fonts.
+    bool embedFont = true;            // embed font files into output.
+    std::string font_format = "woff"; // suffix for embedded font files (ttf, otf, woff, svg)
+
     //if(param.debug)
     //{
         //cerr << "Embed font: " << filepath << " " << info.id << endl;
@@ -333,7 +347,7 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
      * if parm->tounicode is 0, try the provided tounicode map first
      */
     // TODO
-    info.use_tounicode = 0;//(param.tounicode >= 0);
+    info.use_tounicode = tounicode >= 0;
     bool has_space = false;
 
     const char * used_map = nullptr;
@@ -342,22 +356,18 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
 
     //if(param.debug)
     //{
-        cerr << "em size: " << info.em_size << endl;
+        //cerr << "em size: " << info.em_size << endl;
     //}
 
     info.space_width = 0;
 
-    if(!font->isCIDFont())
-    {
+    if(!font->isCIDFont()) {
         font_8bit = dynamic_cast<Gfx8BitFont*>(font);
-    }
-    else
-    {
+    } else {
         font_cid = dynamic_cast<GfxCIDFont*>(font);
     }
 
-    if(get_metric_only)
-    {
+    if(get_metric_only) {
         ffw_fix_metric();
         ffw_get_metric(&info.ascent, &info.descent);
         ffw_close();
@@ -365,7 +375,7 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
     }
 
     // FIXME
-    used_map = m_preprocessor->get_code_map(hash_ref(font->getID()));
+    used_map = m_preprocessor.get_code_map(hash_ref(font->getID()));
 
     /*
      * Step 1
@@ -386,8 +396,7 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
      * use the embedded code2GID table if there is, otherwise use the one in the font
      */
     //if(font_8bit)
-    if (0)
-    {
+    if (0) {
         //maxcode = 0xff;
         //if(is_truetype_suffix(suffix))
         //{
@@ -449,36 +458,27 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
 
             //ffw_reencode_raw2(cur_mapping2.data(), 256, 0);
         //}
-    }
-    else
-    {
+    } else {
         maxcode = 0xffff;
 
-        if(is_truetype_suffix(suffix))
-        {
+        if(is_truetype_suffix(suffix)) {
             ffw_reencode_glyph_order();
 
             GfxCIDFont * _font = dynamic_cast<GfxCIDFont*>(font);
 
             // To locate CID2GID for the font
             // as in CairoFontEngine.cc
-            if((code2GID = _font->getCIDToGID()))
-            {
+            if((code2GID = _font->getCIDToGID())) {
                 // use the mapping stored in _font
                 code2GID_len = _font->getCIDToGIDLen();
-            }
-            else
-            {
+            } else {
                 // use the mapping stored in the file
-                if(FoFiTrueType * fftt = FoFiTrueType::load((char*)filepath.c_str()))
-                {
+                if(FoFiTrueType * fftt = FoFiTrueType::load((char*)filepath.c_str())) {
                     code2GID = _font->getCodeToGIDMap(fftt, &code2GID_len);
                     delete fftt;
                 }
             }
-        }
-        else
-        {
+        } else {
             // TODO: add an option to load the table?
             ffw_cidflatten();
         }
@@ -498,8 +498,8 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
 
 
     {
-        string map_filename;
-        ofstream map_outf;
+        //string map_filename;
+        //ofstream map_outf;
         //if(param.debug)
         //{
             //map_filename = (char*)str_fmt("%s/f%llx.map", param.tmp_dir.c_str(), info.id);
@@ -514,8 +514,9 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
         std::fill(cur_mapping.begin(), cur_mapping.end(), -1);
         std::fill(width_list.begin(), width_list.end(), -1);
 
-        if(code2GID)
+        if(code2GID){
             maxcode = min<int>(maxcode, code2GID_len - 1);
+        }
 
         bool is_truetype = is_truetype_suffix(suffix);
         int max_key = maxcode;
@@ -523,55 +524,43 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
          * Traverse all possible codes
          */
         bool retried = false; // avoid infinite loop
-        for(int cur_code = 0; cur_code <= maxcode; ++cur_code)
-        {
-            if(!used_map[cur_code])
-                continue;
+        for(int cur_code = 0; cur_code <= maxcode; ++cur_code) {
+            if(!used_map[cur_code]) continue;
 
             /*
              * Skip glyphs without names (only for non-ttf fonts)
              */
             if(!is_truetype && (font_8bit != nullptr) 
-                    && (font_8bit->getCharName(cur_code) == nullptr))
-            {
+                    && (font_8bit->getCharName(cur_code) == nullptr)) {
                 continue;
             }
 
             int mapped_code = cur_code;
-            if(code2GID)
-            {
+            if(code2GID) {
                 // for fonts with GID (e.g. TTF) we need to map GIDs instead of codes
                 if((mapped_code = code2GID[cur_code]) == 0) continue;
             }
 
-            if(mapped_code > max_key)
+            if(mapped_code > max_key){
                 max_key = mapped_code;
+            }
 
             Unicode u, *pu=&u;
-            if(info.use_tounicode)
-            {
+            if(info.use_tounicode) {
                 int n = ctu ? (ctu->mapToUnicode(cur_code, &pu)) : 0;
                 u = check_unicode(pu, n, cur_code, font);
-            }
-            else
-            {
+            } else {
                 u = unicode_from_font(cur_code, font);
             }
 
-            if(codeset.insert(u).second)
-            {
+            if(codeset.insert(u).second) {
                 cur_mapping[mapped_code] = u;
-            }
-            else
-            {
+            } else {
                 // collision detected
-                if (info.use_tounicode == 0)
-                //if(param.tounicode == 0)
-                {
+                if( tounicode == 0 ) {
                     // in auto mode, just drop the tounicode map
-                    if(!retried)
-                    {
-                        cerr << "ToUnicode CMap is not valid and got dropped for font: " << hex << info.id << dec << endl;
+                    if(!retried) {
+                        LOG(ERROR) << "ToUnicode CMap is not valid and got dropped for font: " << hex << info.id << dec << endl;
                         retried = true;
                         codeset.clear();
                         info.use_tounicode = false;
@@ -586,22 +575,18 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
                         continue;
                     }
                 }
-                if(!name_conflict_warned)
-                {
+                if(!name_conflict_warned) {
                     name_conflict_warned = true;
                     //TODO: may be resolved using advanced font properties?
-                    cerr << "Warning: encoding confliction detected in font: " << hex << info.id << dec << endl;
+                    LOG(ERROR) << "Warning: encoding confliction detected in font: " << hex << info.id << dec << endl;
                 }
             }
 
             {
                 double cur_width = 0;
-                if(font_8bit)
-                {
+                if(font_8bit) {
                     cur_width = font_8bit->getWidth(cur_code);
-                }
-                else
-                {
+                } else {
                     char buf[2];  
                     buf[0] = (cur_code >> 8) & 0xff;
                     buf[1] = (cur_code & 0xff);
@@ -610,8 +595,7 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
 
                 cur_width /= info.font_size_scale;
 
-                if(u == ' ')
-                {
+                if(u == ' ') {
                     /*
                      * Internet Explorer will ignore `word-spacing` if
                      * the width of the 'space' glyph is 0
@@ -620,8 +604,8 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
                      * so setting it to be 0.001 should be safe
                      */
                     if(equal(cur_width, 0))
-Unicode unicode_from_font (CharCode code, GfxFont * font);
-                        cur_width = 0.001;
+                        Unicode unicode_from_font (CharCode code, GfxFont * font);
+                    cur_width = 0.001;
 
                     info.space_width = cur_width;
                     has_space = true;
@@ -631,35 +615,32 @@ Unicode unicode_from_font (CharCode code, GfxFont * font);
             }
 
             //if(param.debug)
-            {
-                map_outf << hex << cur_code << ' ' << mapped_code << ' ' << u << endl;
-            }
+            //{
+                //map_outf << hex << cur_code << ' ' << mapped_code << ' ' << u << endl;
+            //}
         }
 
         // FIXME
-        //ffw_set_widths(width_list.data(), max_key + 1, param.stretch_narrow_glyph, param.squeeze_wide_glyph);
+        ffw_set_widths(width_list.data(), max_key + 1, stretch_narrow_glyph, squeeze_wide_glyph);
         
         ffw_reencode_raw(cur_mapping.data(), max_key + 1, 1);
 
         // In some space offsets in HTML, we insert a ' ' there in order to improve text copy&paste
         // We need to make sure that ' ' is in the font, otherwise it would be very ugly if you select the text
         // Might be a problem if ' ' is in the font, but not empty
-        if(!has_space)
-        {
-            if(font_8bit)
-            {
+        if(!has_space) {
+            if(font_8bit) {
                 info.space_width = font_8bit->getWidth(' ');
-            }
-            else
-            {
+            } else {
                 char buf[2] = {0, ' '};
                 info.space_width = font_cid->getWidth(buf, 2);
             }
             info.space_width /= info.font_size_scale;
 
             /* See comments above */
-            if(equal(info.space_width,0))
+            if(equal(info.space_width,0)){
                 info.space_width = 0.001;
+            }
 
             ffw_add_empty_char((int32_t)' ', (int)floor(info.space_width * info.em_size + 0.5));
             //if(param.debug)
@@ -673,8 +654,9 @@ Unicode unicode_from_font (CharCode code, GfxFont * font);
             //cerr << "space width: " << info.space_width << endl;
         //}
 
-        if(ctu)
+        if(ctu){
             ctu->decRefCnt();
+        }
     }
 
     /*
@@ -689,14 +671,12 @@ Unicode unicode_from_font (CharCode code, GfxFont * font);
     // we always generate TTF first, instead of the format specified by user
 
     // FIXME
-    std::string cur_tmp_fn;
-    //string cur_tmp_fn = (char*)str_fmt("%s/__tmp_font1.%s", param.tmp_dir.c_str(), "ttf");
+    std::string cur_tmp_fn = (char*)str_fmt("%s/__tmp_font1.%s", tmp_dir.c_str(), "ttf");
     //tmp_files.add(cur_tmp_fn);
-    string other_tmp_fn;
-    //other_tmp_fn = (char*)str_fmt("%s/__tmp_font2.%s", param.tmp_dir.c_str(), "ttf");
+    std::string other_tmp_fn = (char*)str_fmt("%s/__tmp_font2.%s", tmp_dir.c_str(), "ttf");
     //tmp_files.add(other_tmp_fn);
 
-    //ffw_save(cur_tmp_fn.c_str());
+    ffw_save(cur_tmp_fn.c_str());
 
     ffw_close();
 
@@ -708,13 +688,12 @@ Unicode unicode_from_font (CharCode code, GfxFont * font);
 
     // Call external hinting program if specified 
     // FIXME
-    //if(param.external_hint_tool != "")
-    //{
-        //hinted = (system((char*)str_fmt("%s \"%s\" \"%s\"", param.external_hint_tool.c_str(), cur_tmp_fn.c_str(), other_tmp_fn.c_str())) == 0);
-    //}
+    if(external_hint_tool != ""){
+        hinted = (system((char*)str_fmt("%s \"%s\" \"%s\"", external_hint_tool.c_str(), cur_tmp_fn.c_str(), other_tmp_fn.c_str())) == 0);
+    }
 
     // Call internal hinting procedure if specified 
-    //if((!hinted) && (param.auto_hint))
+    if((!hinted) && (auto_hint))
     {
         ffw_load_font(cur_tmp_fn.c_str());
         ffw_auto_hint();
@@ -723,8 +702,7 @@ Unicode unicode_from_font (CharCode code, GfxFont * font);
         hinted = true;
     }
 
-    if(hinted)
-    {
+    if(hinted) {
         swap(cur_tmp_fn, other_tmp_fn);
     }
 
@@ -735,22 +713,25 @@ Unicode unicode_from_font (CharCode code, GfxFont * font);
      * Ascent/Descent are not used in PDF, and the values in PDF may be wrong or inconsistent (there are 3 sets of them)
      * We need to reload in order to retrieve/fix accurate ascent/descent, some info won't be written to the font by fontforge until saved.
      */
-    string fn;
     // FIXME
-    //fn = (char*)str_fmt("%s/f%llx.%s", 
-        //(param.embed_font ? param.tmp_dir : param.dest_dir).c_str(),
-        //info.id, param.font_format.c_str());
+    std::string fn = (char*)str_fmt("%s/f%llx.%s", 
+        (embedFont ? tmp_dir : dest_dir).c_str(),
+        info.id, font_format.c_str());
 
     // FIXME
-    //if(param.embed_font)
+    //if( embedFont ){
         //tmp_files.add(fn);
+    //}
 
     ffw_load_font(cur_tmp_fn.c_str());
     ffw_fix_metric();
     ffw_get_metric(&info.ascent, &info.descent);
+
     // FIXME
-    //if(param.override_fstype)
-        //ffw_override_fstype();
+    if ( override_fstype ){
+        ffw_override_fstype();
+    }
+
     ffw_save(fn.c_str());
 
     ffw_close();
