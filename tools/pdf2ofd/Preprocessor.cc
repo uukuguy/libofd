@@ -23,7 +23,7 @@ using std::endl;
 using std::flush;
 using std::max;
 
-static inline long long hash_ref(const Ref * id) {
+inline long long hash_ref(const Ref * id) {
     return (((long long)(id->num)) << (sizeof(id->gen)*8)) | (id->gen);
 }
 
