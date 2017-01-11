@@ -248,6 +248,7 @@ double getSubstitutionCorrection(OFDFontPtr ofdFont, GfxFont *gfxFont){
     return 1.0;
 }
 
+long long hash_ref(const Ref * id);
 // -------- OFDOutputDev::updateFont --------
 void OFDOutputDev::updateFont(GfxState *state){
     GfxFont *gfxFont = state->getFont();
@@ -260,7 +261,9 @@ void OFDOutputDev::updateFont(GfxState *state){
         m_useShowTextGlyphs = gfxFont->hasToUnicodeCMap() && cairo_surface_has_show_text_glyphs (cairo_get_target(m_cairo));
 
         Ref *ref = gfxFont->getID();
+        // FIXME
         int fontID = ref->num;
+        //int fontID = hash_ref(ref);
 
         // FIXME
         // LoadFont!!!
@@ -270,7 +273,13 @@ void OFDOutputDev::updateFont(GfxState *state){
         ofdFont = commonData.DocumentRes->GetFont(fontID);
 
         if ( ofdFont == nullptr ){
-            dump_embedded_font(gfxFont, m_xref);
+            //std::string dumpFontFile = dump_embedded_font(gfxFont, m_xref);
+            FontInfo fontInfo;
+            fontInfo.id = fontID;
+            //embed_font(dumpFontFile, gfxFont, fontInfo, false);
+            //install_embedded_font(gfxFont, fontInfo);
+            install_external_font(gfxFont, fontInfo);
+
             ofdFont = GfxFont_to_OFDFont(gfxFont, m_xref);
             commonData.DocumentRes->AddFont(ofdFont);
             showGfxFont(gfxFont);
@@ -331,5 +340,4 @@ void OFDOutputDev::updateFont(GfxState *state){
         m_textMatrixValid = true;
     }
 }
-
 

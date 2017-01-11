@@ -229,8 +229,13 @@ private:
     void processTextLine(TextLine *line, ofd::OFDLayerPtr bodyLayer, ofd::OFDCairoRenderPtr cairoRender);
     void processTextPage(TextPage *textPage, ofd::OFDPagePtr currentOFDPage);
 
-    void dump_embedded_font(GfxFont * font, XRef * xref); 
-    void embed_font(const std::string & filepath, GfxFont * font, FontInfo & info, bool get_metric_only);
+    std::string dump_embedded_font(GfxFont * font, XRef * xref); 
+    void embed_font(const std::string & filepath, GfxFont * font, FontInfo & info, bool get_metric_only = false);
+
+    void install_external_font(GfxFont *font, FontInfo & info); 
+    void install_embedded_font(GfxFont *font, FontInfo & info); 
+    const FontInfo *install_font(GfxFont *font);
+
 public:
 
     // CropBox (pixel)
@@ -353,6 +358,11 @@ private:
 
     Preprocessor m_preprocessor;
     utils::StringFormatter str_fmt;
+
+    std::vector<int32_t> cur_mapping; 
+    std::vector<char*> cur_mapping2;
+    std::vector<int> width_list; // width of each char
+
 
 }; // class OFDOutputDev
 

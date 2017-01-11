@@ -119,7 +119,7 @@ Unicode check_unicode(Unicode * u, int len, CharCode code, GfxFont * font)
 
     return unicode_from_font(code, font);
 }
-void OFDOutputDev::dump_embedded_font(GfxFont * font, XRef * xref) {
+std::string OFDOutputDev::dump_embedded_font(GfxFont * font, XRef * xref) {
     //if(info.is_type3){
         //LOG(INFO) << "dump typ3 font.";
         //return "";
@@ -231,11 +231,10 @@ void OFDOutputDev::dump_embedded_font(GfxFont * font, XRef * xref) {
         obj.streamReset();
 
         std::string tmpDir = "/tmp";
-        char filepath[1024];
-        sprintf(filepath, "%s/f%llx%s", tmpDir.c_str(), fn_id, suffix.c_str());
+        filepath = tmpDir + "/f" + std::to_string(fn_id) + suffix;
         //tmp_files.add(filepath);
 
-        ofstream outf(filepath, ofstream::binary);
+        ofstream outf(filepath.c_str(), ofstream::binary);
         if(!outf)
             throw string("Cannot open file ") + filepath + " for writing";
 
@@ -259,6 +258,8 @@ void OFDOutputDev::dump_embedded_font(GfxFont * font, XRef * xref) {
     fontdesc_obj.free();
     font_obj2.free();
     font_obj.free();
+
+    return filepath;
 }
 
 
@@ -296,16 +297,15 @@ std::string get_suffix(const std::string & path) {
 #include <math.h>
 static inline bool equal(double x, double y) { return fabs(x-y) <= EPS; };
 
-std::vector<int32_t> cur_mapping; 
-//std::vector<char*> cur_mapping2;
-std::vector<int> width_list; // width of each char
-
 long long hash_ref(const Ref * id);
 
 void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo & info, bool get_metric_only) {
 
+    LOG(DEBUG) << "embed_font() filepath: " << filepath;
+    assert(!filepath.empty());
+
     // Params
-    int tounicode            = 0;      // how to handle ToUnicode CMaps. 
+    int tounicode            = 1;      // how to handle ToUnicode CMaps. 
                                        // (0=auto, 1=force, -1=ignore)
     int stretch_narrow_glyph = 0;      // stretch narrow glyphs instead of padding them.
     int squeeze_wide_glyph   = 1;      // shrink wide glyphs instaed of truncating them.
@@ -315,7 +315,7 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
     bool auto_hint = true;            // use fontforge autohint on fonts without hints
     bool override_fstype = false;     // clear the fstype bits in TTF/OTF fonts.
     bool embedFont = true;            // embed font files into output.
-    std::string font_format = "woff"; // suffix for embedded font files (ttf, otf, woff, svg)
+    std::string font_format = "ttf"; // suffix for embedded font files (ttf, otf, woff, svg)
 
     //if(param.debug)
     //{
@@ -395,69 +395,53 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
      * same as 8bitTrueType, except for that we have to check 65536 charcodes
      * use the embedded code2GID table if there is, otherwise use the one in the font
      */
-    //if(font_8bit)
-    if (0) {
-        //maxcode = 0xff;
-        //if(is_truetype_suffix(suffix))
-        //{
-            //if(info.is_type3)
-            //{
-                /*
-                 * Type 3 fonts are saved and converted into ttf fonts
-                 * encoded based on code points instead of GID
-                 *
-                 * I thought code2GID would work but it never works, and I don't know why
-                 * Anyway we can disable code2GID such that the following procedure will be working based on code points instead of GID
-                 */
+    if(font_8bit){
+        maxcode = 0xff;
+        if(is_truetype_suffix(suffix)) {
+            //if(info.is_type3) {
+                 //Type 3 fonts are saved and converted into ttf fonts
+                 //encoded based on code points instead of GID
+                
+                 //I thought code2GID would work but it never works, and I don't know why
+                 //Anyway we can disable code2GID such that the following procedure will be working based on code points instead of GID
             //}
             //else
-            //{
-                //ffw_reencode_glyph_order();
-                //if(FoFiTrueType * fftt = FoFiTrueType::load((char*)filepath.c_str()))
-                //{
-                    //code2GID = font_8bit->getCodeToGIDMap(fftt);
-                    //code2GID_len = 256;
-                    //delete fftt;
-                //}
-            //}
-        //}
-        //else
-        //{
-            //// move the slot such that it's consistent with the encoding seen in PDF
-            //unordered_set<string> nameset;
-            //bool name_conflict_warned = false;
+            {
+                ffw_reencode_glyph_order();
+                if(FoFiTrueType * fftt = FoFiTrueType::load((char*)filepath.c_str())) {
+                    code2GID = font_8bit->getCodeToGIDMap(fftt);
+                    code2GID_len = 256;
+                    delete fftt;
+                }
+            }
+        } else {
+            // move the slot such that it's consistent with the encoding seen in PDF
+            unordered_set<string> nameset;
+            bool name_conflict_warned = false;
 
-            //std::fill(cur_mapping2.begin(), cur_mapping2.end(), (char*)nullptr);
+            std::fill(cur_mapping2.begin(), cur_mapping2.end(), (char*)nullptr);
 
-            //for(int i = 0; i < 256; ++i)
-            //{
-                //if(!used_map[i]) continue;
+            for(int i = 0; i < 256; ++i) {
+                if(!used_map[i]) continue;
 
-                //auto cn = font_8bit->getCharName(i);
-                //if(cn == nullptr)
-                //{
-                    //continue;
-                //}
-                //else
-                //{
-                    //if(nameset.insert(string(cn)).second)
-                    //{
-                        //cur_mapping2[i] = cn;    
-                    //}
-                    //else
-                    //{
-                        //if(!name_conflict_warned)
-                        //{
-                            //name_conflict_warned = true;
-                            ////TODO: may be resolved using advanced font properties?
-                            //cerr << "Warning: encoding conflict detected in font: " << hex << info.id << dec << endl;
-                        //}
-                    //}
-                //}
-            //}
+                auto cn = font_8bit->getCharName(i);
+                if(cn == nullptr) {
+                    continue;
+                } else {
+                    if(nameset.insert(string(cn)).second) {
+                        cur_mapping2[i] = cn;    
+                    } else {
+                        if(!name_conflict_warned) {
+                            name_conflict_warned = true;
+                            //TODO: may be resolved using advanced font properties?
+                            cerr << "Warning: encoding conflict detected in font: " << hex << info.id << dec << endl;
+                        }
+                    }
+                }
+            }
 
-            //ffw_reencode_raw2(cur_mapping2.data(), 256, 0);
-        //}
+            ffw_reencode_raw2(cur_mapping2.data(), 256, 0);
+        }
     } else {
         maxcode = 0xffff;
 
@@ -735,4 +719,167 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
     ffw_save(fn.c_str());
 
     ffw_close();
+}
+
+void OFDOutputDev::install_embedded_font(GfxFont * font, FontInfo & info) {
+    // FIXME
+    //auto path = dump_embedded_font(font, info);
+    auto path = dump_embedded_font(font, m_xref);
+
+    if(path != "") {
+        embed_font(path, font, info);
+        //export_remote_font(info, param.font_format, font);
+    } else {
+        //export_remote_default_font(info.id);
+    }
+}
+
+const map<string, string> GB_ENCODED_FONT_NAME_MAP({
+    {"\xCB\xCE\xCC\xE5", "SimSun"},
+    {"\xBA\xDA\xCC\xE5", "SimHei"},
+    {"\xBF\xAC\xCC\xE5_GB2312", "SimKai"},
+    {"\xB7\xC2\xCB\xCE_GB2312", "SimFang"},
+    {"\xC1\xA5\xCA\xE9", "SimLi"},
+});
+
+void OFDOutputDev::install_external_font(GfxFont *font, FontInfo & info) {
+    bool embed_external_font = true;
+
+    string fontname(font->getName()->getCString());
+
+    // resolve bad encodings in GB
+    auto iter = GB_ENCODED_FONT_NAME_MAP.find(fontname); 
+    if(iter != GB_ENCODED_FONT_NAME_MAP.end()) {
+        fontname = iter->second;
+        LOG(ERROR) << "Warning: workaround for font names in bad encodings.";
+    }
+
+    GfxFontLoc * localfontloc = font->locateFont(m_xref, nullptr);
+
+    if(embed_external_font) {
+        if(localfontloc != nullptr) {
+            embed_font(string(localfontloc->path->getCString()), font, info);
+            delete localfontloc;
+            return;
+        } else {
+            LOG(ERROR) << "Cannot embed external font: f" << hex << info.id << dec << ' ' << fontname;
+            // fallback to exporting by name
+        }
+    }
+
+    // still try to get an idea of read ascent/descent
+    if(localfontloc != nullptr) {
+        // fill in ascent/descent only, do not embed
+        embed_font(string(localfontloc->path->getCString()), font, info, true);
+        delete localfontloc;
+    } else {
+        info.ascent = font->getAscent();
+        info.descent = font->getDescent();
+    }
+
+    //export_local_font(info, font, fontname, "");
+}
+
+
+const FontInfo * OFDOutputDev::install_font(GfxFont * font) {
+    assert(sizeof(long long) == 2*sizeof(int));
+                
+    long long fn_id = (font == nullptr) ? 0 : hash_ref(font->getID());
+
+    // FIXME
+    std::unordered_map<long long, FontInfo> font_info_map;
+
+    auto iter = font_info_map.find(fn_id);
+    if(iter != font_info_map.end())
+        return &(iter->second);
+
+    long long new_fn_id = font_info_map.size(); 
+
+    auto cur_info_iter = font_info_map.insert(make_pair(fn_id, FontInfo())).first;
+
+    FontInfo & new_font_info = cur_info_iter->second;
+    new_font_info.id = new_fn_id;
+    new_font_info.use_tounicode = true;
+    new_font_info.font_size_scale = 1.0;
+
+    if(font == nullptr)
+    {
+        new_font_info.em_size = 0;
+        new_font_info.space_width = 0;
+        new_font_info.ascent = 0;
+        new_font_info.descent = 0;
+        new_font_info.is_type3 = false;
+
+        //export_remote_default_font(new_fn_id);
+
+        return &(new_font_info);
+    }
+
+    new_font_info.ascent = font->getAscent();
+    new_font_info.descent = font->getDescent();
+    new_font_info.is_type3 = (font->getType() == fontType3);
+
+    //if(param.debug)
+    //{
+        //cerr << "Install font " << hex << new_fn_id << dec
+            //<< ": (" << (font->getID()->num) << ' ' << (font->getID()->gen) << ") " 
+            //<< (font->getName() ? font->getName()->getCString() : "")
+            //<< endl;
+    //}
+
+    if(new_font_info.is_type3)
+    {
+#if ENABLE_SVG
+        //if(param.process_type3)
+        if ( true)
+        {
+            install_embedded_font(font, new_font_info);
+        }
+        else
+        {
+            //export_remote_default_font(new_fn_id);
+        }
+#else
+        cerr << "Type 3 fonts are unsupported and will be rendered as Image" << endl;
+        //export_remote_default_font(new_fn_id);
+#endif
+        return &new_font_info;
+    }
+    if(font->getWMode()) {
+        cerr << "Writing mode is unsupported and will be rendered as Image" << endl;
+        //export_remote_default_font(new_fn_id);
+        return &new_font_info;
+    }
+
+    /*
+     * The 2nd parameter of locateFont should be true only for PS
+     * which does not make much sense in our case
+     * If we specify gFalse here, font_loc->locType cannot be gfxFontLocResident
+     */
+    if(auto * font_loc = font->locateFont(m_xref, nullptr))
+    {
+        switch(font_loc -> locType)
+        {
+            case gfxFontLocEmbedded:
+                install_embedded_font(font, new_font_info);
+                break;
+            case gfxFontLocResident:
+                std::cerr << "Warning: Base 14 fonts should not be specially handled now. Please report a bug!" << std::endl;
+                /* fall through */
+            case gfxFontLocExternal:
+                install_external_font(font, new_font_info);
+                break;
+            default:
+                cerr << "TODO: other font loc" << endl;
+                //export_remote_default_font(new_fn_id);
+                break;
+        }      
+        delete font_loc;
+    }
+    else
+    {
+        //export_remote_default_font(new_fn_id);
+    }
+      
+    return &new_font_info;
 }

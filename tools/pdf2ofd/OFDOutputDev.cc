@@ -26,6 +26,10 @@ bool duplex = false;
 #include <cairo/cairo-pdf.h>
 #include <cairo/cairo-svg.h>
 
+extern "C"{
+#include "utils/ffw.h"
+}
+
 // ======== OFDOutputDev::OFDOutputDev() ========
 OFDOutputDev::OFDOutputDev(ofd::OFDPackagePtr ofdPackage) :
     m_pdfDoc(nullptr),
@@ -33,6 +37,11 @@ OFDOutputDev::OFDOutputDev(ofd::OFDPackagePtr ofdPackage) :
     m_actualText(nullptr),
     m_ofdPackage(ofdPackage), m_ofdDocument(nullptr), m_currentOFDPage(nullptr),
     m_currentFont(nullptr), m_currentFontSize(14.0), m_currentCTM(nullptr) {
+
+    ffw_init(false);
+    cur_mapping.resize(0x10000);
+    cur_mapping2.resize(0x100);
+    width_list.resize(0x10000);
 
     m_textPage = new TextPage(rawOrder);
     m_actualText = new ActualText(m_textPage);
