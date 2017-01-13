@@ -248,6 +248,8 @@ double getSubstitutionCorrection(OFDFontPtr ofdFont, GfxFont *gfxFont){
     return 1.0;
 }
 
+static int num_mkfonts = 0;
+
 long long hash_ref(const Ref * id);
 // -------- OFDOutputDev::updateFont --------
 void OFDOutputDev::updateFont(GfxState *state){
@@ -273,12 +275,14 @@ void OFDOutputDev::updateFont(GfxState *state){
         ofdFont = commonData.DocumentRes->GetFont(fontID);
 
         if ( ofdFont == nullptr ){
+            LOG(ERROR) << "num_mkfonts=" << num_mkfonts;
+            num_mkfonts++;
             //std::string dumpFontFile = dump_embedded_font(gfxFont, m_xref);
             FontInfo fontInfo;
             fontInfo.id = fontID;
             //embed_font(dumpFontFile, gfxFont, fontInfo, false);
-            //install_embedded_font(gfxFont, fontInfo);
-            install_external_font(gfxFont, fontInfo);
+            install_embedded_font(gfxFont, fontInfo);
+            //install_external_font(gfxFont, fontInfo);
 
             ofdFont = GfxFont_to_OFDFont(gfxFont, m_xref);
             commonData.DocumentRes->AddFont(ofdFont);

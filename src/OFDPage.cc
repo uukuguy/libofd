@@ -188,7 +188,7 @@ void OFDPage::ImplCls::generateContentXML(XMLWriter &writer) const{
                 // -------- <Layer DrawParam="">
 
                 // -------- CT_PageBlock --------
-                LOG(DEBUG) << "############## There are " << layer->Objects.size() << " objects in layer";
+                //LOG(DEBUG) << "############## There are " << layer->Objects.size() << " objects in layer";
                 for ( auto object : layer->Objects ){
                     object->GenerateXML(writer);
                 }

@@ -313,7 +313,5 @@ void OFDOutputDev::updateBlendMode(GfxState *state){
             cairo_set_operator(m_cairo, CAIRO_OPERATOR_HSL_LUMINOSITY);
             break;
     }
-
-    LOG(DEBUG) << "blend mode: " << (int)state->getBlendMode();
 }
 

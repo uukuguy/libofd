@@ -15,6 +15,8 @@ using namespace std;
 //using std::endl;
 //using std::ostream;
 
+long long hash_ref(const Ref * id);
+
 Unicode check_unicode(Unicode * u, int len, CharCode code, GfxFont * font);
 Unicode unicode_from_font (CharCode code, GfxFont * font);
 
@@ -132,6 +134,7 @@ std::string OFDOutputDev::dump_embedded_font(GfxFont * font, XRef * xref) {
 
     Ref *ref = font->getID();
     long long fn_id = ref->num;
+    __attribute__((unused)) long long id1 = hash_ref(ref);
 
 
     try
@@ -297,8 +300,6 @@ std::string get_suffix(const std::string & path) {
 #include <math.h>
 static inline bool equal(double x, double y) { return fabs(x-y) <= EPS; };
 
-long long hash_ref(const Ref * id);
-
 void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo & info, bool get_metric_only) {
 
     LOG(DEBUG) << "embed_font() filepath: " << filepath;
@@ -315,7 +316,7 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
     bool auto_hint = true;            // use fontforge autohint on fonts without hints
     bool override_fstype = false;     // clear the fstype bits in TTF/OTF fonts.
     bool embedFont = true;            // embed font files into output.
-    std::string font_format = "ttf"; // suffix for embedded font files (ttf, otf, woff, svg)
+    std::string font_format = "woff"; // suffix for embedded font files (ttf, otf, woff, svg)
 
     //if(param.debug)
     //{

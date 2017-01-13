@@ -27,7 +27,7 @@ namespace utils {
             GuardedPointer operator () (const char * format, ...);
 
         private:
-            friend class GuardedPointer;
+            friend struct GuardedPointer;
             std::vector<char> buf;
             int buf_cnt;
     };

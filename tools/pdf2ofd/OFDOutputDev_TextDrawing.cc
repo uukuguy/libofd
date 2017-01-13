@@ -153,7 +153,6 @@ void OFDOutputDev::drawChar(GfxState *state, double x, double y,
       //int tLen = utf8Map->mapUnicode( *u, buf, 5);
       //buf[tLen] = '\0';
 
-
       unsigned char buf[8];
       int tLen = enc_unicode_to_utf8_one(*u, buf, 7); 
       buf[tLen] = '\0';

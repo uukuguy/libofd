@@ -118,6 +118,8 @@ OFDOutputDev::OFDOutputDev(ofd::OFDPackagePtr ofdPackage) :
 // ======== OFDOutputDev::~OFDOutputDev() ========
 OFDOutputDev::~OFDOutputDev(){
 
+    ffw_finalize();
+
     if ( m_cairo != nullptr ){
         cairo_destroy(m_cairo);
     }

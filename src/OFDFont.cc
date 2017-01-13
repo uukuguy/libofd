@@ -298,8 +298,9 @@ bool OFDFont::CreateFromData(char *fontData, size_t fontDataSize){
         m_fontData = nullptr;
     }
     m_fontDataSize = fontDataSize;
-    m_fontData = new char[fontDataSize];
-    memcpy(m_fontData, fontData, fontDataSize);
+    m_fontData = fontData;
+    //m_fontData = new char[fontDataSize];
+    //memcpy(m_fontData, fontData, fontDataSize);
 
     FT_Face face;
     cairo_font_face_t *font_face;

@@ -109,6 +109,16 @@ $ build/bin/ofdviewer --v=1 sample0.ofd
 ```
 The command above will create a OFD file named sampl0.ofd in current directory, and upzip it into sample0 folder. See Makefile for detail.
 
+## Install fontforge on Mac OSX with Hombrew
+
+```
+$ brew install python gettext libpng jpeg libtiff giflib cairo pango libspiro czmq fontconfig automake libtool pkg-config glib pango
+$ brew install -v --debug --with-giflib --with-libspiro fontforge
+
+# Install fontforge UI
+$ brew tap caskroom/cask
+$ brew cask install fontforge
+```
 
 ## Errata
 
