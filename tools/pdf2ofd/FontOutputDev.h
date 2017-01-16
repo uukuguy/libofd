@@ -2,6 +2,7 @@
 #define __OFD_FONTOUTPUTDEV_H__
 
 #include <memory>
+#include <map>
 #include <OutputDev.h>
 #include <PDFDoc.h>
 #include <GfxState.h>
@@ -10,6 +11,7 @@
 #include <Object.h>
 #include <GfxFont.h>
 #include "Preprocessor.h"
+#include "Param.h"
 #include "utils/StringFormatter.h"
 
 typedef std::shared_ptr<PDFDoc> PDFDocPtr;
@@ -77,7 +79,7 @@ namespace ofd{
 
         std::string dumpEmbeddedFont(GfxFont *font, FontInfo & info);
         std::string dumpType3Font(GfxFont *font, FontInfo & info); 
-        void embedFont(const std::string & filepath, GfxFont * font, FontInfo & info, bool get_metric_only);
+        void embedFont(const std::string & filepath, GfxFont * font, FontInfo & info, bool get_metric_only = false);
         void installEmbeddedFont(GfxFont *font, FontInfo & info);
         void installExternalFont(GfxFont *font, FontInfo & info);
 
@@ -90,6 +92,14 @@ namespace ofd{
     private:
         Preprocessor m_preprocessor;
         utils::StringFormatter str_fmt;
+
+        std::vector<int32_t> cur_mapping; 
+        std::vector<char*> cur_mapping2;
+        std::vector<int> width_list; // width of each char
+
+        std::unordered_map<long long, FontInfo> font_info_map;
+
+        Param param;
 
     }; // FontOutputDev
 

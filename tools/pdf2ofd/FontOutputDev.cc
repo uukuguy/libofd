@@ -1,11 +1,19 @@
 #include "FontOutputDev.h"
 #include "utils/logger.h"
 
+#include "utils/ffw.h"
+using namespace utils;
+
 using namespace ofd;
 
 FontOutputDev::FontOutputDev() : OutputDev(),
     m_pdfDoc(nullptr), m_xref(nullptr),
     m_allChanged(false), m_fontChanged(false){
+
+    ffw_init(false);
+    cur_mapping.resize(0x10000);
+    cur_mapping2.resize(0x100);
+    width_list.resize(0x10000);
 }
 
 FontOutputDev::~FontOutputDev(){
@@ -67,6 +75,7 @@ void FontOutputDev::drawString(GfxState * state, GooString * s) {
 void FontOutputDev::checkStateChange(GfxState * state){
 
     if ( m_allChanged || m_fontChanged ){
+        __attribute__((unused)) const FontInfo *fontInfo = installFont(state->getFont());
     }
 
     resetStateChange();
@@ -75,6 +84,10 @@ void FontOutputDev::checkStateChange(GfxState * state){
 void FontOutputDev::resetStateChange(){
     m_allChanged = false;
     m_fontChanged = false;
+}
+
+void FontOutputDev::updateFont(GfxState * state){
+    m_fontChanged = true;
 }
 
 //void FontOutputDev::startPage(int pageNum, GfxState *state, XRef * xref){

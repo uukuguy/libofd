@@ -298,7 +298,7 @@ std::string get_suffix(const std::string & path) {
 }
 
 #include <math.h>
-static inline bool equal(double x, double y) { return fabs(x-y) <= EPS; };
+bool equal(double x, double y) { return fabs(x-y) <= 0.000001; };
 
 void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo & info, bool get_metric_only) {
 

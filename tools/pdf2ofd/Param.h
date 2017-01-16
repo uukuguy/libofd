@@ -1,21 +1,9 @@
-/*
- * Parameters
- *
- * Wang Lu
- * 2012.08.03
- */
-
-
-#ifndef PARAM_H__
-#define PARAM_H__
+#ifndef __PARAM_H__
+#define __PARAM_H__
 
 #include <string>
 
-static const double EPS = 1e-6;
-static const double DEFAULT_DPI = 72.0;
-
-struct Param
-{
+typedef struct Param {
     // pages
     int first_page, last_page;
 
@@ -82,6 +70,7 @@ struct Param
     int proof;
 
     std::string input_filename, output_filename;
-};
 
-#endif //PARAM_h__
+} *Param_t;
+
+#endif // __PARAM_H__

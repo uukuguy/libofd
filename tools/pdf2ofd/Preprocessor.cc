@@ -22,7 +22,9 @@ using std::endl;
 using std::flush;
 using std::max;
 
-inline long long hash_ref(const Ref * id) {
+static const double DEFAULT_DPI = 72.0;
+
+long long hash_ref(const Ref * id) {
     return (((long long)(id->num)) << (sizeof(id->gen)*8)) | (id->gen);
 }
 

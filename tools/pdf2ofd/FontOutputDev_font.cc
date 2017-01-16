@@ -40,6 +40,11 @@ using namespace ofd;
 using namespace utils;
 
 std::string get_suffix(const std::string & path);
+long long hash_ref(const Ref * id);
+bool is_truetype_suffix(const std::string & suffix);
+Unicode check_unicode(Unicode * u, int len, CharCode code, GfxFont * font);
+Unicode unicode_from_font (CharCode code, GfxFont * font);
+bool equal(double x, double y);
 
 //using std::min;
 //using std::unordered_set;
@@ -398,7 +403,7 @@ void FontOutputDev::embedFont(const std::string & filepath, GfxFont * font, Font
         return;
     }
 
-    used_map = preprocessor.get_code_map(hash_ref(font->getID()));
+    used_map = m_preprocessor.get_code_map(hash_ref(font->getID()));
 
     /*
      * Step 1
@@ -470,7 +475,7 @@ void FontOutputDev::embedFont(const std::string & filepath, GfxFont * font, Font
                         {
                             name_conflict_warned = true;
                             //TODO: may be resolved using advanced font properties?
-                            cerr << "Warning: encoding conflict detected in font: " << hex << info.id << dec << endl;
+                            LOG(ERROR) << "Warning: encoding conflict detected in font: " << std::hex << info.id << std::dec;
                         }
                     }
                 }
@@ -543,7 +548,7 @@ void FontOutputDev::embedFont(const std::string & filepath, GfxFont * font, Font
         std::fill(width_list.begin(), width_list.end(), -1);
 
         if(code2GID)
-            maxcode = min<int>(maxcode, code2GID_len - 1);
+            maxcode = std::min<int>(maxcode, code2GID_len - 1);
 
         bool is_truetype = is_truetype_suffix(suffix);
         int max_key = maxcode;
@@ -598,37 +603,32 @@ void FontOutputDev::embedFont(const std::string & filepath, GfxFont * font, Font
                     // in auto mode, just drop the tounicode map
                     if(!retried)
                     {
-                        cerr << "ToUnicode CMap is not valid and got dropped for font: " << hex << info.id << dec << endl;
+                        LOG(ERROR) << "ToUnicode CMap is not valid and got dropped for font: " << std::hex << info.id << std::dec;
                         retried = true;
                         codeset.clear();
                         info.use_tounicode = false;
                         std::fill(cur_mapping.begin(), cur_mapping.end(), -1);
                         std::fill(width_list.begin(), width_list.end(), -1);
                         cur_code = -1;
-                        if(param.debug)
-                        {
+                        if(param.debug) {
                             map_outf.close();
                             map_outf.open(map_filename);
                         }
                         continue;
                     }
                 }
-                if(!name_conflict_warned)
-                {
+                if(!name_conflict_warned) {
                     name_conflict_warned = true;
                     //TODO: may be resolved using advanced font properties?
-                    cerr << "Warning: encoding confliction detected in font: " << hex << info.id << dec << endl;
+                    LOG(ERROR) << "Warning: encoding confliction detected in font: " << std::hex << info.id << std::dec;
                 }
             }
 
             {
                 double cur_width = 0;
-                if(font_8bit)
-                {
+                if(font_8bit) {
                     cur_width = font_8bit->getWidth(cur_code);
-                }
-                else
-                {
+                } else {
                     char buf[2];  
                     buf[0] = (cur_code >> 8) & 0xff;
                     buf[1] = (cur_code & 0xff);
@@ -637,8 +637,7 @@ void FontOutputDev::embedFont(const std::string & filepath, GfxFont * font, Font
 
                 cur_width /= info.font_size_scale;
 
-                if(u == ' ')
-                {
+                if(u == ' ') {
                     /*
                      * Internet Explorer will ignore `word-spacing` if
                      * the width of the 'space' glyph is 0
@@ -658,7 +657,7 @@ void FontOutputDev::embedFont(const std::string & filepath, GfxFont * font, Font
 
             if(param.debug)
             {
-                map_outf << hex << cur_code << ' ' << mapped_code << ' ' << u << endl;
+                map_outf << std::hex << cur_code << ' ' << mapped_code << ' ' << u;
             }
         }
 
@@ -669,14 +668,10 @@ void FontOutputDev::embedFont(const std::string & filepath, GfxFont * font, Font
         // In some space offsets in HTML, we insert a ' ' there in order to improve text copy&paste
         // We need to make sure that ' ' is in the font, otherwise it would be very ugly if you select the text
         // Might be a problem if ' ' is in the font, but not empty
-        if(!has_space)
-        {
-            if(font_8bit)
-            {
+        if(!has_space) {
+            if(font_8bit) {
                 info.space_width = font_8bit->getWidth(' ');
-            }
-            else
-            {
+            } else {
                 char buf[2] = {0, ' '};
                 info.space_width = font_cid->getWidth(buf, 2);
             }
@@ -687,15 +682,13 @@ void FontOutputDev::embedFont(const std::string & filepath, GfxFont * font, Font
                 info.space_width = 0.001;
 
             ffw_add_empty_char((int32_t)' ', (int)floor(info.space_width * info.em_size + 0.5));
-            if(param.debug)
-            {
-                cerr << "Missing space width in font " << hex << info.id << ": set to " << dec << info.space_width << endl;
+            if(param.debug) {
+                LOG(ERROR) << "Missing space width in font " << std::hex << info.id << ": set to " << std::dec << info.space_width;
             }
         }
 
-        if(param.debug)
-        {
-            cerr << "space width: " << info.space_width << endl;
+        if(param.debug) {
+            LOG(ERROR) << "space width: " << info.space_width;
         }
 
         if(ctu)
@@ -728,14 +721,12 @@ void FontOutputDev::embedFont(const std::string & filepath, GfxFont * font, Font
     bool hinted = false;
 
     // Call external hinting program if specified 
-    if(param.external_hint_tool != "")
-    {
+    if(param.external_hint_tool != "") {
         hinted = (system((char*)str_fmt("%s \"%s\" \"%s\"", param.external_hint_tool.c_str(), cur_tmp_fn.c_str(), other_tmp_fn.c_str())) == 0);
     }
 
     // Call internal hinting procedure if specified 
-    if((!hinted) && (param.auto_hint))
-    {
+    if((!hinted) && (param.auto_hint)) {
         ffw_load_font(cur_tmp_fn.c_str());
         ffw_auto_hint();
         ffw_save(other_tmp_fn.c_str());
@@ -743,8 +734,7 @@ void FontOutputDev::embedFont(const std::string & filepath, GfxFont * font, Font
         hinted = true;
     }
 
-    if(hinted)
-    {
+    if(hinted) {
         swap(cur_tmp_fn, other_tmp_fn);
     }
 
@@ -784,7 +774,7 @@ const FontInfo * FontOutputDev::installFont(GfxFont * font) {
 
     long long new_fn_id = font_info_map.size(); 
 
-    auto cur_info_iter = font_info_map.insert(make_pair(fn_id, FontInfo())).first;
+    auto cur_info_iter = font_info_map.insert(std::make_pair(fn_id, FontInfo())).first;
 
     FontInfo & new_font_info = cur_info_iter->second;
     new_font_info.id = new_fn_id;
@@ -799,7 +789,7 @@ const FontInfo * FontOutputDev::installFont(GfxFont * font) {
         new_font_info.descent = 0;
         new_font_info.is_type3 = false;
 
-        export_remote_default_font(new_fn_id);
+        //export_remote_default_font(new_fn_id);
 
         return &(new_font_info);
     }
@@ -808,34 +798,29 @@ const FontInfo * FontOutputDev::installFont(GfxFont * font) {
     new_font_info.descent = font->getDescent();
     new_font_info.is_type3 = (font->getType() == fontType3);
 
-    if(param.debug)
-    {
-        cerr << "Install font " << hex << new_fn_id << dec
+    if(param.debug) {
+        LOG(ERROR) << "Install font " << std::hex << new_fn_id << std::dec
             << ": (" << (font->getID()->num) << ' ' << (font->getID()->gen) << ") " 
-            << (font->getName() ? font->getName()->getCString() : "")
-            << endl;
+            << (font->getName() ? font->getName()->getCString() : "");
     }
 
-    if(new_font_info.is_type3)
-    {
+    if(new_font_info.is_type3) {
 #if ENABLE_SVG
-        if(param.process_type3)
-        {
+        xxxxxxx
+        if(param.process_type3) {
             install_embedded_font(font, new_font_info);
-        }
-        else
-        {
+        } else {
             export_remote_default_font(new_fn_id);
         }
 #else
-        cerr << "Type 3 fonts are unsupported and will be rendered as Image" << endl;
-        export_remote_default_font(new_fn_id);
+        LOG(ERROR) << "Type 3 fonts are unsupported and will be rendered as Image" << std::endl;
+        //export_remote_default_font(new_fn_id);
 #endif
         return &new_font_info;
     }
     if(font->getWMode()) {
-        cerr << "Writing mode is unsupported and will be rendered as Image" << endl;
-        export_remote_default_font(new_fn_id);
+        LOG(ERROR) << "Writing mode is unsupported and will be rendered as Image";
+        //export_remote_default_font(new_fn_id);
         return &new_font_info;
     }
 
@@ -844,59 +829,60 @@ const FontInfo * FontOutputDev::installFont(GfxFont * font) {
      * which does not make much sense in our case
      * If we specify gFalse here, font_loc->locType cannot be gfxFontLocResident
      */
-    if(auto * font_loc = font->locateFont(xref, nullptr))
-    {
-        switch(font_loc -> locType)
-        {
+    if(auto * font_loc = font->locateFont(m_xref, nullptr)) {
+        switch(font_loc -> locType) {
             case gfxFontLocEmbedded:
-                install_embedded_font(font, new_font_info);
+                installEmbeddedFont(font, new_font_info);
                 break;
             case gfxFontLocResident:
-                std::cerr << "Warning: Base 14 fonts should not be specially handled now. Please report a bug!" << std::endl;
+                LOG(ERROR) << "Warning: Base 14 fonts should not be specially handled now. Please report a bug!";
                 /* fall through */
             case gfxFontLocExternal:
-                install_external_font(font, new_font_info);
+                installExternalFont(font, new_font_info);
                 break;
             default:
-                cerr << "TODO: other font loc" << endl;
-                export_remote_default_font(new_fn_id);
+                LOG(ERROR) << "TODO: other font loc";
+                //export_remote_default_font(new_fn_id);
                 break;
         }      
         delete font_loc;
-    }
-    else
-    {
-        export_remote_default_font(new_fn_id);
+    } else {
+        //export_remote_default_font(new_fn_id);
     }
       
     return &new_font_info;
 }
 
 void FontOutputDev::installEmbeddedFont(GfxFont * font, FontInfo & info) {
-    auto path = dump_embedded_font(font, info);
+    auto path = dumpEmbeddedFont(font, info);
 
-    if(path != "")
-    {
-        embed_font(path, font, info);
-        export_remote_font(info, param.font_format, font);
-    }
-    else
-    {
-        export_remote_default_font(info.id);
+    if(path != "") {
+        embedFont(path, font, info);
+        //export_remote_font(info, param.font_format, font);
+    } else {
+        //export_remote_default_font(info.id);
     }
 }
+
+const std::map<std::string, std::string> GB_ENCODED_FONT_NAME_MAP_1({
+    {"\xCB\xCE\xCC\xE5", "SimSun"},
+    {"\xBA\xDA\xCC\xE5", "SimHei"},
+    {"\xBF\xAC\xCC\xE5_GB2312", "SimKai"},
+    {"\xB7\xC2\xCB\xCE_GB2312", "SimFang"},
+    {"\xC1\xA5\xCA\xE9", "SimLi"},
+});
 
 void FontOutputDev::installExternalFont(GfxFont * font, FontInfo & info){
     std::string fontname(font->getName()->getCString());
 
     // resolve bad encodings in GB
-    auto iter = GB_ENCODED_FONT_NAME_MAP.find(fontname); 
-    if(iter != GB_ENCODED_FONT_NAME_MAP.end()) {
+    auto iter = GB_ENCODED_FONT_NAME_MAP_1.find(fontname); 
+    if(iter != GB_ENCODED_FONT_NAME_MAP_1.end()) {
         fontname = iter->second;
         LOG(ERROR) << "Warning: workaround for font names in bad encodings.";
     }
 
-    GfxFontLoc * localfontloc = font->locateFont(xref, nullptr);
+    GfxFontLoc * localfontloc = font->locateFont(m_xref, nullptr);
 
     if(param.embed_external_font) {
         if(localfontloc != nullptr) {
@@ -905,7 +891,7 @@ void FontOutputDev::installExternalFont(GfxFont * font, FontInfo & info){
             delete localfontloc;
             return;
         } else {
-            LOG(ERROR) << "Cannot embed external font: f" << hex << info.id << dec << ' ' << fontname ;
+            LOG(ERROR) << "Cannot embed external font: f" << std::hex << info.id << std::dec << ' ' << fontname ;
             // fallback to exporting by name
         }
     }
@@ -923,7 +909,7 @@ void FontOutputDev::installExternalFont(GfxFont * font, FontInfo & info){
     //export_local_font(info, font, fontname, "");
 }
 
-void FontOutputDev::export_remote_font(const FontInfo & info, const std::string & format, GfxFont * font) {
+//void FontOutputDev::export_remote_font(const FontInfo & info, const std::string & format, GfxFont * font) {
     //std::string css_font_format;
     //if(format == "ttf")
     //{
@@ -987,23 +973,23 @@ void FontOutputDev::export_remote_font(const FontInfo & info, const std::string 
              //<< "visibility:visible;"
              //<< "}" 
              //<< endl;
-}
+//}
 
-static std::string general_font_family(GfxFont * font) {
+//static std::string general_font_family(GfxFont * font) {
     //if(font->isFixedWidth())
         //return "monospace";
     //else if (font->isSerif())
         //return "serif";
     //else
         //return "sans-serif";
-}
+//}
 
 // TODO: this function is called when some font is unable to process, may use the name there as a hint
-void FontOutputDev::export_remote_default_font(long long fn_id) {
+//void FontOutputDev::export_remote_default_font(long long fn_id) {
     //f_css.fs << "." << CSS::FONT_FAMILY_CN << fn_id << "{font-family:sans-serif;visibility:hidden;}" << endl;
-}
+//}
 
-void FontOutputDev::export_local_font(const FontInfo & info, GfxFont * font, const std::string & original_font_name, const std::string & cssfont) {
+//void FontOutputDev::export_local_font(const FontInfo & info, GfxFont * font, const std::string & original_font_name, const std::string & cssfont) {
     //f_css.fs << "." << CSS::FONT_FAMILY_CN << info.id << "{";
     //f_css.fs << "font-family:" << ((cssfont == "") ? (original_font_name + "," + general_font_family(font)) : cssfont) << ";";
 
@@ -1028,5 +1014,5 @@ void FontOutputDev::export_local_font(const FontInfo & info, GfxFont * font, con
     //f_css.fs << "visibility:visible;";
 
     //f_css.fs << "}" << endl;
-}
+//}
 
