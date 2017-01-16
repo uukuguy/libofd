@@ -275,7 +275,7 @@ void OFDOutputDev::updateFont(GfxState *state){
         ofdFont = commonData.DocumentRes->GetFont(fontID);
 
         if ( ofdFont == nullptr ){
-            LOG(ERROR) << "num_mkfonts=" << num_mkfonts;
+            LOG(INFO) << "num_mkfonts=" << num_mkfonts;
             num_mkfonts++;
             //std::string dumpFontFile = dump_embedded_font(gfxFont, m_xref);
             FontInfo fontInfo;

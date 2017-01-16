@@ -5,15 +5,39 @@
 #include <OutputDev.h>
 #include <PDFDoc.h>
 #include <GfxState.h>
-//#include <Stream.h>
-//#include <goo/gtypes.h>
-//#include <Object.h>
-//#include <GfxFont.h>
+#include <Stream.h>
+#include <goo/gtypes.h>
+#include <Object.h>
+#include <GfxFont.h>
 #include "Preprocessor.h"
+#include "utils/StringFormatter.h"
 
 typedef std::shared_ptr<PDFDoc> PDFDocPtr;
 
 namespace ofd{
+
+    typedef struct FontInfo {
+        long long id;
+        bool use_tounicode;
+        int em_size;
+        double space_width;
+        double ascent, descent;
+        bool is_type3;
+        /*
+         * As Type 3 fonts have a font matrix
+         * a glyph of 1pt can be very large or very small
+         * however it might not be true for other font formats such as ttf
+         *
+         * Therefore when we save a Type 3 font into ttf,
+         * we have to scale the font to about 1,
+         * then apply the scaling when using the font
+         *
+         * The scaling factor is stored as font_size_scale
+         *
+         * The value is 1 for other fonts
+         */
+        double font_size_scale;
+    } *FontInfo_t;
 
     class FontOutputDev : public OutputDev {
     public:
@@ -36,18 +60,36 @@ namespace ofd{
         // Rendering
         virtual void drawString(GfxState * state, GooString * s);
 
+        void updateFont(GfxState * state); 
+
         //// Start a page.
         //virtual void startPage(int pageNum, GfxState *state, XRef * xref);
         //// End a page.
         //virtual void endPage();
 
+        const FontInfo *installFont(GfxFont * font);
 
     protected:
         void preProcess(PDFDocPtr pdfDoc);
         void postProcess();
+        void checkStateChange(GfxState * state);
+        void resetStateChange();
+
+        std::string dumpEmbeddedFont(GfxFont *font, FontInfo & info);
+        std::string dumpType3Font(GfxFont *font, FontInfo & info); 
+        void embedFont(const std::string & filepath, GfxFont * font, FontInfo & info, bool get_metric_only);
+        void installEmbeddedFont(GfxFont *font, FontInfo & info);
+        void installExternalFont(GfxFont *font, FontInfo & info);
+
+        PDFDocPtr m_pdfDoc;
+        XRef *m_xref;
+
+        bool m_allChanged;
+        bool m_fontChanged;
 
     private:
         Preprocessor m_preprocessor;
+        utils::StringFormatter str_fmt;
 
     }; // FontOutputDev
 

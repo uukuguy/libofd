@@ -3,7 +3,9 @@
 
 using namespace ofd;
 
-FontOutputDev::FontOutputDev() : OutputDev(){
+FontOutputDev::FontOutputDev() : OutputDev(),
+    m_pdfDoc(nullptr), m_xref(nullptr),
+    m_allChanged(false), m_fontChanged(false){
 }
 
 FontOutputDev::~FontOutputDev(){
@@ -16,6 +18,9 @@ void FontOutputDev::preProcess(PDFDocPtr pdfDoc){
 
 // ======== FontOutputDev::ProcessDoc() ========
 void FontOutputDev::ProcessDoc(PDFDocPtr pdfDoc){
+    if ( pdfDoc == nullptr ) return;
+    m_pdfDoc = pdfDoc;
+    m_xref = pdfDoc->getXRef();
 
     preProcess(pdfDoc);
 
@@ -59,6 +64,18 @@ void FontOutputDev::drawString(GfxState * state, GooString * s) {
 
 }
 
+void FontOutputDev::checkStateChange(GfxState * state){
+
+    if ( m_allChanged || m_fontChanged ){
+    }
+
+    resetStateChange();
+}
+
+void FontOutputDev::resetStateChange(){
+    m_allChanged = false;
+    m_fontChanged = false;
+}
 
 //void FontOutputDev::startPage(int pageNum, GfxState *state, XRef * xref){
     //LOG(DEBUG) << "startPage() Page " << pageNum;

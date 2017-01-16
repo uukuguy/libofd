@@ -50,9 +50,6 @@ void OFDOutputDev::startPage(int pageNum, GfxState *state, XRef *xrefA) {
 
         m_textPage->startPage(state);
     }
-    if ( xrefA != nullptr){
-        m_xref = xrefA;
-    }
 
     if ( m_ofdDocument != nullptr ){
         LOG(INFO) << "******** startPage(" << pageNum << ") ********";

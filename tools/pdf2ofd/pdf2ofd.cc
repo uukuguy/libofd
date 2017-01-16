@@ -93,17 +93,17 @@ int main(int argc, char *argv[]){
     std::shared_ptr<PDFDoc> pdfDoc = OpenPDFFile(pdfFilename, ownerPassword, userPassword);
     if ( pdfDoc != nullptr ){
 
-        //ofd::OFDPackagePtr ofdPackage = std::make_shared<ofd::OFDPackage>();
+        ofd::OFDPackagePtr ofdPackage = std::make_shared<ofd::OFDPackage>();
 
-        //std::shared_ptr<OFDOutputDev> ofdOut = std::make_shared<OFDOutputDev>(ofdPackage);
-        //ofdOut->ProcessDoc(pdfDoc);
-        //ofdOut = nullptr;
+        std::shared_ptr<OFDOutputDev> ofdOut = std::make_shared<OFDOutputDev>(ofdPackage);
+        ofdOut->ProcessDoc(pdfDoc);
+        ofdOut = nullptr;
 
-        //ofdPackage->Save(ofdPackagename);
+        ofdPackage->Save(ofdPackagename);
 
-        std::shared_ptr<ofd::FontOutputDev> fontOut = std::make_shared<ofd::FontOutputDev>();
-        fontOut->ProcessDoc(pdfDoc);
-        fontOut = nullptr;
+        //std::shared_ptr<ofd::FontOutputDev> fontOut = std::make_shared<ofd::FontOutputDev>();
+        //fontOut->ProcessDoc(pdfDoc);
+        //fontOut = nullptr;
 
         pdfDoc = nullptr;
     }

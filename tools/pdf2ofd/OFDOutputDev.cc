@@ -199,6 +199,7 @@ std::tuple<double, double> OFDOutputDev::getPageSize(PDFDocPtr pdfDoc, int pg, i
 void OFDOutputDev::ProcessDoc(PDFDocPtr pdfDoc){
     if ( pdfDoc == nullptr ) return;
     m_pdfDoc = pdfDoc;
+    m_xref = pdfDoc->getXRef();
 
     m_preprocessor.ProcessDoc(m_pdfDoc.get());
 
