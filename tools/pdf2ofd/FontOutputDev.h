@@ -11,7 +11,6 @@
 #include <Object.h>
 #include <GfxFont.h>
 #include "Preprocessor.h"
-#include "Param.h"
 #include "utils/StringFormatter.h"
 
 typedef std::shared_ptr<PDFDoc> PDFDocPtr;
@@ -62,21 +61,19 @@ namespace ofd{
         // Rendering
         virtual void drawString(GfxState * state, GooString * s);
 
-        void updateFont(GfxState * state); 
+        virtual void updateAll(GfxState * state);
+        virtual void updateFont(GfxState * state); 
 
-        //// Start a page.
-        //virtual void startPage(int pageNum, GfxState *state, XRef * xref);
-        //// End a page.
-        //virtual void endPage();
-
-        const FontInfo *installFont(GfxFont * font);
 
     protected:
         void preProcess(PDFDocPtr pdfDoc);
         void postProcess();
         void checkStateChange(GfxState * state);
-        void resetStateChange();
 
+        void resetState();
+        void resetChangedState();
+
+        const FontInfo *installFont(GfxFont * font);
         std::string dumpEmbeddedFont(GfxFont *font, FontInfo & info);
         std::string dumpType3Font(GfxFont *font, FontInfo & info); 
         void embedFont(const std::string & filepath, GfxFont * font, FontInfo & info, bool get_metric_only = false);
@@ -99,7 +96,28 @@ namespace ofd{
 
         std::unordered_map<long long, FontInfo> font_info_map;
 
-        Param param;
+
+    private:
+        typedef struct Param{
+            bool debug = true;
+            int toUnicode = 1;
+            double hDPI = 72.0;
+            double vDPI = 72.0;
+            std::string tmpDir = "/tmp";
+            std::string destDir = ".";
+            int stretchNarrowGlyph = 0;
+            int squeezeWideGlyph = 1;
+            bool autoHint = false;
+            std::string externalHintTool = "";
+            bool embedFont = true;
+            // TODO
+            bool embedExternalFont = true;
+            std::string fontFormat = "woff";
+            bool overrideFstype = false;
+
+        } *Param_t;
+
+        Param m_param;
 
     }; // FontOutputDev
 

@@ -32,9 +32,7 @@
 #include "FontOutputDev.h"
 #include "utils/logger.h"
 
-extern "C"{
 #include "utils/ffw.h"
-}
 
 using namespace ofd;
 using namespace utils;
@@ -135,7 +133,7 @@ std::string FontOutputDev::dumpEmbeddedFont(GfxFont * font, FontInfo & info) {
 
         obj.streamReset();
 
-        filepath = (char*)str_fmt("%s/f%llx%s", param.tmp_dir.c_str(), fn_id, suffix.c_str());
+        filepath = (char*)str_fmt("%s/f%llx%s", m_param.tmpDir.c_str(), fn_id, suffix.c_str());
         //tmp_files.add(filepath);
 
         std::ofstream outf(filepath, std::ofstream::binary);
@@ -208,13 +206,13 @@ std::string FontOutputDev::dumpType3Font(GfxFont *font, FontInfo & info) {
 
         cairo_surface_t * surface = nullptr;
 
-        std::string glyph_filename = (char*)str_fmt("%s/f%llx-%x.svg", param.tmp_dir.c_str(), fn_id, code);
+        std::string glyph_filename = (char*)str_fmt("%s/f%llx-%x.svg", m_param.tmpDir.c_str(), fn_id, code);
         //tmp_files.add(glyph_filename);
 
         surface = cairo_svg_surface_create(glyph_filename.c_str(), transformed_bbox_width * scale, transformed_bbox_height * scale);
 
         cairo_svg_surface_restrict_to_version(surface, CAIRO_SVG_VERSION_1_2);
-        cairo_surface_set_fallback_resolution(surface, param.h_dpi, param.v_dpi);
+        cairo_surface_set_fallback_resolution(surface, m_param.hDPI, m_param.vDPI);
         cairo_t * cr = cairo_create(surface);
 
         // track the position of the origin
@@ -351,15 +349,15 @@ std::string FontOutputDev::dumpType3Font(GfxFont *font, FontInfo & info) {
 }
 
 void FontOutputDev::embedFont(const std::string & filepath, GfxFont * font, FontInfo & info, bool get_metric_only) {
-    if(param.debug) {
-        LOG(ERROR) << "Embed font: " << filepath << " " << info.id;
+    if(m_param.debug) {
+        LOG(DEBUG) << "Embed font: " << filepath << " " << info.id;
     }
 
     ffw_load_font(filepath.c_str());
     ffw_prepare_font();
 
-    if(param.debug) {
-        auto fn = str_fmt("%s/__raw_font_%llx%s", param.tmp_dir.c_str(), info.id, get_suffix(filepath).c_str());
+    if(m_param.debug) {
+        auto fn = str_fmt("%s/__raw_font_%llx%s", m_param.tmpDir.c_str(), info.id, get_suffix(filepath).c_str());
         //tmp_files.add((char*)fn);
         std::ofstream((char*)fn, std::ofstream::binary) << std::ifstream(filepath).rdbuf();
     }
@@ -378,15 +376,15 @@ void FontOutputDev::embedFont(const std::string & filepath, GfxFont * font, Font
     /*
      * if parm->tounicode is 0, try the provided tounicode map first
      */
-    info.use_tounicode = (param.tounicode >= 0);
+    info.use_tounicode = (m_param.toUnicode >= 0);
     bool has_space = false;
 
     const char * used_map = nullptr;
 
     info.em_size = ffw_get_em_size();
 
-    if(param.debug) {
-        LOG(ERROR) << "em size: " << info.em_size;
+    if(m_param.debug) {
+        LOG(DEBUG) << "em size: " << info.em_size;
     }
 
     info.space_width = 0;
@@ -535,8 +533,8 @@ void FontOutputDev::embedFont(const std::string & filepath, GfxFont * font, Font
     {
         std::string map_filename;
         std::ofstream map_outf;
-        if(param.debug) {
-            map_filename = (char*)str_fmt("%s/f%llx.map", param.tmp_dir.c_str(), info.id);
+        if(m_param.debug) {
+            map_filename = (char*)str_fmt("%s/f%llx.map", m_param.tmpDir.c_str(), info.id);
             //tmp_files.add(map_filename);
             map_outf.open(map_filename);
         }
@@ -599,7 +597,7 @@ void FontOutputDev::embedFont(const std::string & filepath, GfxFont * font, Font
             else
             {
                 // collision detected
-                if(param.tounicode == 0)
+                if(m_param.toUnicode == 0)
                 {
                     // in auto mode, just drop the tounicode map
                     if(!retried)
@@ -611,7 +609,7 @@ void FontOutputDev::embedFont(const std::string & filepath, GfxFont * font, Font
                         std::fill(cur_mapping.begin(), cur_mapping.end(), -1);
                         std::fill(width_list.begin(), width_list.end(), -1);
                         cur_code = -1;
-                        if(param.debug) {
+                        if(m_param.debug) {
                             map_outf.close();
                             map_outf.open(map_filename);
                         }
@@ -656,13 +654,13 @@ void FontOutputDev::embedFont(const std::string & filepath, GfxFont * font, Font
                 width_list[mapped_code] = (int)floor(cur_width * info.em_size + 0.5);
             }
 
-            if(param.debug)
+            if(m_param.debug)
             {
                 map_outf << std::hex << cur_code << ' ' << mapped_code << ' ' << u;
             }
         }
 
-        ffw_set_widths(width_list.data(), max_key + 1, param.stretch_narrow_glyph, param.squeeze_wide_glyph);
+        ffw_set_widths(width_list.data(), max_key + 1, m_param.stretchNarrowGlyph, m_param.squeezeWideGlyph);
         
         ffw_reencode_raw(cur_mapping.data(), max_key + 1, 1);
 
@@ -683,13 +681,13 @@ void FontOutputDev::embedFont(const std::string & filepath, GfxFont * font, Font
                 info.space_width = 0.001;
 
             ffw_add_empty_char((int32_t)' ', (int)floor(info.space_width * info.em_size + 0.5));
-            if(param.debug) {
-                LOG(ERROR) << "Missing space width in font " << std::hex << info.id << ": set to " << std::dec << info.space_width;
+            if(m_param.debug) {
+                LOG(DEBUG) << "Missing space width in font " << std::hex << info.id << ": set to " << std::dec << info.space_width;
             }
         }
 
-        if(param.debug) {
-            LOG(ERROR) << "space width: " << info.space_width;
+        if(m_param.debug) {
+            LOG(DEBUG) << "space width: " << info.space_width;
         }
 
         if(ctu)
@@ -706,9 +704,9 @@ void FontOutputDev::embedFont(const std::string & filepath, GfxFont * font, Font
 
     // Due to a bug of Fontforge about pfa -> woff conversion
     // we always generate TTF first, instead of the format specified by user
-    std::string cur_tmp_fn = (char*)str_fmt("%s/__tmp_font1.%s", param.tmp_dir.c_str(), "ttf");
+    std::string cur_tmp_fn = (char*)str_fmt("%s/__tmp_font1.%s", m_param.tmpDir.c_str(), "ttf");
     //tmp_files.add(cur_tmp_fn);
-    std::string other_tmp_fn = (char*)str_fmt("%s/__tmp_font2.%s", param.tmp_dir.c_str(), "ttf");
+    std::string other_tmp_fn = (char*)str_fmt("%s/__tmp_font2.%s", m_param.tmpDir.c_str(), "ttf");
     //tmp_files.add(other_tmp_fn);
 
     ffw_save(cur_tmp_fn.c_str());
@@ -722,12 +720,12 @@ void FontOutputDev::embedFont(const std::string & filepath, GfxFont * font, Font
     bool hinted = false;
 
     // Call external hinting program if specified 
-    if(param.external_hint_tool != "") {
-        hinted = (system((char*)str_fmt("%s \"%s\" \"%s\"", param.external_hint_tool.c_str(), cur_tmp_fn.c_str(), other_tmp_fn.c_str())) == 0);
+    if(m_param.externalHintTool != "") {
+        hinted = (system((char*)str_fmt("%s \"%s\" \"%s\"", m_param.externalHintTool.c_str(), cur_tmp_fn.c_str(), other_tmp_fn.c_str())) == 0);
     }
 
     // Call internal hinting procedure if specified 
-    if((!hinted) && (param.auto_hint)) {
+    if((!hinted) && (m_param.autoHint)) {
         ffw_load_font(cur_tmp_fn.c_str());
         ffw_auto_hint();
         ffw_save(other_tmp_fn.c_str());
@@ -747,16 +745,16 @@ void FontOutputDev::embedFont(const std::string & filepath, GfxFont * font, Font
      * We need to reload in order to retrieve/fix accurate ascent/descent, some info won't be written to the font by fontforge until saved.
      */
     std::string fn = (char*)str_fmt("%s/f%llx.%s", 
-        (param.embed_font ? param.tmp_dir : param.dest_dir).c_str(),
-        info.id, param.font_format.c_str());
+        (m_param.embedFont ? m_param.tmpDir : m_param.destDir).c_str(),
+        info.id, m_param.fontFormat.c_str());
 
-    //if(param.embed_font)
+    //if(m_param.embedFont)
         //tmp_files.add(fn);
 
     ffw_load_font(cur_tmp_fn.c_str());
     ffw_fix_metric();
     ffw_get_metric(&info.ascent, &info.descent);
-    if(param.override_fstype)
+    if(m_param.overrideFstype)
         ffw_override_fstype();
     ffw_save(fn.c_str());
 
@@ -799,8 +797,8 @@ const FontInfo * FontOutputDev::installFont(GfxFont * font) {
     new_font_info.descent = font->getDescent();
     new_font_info.is_type3 = (font->getType() == fontType3);
 
-    if(param.debug) {
-        LOG(ERROR) << "Install font " << std::hex << new_fn_id << std::dec
+    if(m_param.debug) {
+        LOG(DEBUG) << "Install font " << std::hex << new_fn_id << std::dec
             << ": (" << (font->getID()->num) << ' ' << (font->getID()->gen) << ") " 
             << (font->getName() ? font->getName()->getCString() : "");
     }
@@ -885,10 +883,10 @@ void FontOutputDev::installExternalFont(GfxFont * font, FontInfo & info){
 
     GfxFontLoc * localfontloc = font->locateFont(m_xref, nullptr);
 
-    if(param.embed_external_font) {
+    if(m_param.embedExternalFont) {
         if(localfontloc != nullptr) {
             embedFont(std::string(localfontloc->path->getCString()), font, info);
-            //export_remote_font(info, param.font_format, font);
+            //export_remote_font(info, m_param.fontFormat, font);
             delete localfontloc;
             return;
         } else {
@@ -949,9 +947,9 @@ void FontOutputDev::installExternalFont(GfxFont * font, FontInfo & info){
 
     //{
         //auto fn = str_fmt("f%llx.%s", info.id, format.c_str());
-        //if(param.embed_font)
+        //if(m_param.embedFont)
         //{
-            //auto path = param.tmp_dir + "/" + (char*)fn;
+            //auto path = m_param.tmpDir + "/" + (char*)fn;
             //ifstream fin(path, ifstream::binary);
             //if(!fin)
                 //throw "Cannot locate font file: " + path;

@@ -6,6 +6,8 @@ using namespace utils;
 
 using namespace ofd;
 
+//Param param;
+
 FontOutputDev::FontOutputDev() : OutputDev(),
     m_pdfDoc(nullptr), m_xref(nullptr),
     m_allChanged(false), m_fontChanged(false){
@@ -14,16 +16,16 @@ FontOutputDev::FontOutputDev() : OutputDev(),
     // -------- Params
 
     //memset(&param, 0, sizeof(Param));
-    param.tounicode = 1;
-    param.stretch_narrow_glyph = 0;
-    param.squeeze_wide_glyph = 1;
-    param.tmp_dir = "/tmp";
-    param.dest_dir = ".";
-    param.external_hint_tool = "";
-    param.auto_hint = 0;
-    param.override_fstype = 0;
-    param.embed_font = 1;
-    param.font_format = "woff";
+    //param.tounicode = 1;
+    //param.stretch_narrow_glyph = 0;
+    //param.squeeze_wide_glyph = 1;
+    //param.tmp_dir = "/tmp";
+    //param.dest_dir = ".";
+    //param.external_hint_tool = "";
+    //param.auto_hint = 0;
+    //param.override_fstype = 0;
+    //param.embed_font = 1;
+    //param.font_format = "woff";
 
     //int tounicode            = 1;      // how to handle ToUnicode CMaps. 
                                        //// (0=auto, 1=force, -1=ignore)
@@ -81,8 +83,6 @@ void FontOutputDev::postProcess(){
 
 // -------- FontOutputDev::drawString() --------
 void FontOutputDev::drawString(GfxState * state, GooString * s) {
-    //LOG(DEBUG) << "drawString() " << std::string(s->getCString());
-
     if ( s->getLength() == 0 ){
         return;
     }
@@ -97,7 +97,7 @@ void FontOutputDev::drawString(GfxState * state, GooString * s) {
     //double curWordSpace   = state->getWordSpace();
     //double curHorizScaling = state->getHorizScaling();
 
-    checkStateChange(state);
+    //checkStateChange(state);
 }
 
 void FontOutputDev::checkStateChange(GfxState * state){
@@ -106,22 +106,28 @@ void FontOutputDev::checkStateChange(GfxState * state){
         __attribute__((unused)) const FontInfo *fontInfo = installFont(state->getFont());
     }
 
-    resetStateChange();
+    resetChangedState();
 }
 
-void FontOutputDev::resetStateChange(){
+void FontOutputDev::resetState(){
+
+    resetChangedState();
+
+    m_allChanged = true;
+}
+
+void FontOutputDev::resetChangedState(){
     m_allChanged = false;
+
     m_fontChanged = false;
+}
+
+void FontOutputDev::updateAll(GfxState * state){
+    m_allChanged = true;
 }
 
 void FontOutputDev::updateFont(GfxState * state){
     m_fontChanged = true;
+    checkStateChange(state);
 }
 
-//void FontOutputDev::startPage(int pageNum, GfxState *state, XRef * xref){
-    //LOG(DEBUG) << "startPage() Page " << pageNum;
-//}
-
-//void FontOutputDev::endPage(){
-    //LOG(DEBUG) << "endPage()";
-//}
