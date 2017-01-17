@@ -73,7 +73,11 @@ $ sudo apt-get insatll fontforge
 - easylogging++ https://github.com/easylogging/easyloggingpp
 
 
+### poppler
 
+```
+$ sudo apt-get install libpoppler-private-dev
+```
 
 ## Build
 

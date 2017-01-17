@@ -10,6 +10,33 @@ FontOutputDev::FontOutputDev() : OutputDev(),
     m_pdfDoc(nullptr), m_xref(nullptr),
     m_allChanged(false), m_fontChanged(false){
 
+
+    // -------- Params
+
+    //memset(&param, 0, sizeof(Param));
+    param.tounicode = 1;
+    param.stretch_narrow_glyph = 0;
+    param.squeeze_wide_glyph = 1;
+    param.tmp_dir = "/tmp";
+    param.dest_dir = ".";
+    param.external_hint_tool = "";
+    param.auto_hint = 0;
+    param.override_fstype = 0;
+    param.embed_font = 1;
+    param.font_format = "woff";
+
+    //int tounicode            = 1;      // how to handle ToUnicode CMaps. 
+                                       //// (0=auto, 1=force, -1=ignore)
+    //int stretch_narrow_glyph = 0;      // stretch narrow glyphs instead of padding them.
+    //int squeeze_wide_glyph   = 1;      // shrink wide glyphs instaed of truncating them.
+    //std::string tmp_dir      = "/tmp";
+    //std::string dest_dir     = ".";
+    //std::string external_hint_tool = ""; // external tool for hinting fonts (overrides --auto-hint)
+    //bool auto_hint = true;            // use fontforge autohint on fonts without hints
+    //bool override_fstype = false;     // clear the fstype bits in TTF/OTF fonts.
+    //bool embedFont = true;            // embed font files into output.
+    //std::string font_format = "woff"; // suffix for embedded font files (ttf, otf, woff, svg)
+
     ffw_init(false);
     cur_mapping.resize(0x10000);
     cur_mapping2.resize(0x100);
@@ -70,6 +97,7 @@ void FontOutputDev::drawString(GfxState * state, GooString * s) {
     //double curWordSpace   = state->getWordSpace();
     //double curHorizScaling = state->getHorizScaling();
 
+    checkStateChange(state);
 }
 
 void FontOutputDev::checkStateChange(GfxState * state){

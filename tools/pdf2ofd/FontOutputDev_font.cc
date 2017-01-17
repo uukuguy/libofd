@@ -52,6 +52,7 @@ bool equal(double x, double y);
 //using std::endl;
 
 std::string FontOutputDev::dumpEmbeddedFont(GfxFont * font, FontInfo & info) {
+    LOG(DEBUG) << "enter FontOutputDev::dumpEmbeddedFont()";
 
     if(info.is_type3)
         return dumpType3Font(font, info);
