@@ -797,6 +797,8 @@ const FontInfo * FontOutputDev::installFont(GfxFont * font) {
     new_font_info.descent = font->getDescent();
     new_font_info.is_type3 = (font->getType() == fontType3);
 
+    font->getName();
+
     if(m_param.debug) {
         LOG(DEBUG) << "Install font " << std::hex << new_fn_id << std::dec
             << ": (" << (font->getID()->num) << ' ' << (font->getID()->gen) << ") " 

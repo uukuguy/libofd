@@ -76,11 +76,11 @@ int main(int argc, char *argv[]){
     std::string pdfFilename = argv[1];
 
     // ofd filename
-    std::string ofdPackagename = pdfFilename + ".ofd";
+    std::string packageName = pdfFilename + ".ofd";
     if ( argc > 2 ) {
-        ofdPackagename = argv[2];
+        packageName = argv[2];
     }
-    LOG(INFO) << "Try to translate pdf file " << pdfFilename << " to ofd file " << ofdPackagename;
+    LOG(INFO) << "Try to translate pdf file " << pdfFilename << " to ofd file " << packageName;
 
     // owner password
     std::string ownerPassword = FLAGS_owner_password;
@@ -93,17 +93,14 @@ int main(int argc, char *argv[]){
     std::shared_ptr<PDFDoc> pdfDoc = OpenPDFFile(pdfFilename, ownerPassword, userPassword);
     if ( pdfDoc != nullptr ){
 
-        //ofd::OFDPackagePtr ofdPackage = std::make_shared<ofd::OFDPackage>();
+        ofd::OFDPackagePtr package = std::make_shared<ofd::OFDPackage>();
 
-        //std::shared_ptr<OFDOutputDev> ofdOut = std::make_shared<OFDOutputDev>(ofdPackage);
-        //ofdOut->ProcessDoc(pdfDoc);
-        //ofdOut = nullptr;
+        std::shared_ptr<OFDOutputDev> ofdOut = std::make_shared<OFDOutputDev>(package);
+        ofdOut->ProcessDoc(pdfDoc);
+        ofdOut = nullptr;
 
-        //ofdPackage->Save(ofdPackagename);
+        package->Save(packageName);
 
-        std::shared_ptr<ofd::FontOutputDev> fontOut = std::make_shared<ofd::FontOutputDev>();
-        fontOut->ProcessDoc(pdfDoc);
-        fontOut = nullptr;
 
         pdfDoc = nullptr;
     }

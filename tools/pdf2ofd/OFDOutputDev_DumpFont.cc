@@ -376,7 +376,7 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
     }
 
     // FIXME
-    used_map = m_preprocessor.get_code_map(hash_ref(font->getID()));
+    //used_map = m_preprocessor.get_code_map(hash_ref(font->getID()));
 
     /*
      * Step 1

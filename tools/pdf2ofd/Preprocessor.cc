@@ -43,7 +43,7 @@ Preprocessor::~Preprocessor(void)
         delete [] p.second;
 }
 
-void Preprocessor::ProcessDoc(PDFDoc * doc) {
+void Preprocessor::ProcessDoc(PDFDocPtr doc) {
 
     auto numPages = doc->getNumPages();
     for ( auto i = 1 ; i <= numPages ; i++ ){

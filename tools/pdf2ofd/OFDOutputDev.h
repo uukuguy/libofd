@@ -13,7 +13,7 @@
 #include "OFDPage.h"
 #include "OFDFont.h"
 #include "OFDCairoRender.h"
-#include "Preprocessor.h"
+//#include "Preprocessor.h"
 #include "utils/StringFormatter.h"
 
 
@@ -329,6 +329,10 @@ public:
     } * m_maskStack;
 
 protected:
+
+    void preProcess(PDFDocPtr pdfDoc);
+    void postProcess();
+
     void fillToStrokePathClip(GfxState *state);
     void doPath(cairo_t *cairo, GfxState *state, GfxPath *path);
     void alignStrokeCoords(GfxSubpath *subpath, int i, double *x, double *y);
@@ -356,7 +360,7 @@ private:
     void afterPage(const std::string &imageFileName);
     void renderPage(int pg, double page_w, double page_h, double output_w, double output_h); 
 
-    Preprocessor m_preprocessor;
+    //Preprocessor m_preprocessor;
     utils::StringFormatter str_fmt;
 
     std::vector<int32_t> cur_mapping; 

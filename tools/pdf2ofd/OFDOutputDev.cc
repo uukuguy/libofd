@@ -6,6 +6,7 @@
 
 #include "OFDCommon.h"
 #include "OFDOutputDev.h"
+#include "FontOutputDev.h"
 #include "OFDPage.h"
 #include "utils/logger.h"
 
@@ -195,13 +196,23 @@ std::tuple<double, double> OFDOutputDev::getPageSize(PDFDocPtr pdfDoc, int pg, i
     return std::make_tuple(pg_w, pg_h);
 }
 
+// -------- OFDOutputDev::preProcess() --------
+void OFDOutputDev::preProcess(PDFDocPtr pdfDoc){
+
+    std::shared_ptr<ofd::FontOutputDev> fontOut = std::make_shared<ofd::FontOutputDev>();
+    fontOut->ProcessDoc(pdfDoc);
+    fontOut = nullptr;
+
+    //m_preprocessor.ProcessDoc(pdfDoc);
+}
+
 // ======== OFDOutputDev::ProcessDoc() ========
 void OFDOutputDev::ProcessDoc(PDFDocPtr pdfDoc){
     if ( pdfDoc == nullptr ) return;
     m_pdfDoc = pdfDoc;
     m_xref = pdfDoc->getXRef();
 
-    m_preprocessor.ProcessDoc(m_pdfDoc.get());
+    preProcess(pdfDoc);
 
     //double resolution = 72.0;
     //GBool useMediaBox = gTrue;
@@ -247,6 +258,12 @@ void OFDOutputDev::ProcessDoc(PDFDocPtr pdfDoc){
 
     // -------- afterDocumnet()
     afterDocument();
+
+    postProcess();
+}
+
+// -------- OFDOutputDev::postProcess() --------
+void OFDOutputDev::postProcess(){
 }
 
 // -------- writeStream --------

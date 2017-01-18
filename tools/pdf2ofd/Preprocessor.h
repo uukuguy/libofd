@@ -22,12 +22,14 @@
 #include "Param.h"
 
 
+typedef std::shared_ptr<PDFDoc> PDFDocPtr;
+
 class Preprocessor : public OutputDev {
 public:
     Preprocessor();
     virtual ~Preprocessor(void);
 
-    void ProcessDoc(PDFDoc * doc);
+    void ProcessDoc(PDFDocPtr  doc);
 
     virtual GBool upsideDown() { return gFalse; }
     virtual GBool useDrawChar() { return gTrue; }

@@ -52,14 +52,20 @@ namespace ofd{
         virtual GBool upsideDown() { return gFalse; }
 
         // Does this device use drawChar() or drawString()?
-        virtual GBool useDrawChar() { return gFalse; }
+        //virtual GBool useDrawChar() { return gFalse; }
+        virtual GBool useDrawChar() { return gTrue; }
 
         // Does this device use beginType3Char/endType3Char?  Otherwise,
         // text in Type 3 fonts will be drawn with drawChar/drawString.
         virtual GBool interpretType3Chars() { return gFalse; }
 
         // Rendering
-        virtual void drawString(GfxState * state, GooString * s);
+        //virtual void drawString(GfxState * state, GooString * s);
+
+        virtual void drawChar(GfxState *state, double x, double y,
+                double dx, double dy,
+                double originX, double originY,
+                CharCode code, int nBytes, Unicode *u, int uLen);
 
         virtual void updateAll(GfxState * state);
         virtual void updateFont(GfxState * state); 
@@ -118,6 +124,8 @@ namespace ofd{
         } *Param_t;
 
         Param m_param;
+
+        std::vector<GfxFont*> m_fonts;
 
     }; // FontOutputDev
 

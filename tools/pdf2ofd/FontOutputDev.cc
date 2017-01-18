@@ -50,7 +50,7 @@ FontOutputDev::~FontOutputDev(){
 
 // -------- FontOutputDev::preProcess() --------
 void FontOutputDev::preProcess(PDFDocPtr pdfDoc){
-    m_preprocessor.ProcessDoc(pdfDoc.get());
+    m_preprocessor.ProcessDoc(pdfDoc);
 }
 
 // ======== FontOutputDev::ProcessDoc() ========
@@ -79,31 +79,42 @@ void FontOutputDev::ProcessDoc(PDFDocPtr pdfDoc){
 
 // -------- FontOutputDev::postProcess() --------
 void FontOutputDev::postProcess(){
+    //for ( auto font : m_fonts ){
+        //__attribute__((unused)) const FontInfo *fontInfo = installFont(font);
+    //}
 }
 
-// -------- FontOutputDev::drawString() --------
-void FontOutputDev::drawString(GfxState * state, GooString * s) {
-    if ( s->getLength() == 0 ){
-        return;
-    }
+//// -------- FontOutputDev::drawString() --------
+//void FontOutputDev::drawString(GfxState * state, GooString * s) {
+    //if ( s->getLength() == 0 ){
+        //return;
+    //}
 
-    auto font = state->getFont();
-    if( font == nullptr) {
-        LOG(WARNING) << "font == nullptr.";
-        return;
-    }
+    //auto font = state->getFont();
+    //if( font == nullptr) {
+        //LOG(WARNING) << "font == nullptr.";
+        //return;
+    //}
 
-    //double curLetterSpace = state->getCharSpace();
-    //double curWordSpace   = state->getWordSpace();
-    //double curHorizScaling = state->getHorizScaling();
+    ////double curLetterSpace = state->getCharSpace();
+    ////double curWordSpace   = state->getWordSpace();
+    ////double curHorizScaling = state->getHorizScaling();
 
-    //checkStateChange(state);
+    ////checkStateChange(state);
+//}
+
+void FontOutputDev::drawChar(GfxState *state, double x, double y,
+      double dx, double dy,
+      double originX, double originY,
+      CharCode code, int nBytes, Unicode *u, int uLen) {
 }
 
 void FontOutputDev::checkStateChange(GfxState * state){
 
     if ( m_allChanged || m_fontChanged ){
-        __attribute__((unused)) const FontInfo *fontInfo = installFont(state->getFont());
+        auto font = state->getFont();
+        //m_fonts.push_back(font);
+        __attribute__((unused)) const FontInfo *fontInfo = installFont(font);
     }
 
     resetChangedState();
