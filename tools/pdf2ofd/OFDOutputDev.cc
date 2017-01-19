@@ -199,11 +199,12 @@ std::tuple<double, double> OFDOutputDev::getPageSize(PDFDocPtr pdfDoc, int pg, i
 // -------- OFDOutputDev::preProcess() --------
 void OFDOutputDev::preProcess(PDFDocPtr pdfDoc){
 
-    std::shared_ptr<ofd::FontOutputDev> fontOut = std::make_shared<ofd::FontOutputDev>();
-    fontOut->ProcessDoc(pdfDoc);
-    fontOut = nullptr;
+    m_fontOutputDev = std::make_shared<ofd::FontOutputDev>();
+    m_fontOutputDev->ProcessDoc(pdfDoc);
 
-    //m_preprocessor.ProcessDoc(pdfDoc);
+
+    //ofdFont = GfxFont_to_OFDFont(gfxFont, m_xref);
+    //commonData.DocumentRes->AddFont(ofdFont);
 }
 
 // ======== OFDOutputDev::ProcessDoc() ========

@@ -203,7 +203,9 @@ void OFDOutputDev::processTextLine(TextLine *line, OFDLayerPtr bodyLayer, OFDCai
             OFDObjectPtr object = std::shared_ptr<OFDObject>(textObject);
             bodyLayer->AddObject(object);
 
-            cairoRender->DrawObject(object);
+            if ( cairoRender != nullptr ){
+                cairoRender->DrawObject(object);
+            }
         }
     }
 
@@ -223,14 +225,15 @@ void OFDOutputDev::processTextPage(TextPage *textPage, OFDPagePtr currentOFDPage
 
     // OFDCairoRender
 
-    int imageWidth = 794;
-    int imageHeight = 1122;
-    cairo_surface_t *imageSurface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, imageWidth, imageHeight);
-    if ( imageSurface == nullptr ){
-        LOG(ERROR) << "create_image_surface() failed. ";
-        return;
-    }
-    OFDCairoRenderPtr cairoRender(new OFDCairoRender(imageSurface));
+    //int imageWidth = 794;
+    //int imageHeight = 1122;
+    //cairo_surface_t *imageSurface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, imageWidth, imageHeight);
+    //if ( imageSurface == nullptr ){
+        //LOG(ERROR) << "create_image_surface() failed. ";
+        //return;
+    //}
+    //OFDCairoRenderPtr cairoRender(new OFDCairoRender(imageSurface));
+    OFDCairoRenderPtr cairoRender = nullptr;
 
     double xMin, yMin, xMax, yMax;
     for ( auto flow = textPage->getFlows(); flow != nullptr ; flow = flow->getNext()){
@@ -242,10 +245,10 @@ void OFDOutputDev::processTextPage(TextPage *textPage, OFDPagePtr currentOFDPage
         }
     }
 
-    std::string png_filename = std::string("output/pdf2ofd/Page") + std::to_string(pageID) + ".png";
-    cairo_surface_write_to_png(imageSurface, png_filename.c_str());
+    //std::string png_filename = std::string("output/pdf2ofd/Page") + std::to_string(pageID) + ".png";
+    //cairo_surface_write_to_png(imageSurface, png_filename.c_str());
 
-    cairo_surface_destroy(imageSurface);
+    //cairo_surface_destroy(imageSurface);
 }
 
 // -------- OFDOutputDev::endPage() --------

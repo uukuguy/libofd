@@ -8,6 +8,7 @@
 #include "utils/logger.h"
 #include "utils/xml.h"
 #include "utils/zip.h"
+#include "utils/utils.h"
 
 using namespace ofd;
 
@@ -456,9 +457,7 @@ bool OFDPackage::ImplCls::Save(const std::string &filename){
             auto font = iter.second;
             if ( font->m_fontData != nullptr && font->m_fontDataSize > 0 ){
                 std::string fontFileName = resDir + "/" + font->GetFileName();
-
                 zip->AddFile(fontFileName, font->m_fontData, font->m_fontDataSize);
-
             }
         }
 

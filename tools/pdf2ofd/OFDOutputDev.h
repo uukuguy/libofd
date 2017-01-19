@@ -13,7 +13,7 @@
 #include "OFDPage.h"
 #include "OFDFont.h"
 #include "OFDCairoRender.h"
-//#include "Preprocessor.h"
+#include "FontOutputDev.h"
 #include "utils/StringFormatter.h"
 
 
@@ -360,7 +360,7 @@ private:
     void afterPage(const std::string &imageFileName);
     void renderPage(int pg, double page_w, double page_h, double output_w, double output_h); 
 
-    //Preprocessor m_preprocessor;
+    std::shared_ptr<ofd::FontOutputDev> m_fontOutputDev; 
     utils::StringFormatter str_fmt;
 
     std::vector<int32_t> cur_mapping; 

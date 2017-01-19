@@ -134,6 +134,9 @@ OFDFontPtr GfxFont_to_OFDFont(GfxFont *gfxFont, XRef *xref){
     Ref *ref = gfxFont->getID();
     ofdFont->ID = ref->num;
 
+    // FIXME
+    LOG(ERROR) << "GfxFont_to_OFDFont() fontID=" << ofdFont->ID;
+
     // -------- FontFamily --------
     GooString *family = gfxFont->getFamily();
     if ( family != nullptr ){
@@ -180,13 +183,13 @@ OFDFontPtr GfxFont_to_OFDFont(GfxFont *gfxFont, XRef *xref){
     }
 
     // -------- FontData --------
-    int fontDataSize = 0;
-    char *fontData = gfxFont->readEmbFontFile(xref, &fontDataSize);
+    //int fontDataSize = 0;
+    //char *fontData = gfxFont->readEmbFontFile(xref, &fontDataSize);
 
     // FIXME
     //ofdFont->m_fontData = fontData;
     //ofdFont->m_fontDataSize = fontDataSize;
-    ofdFont->CreateFromData(fontData, fontDataSize);
+    //ofdFont->CreateFromData(fontData, fontDataSize);
 
     //// FIXME
     //// Export running font data.
@@ -195,9 +198,9 @@ OFDFontPtr GfxFont_to_OFDFont(GfxFont *gfxFont, XRef *xref){
         //utils::WriteFileData(fontfile, fontData, fontDataSize);
     //}
 
-    int *codeToGID = nullptr;
-    size_t codeToGIDLen = 0;
-    std::tie(codeToGID, codeToGIDLen) = getCodeToGID(gfxFont, fontData, fontDataSize);
+    //int *codeToGID = nullptr;
+    //size_t codeToGIDLen = 0;
+    //std::tie(codeToGID, codeToGIDLen) = getCodeToGID(gfxFont, fontData, fontDataSize);
 
     return ofdFont;
 }
@@ -248,7 +251,7 @@ double getSubstitutionCorrection(OFDFontPtr ofdFont, GfxFont *gfxFont){
     return 1.0;
 }
 
-//static int num_mkfonts = 0;
+static int num_mkfonts = 0;
 
 long long hash_ref(const Ref * id);
 // -------- OFDOutputDev::updateFont --------
@@ -274,11 +277,12 @@ void OFDOutputDev::updateFont(GfxState *state){
         assert(commonData.DocumentRes != nullptr );
         ofdFont = commonData.DocumentRes->GetFont(fontID);
 
-        if ( ofdFont == nullptr ){
-            LOG(WARNING) << "Font not found. fontID=" << fontID;
-            return;
-        }
+        //if ( ofdFont == nullptr ){
+            //LOG(WARNING) << "Font not found. fontID=" << fontID;
+            //return;
+        //}
 
+        // FIXME
         //if ( ofdFont == nullptr ){
             //LOG(INFO) << "num_mkfonts=" << num_mkfonts;
             //num_mkfonts++;
@@ -296,6 +300,46 @@ void OFDOutputDev::updateFont(GfxState *state){
 
         //m_currentFont = ofdFont;
 
+        if ( ofdFont == nullptr ){
+
+            LOG(INFO) << "num_mkfonts=" << num_mkfonts;
+            num_mkfonts++;
+            
+            ofdFont = GfxFont_to_OFDFont(gfxFont, m_xref);
+
+            std::string dumpedFontFile = m_fontOutputDev->GetEmbeddedFontFile(hash_ref(ref));
+            if (!dumpedFontFile.empty()){
+                //std::string strID = std::to_string(fontID);
+
+                //LOG(ERROR) << "ref=(" << ref->num << ", " << ref->gen << ") fontID: " << fontID;
+                //LOG(ERROR) << "std::to_string(" << fontID << ") = " << strID;
+                
+                //std::string dumpedFontFile = std::string("/tmp/f") + std::to_string(fontID) + ".woff";
+                LOG(ERROR) << "dumpedFontFile=" << dumpedFontFile;
+
+                char *dumpFontData = nullptr;
+                size_t dumpFontDataSize = 0;
+                bool readDumpOK = false;
+                std::tie(dumpFontData, dumpFontDataSize, readDumpOK) = utils::ReadFileData(dumpedFontFile);
+                    
+                LOG(ERROR) << "After read dumpedFontFile=" << dumpedFontFile;
+
+                if (readDumpOK ){
+                    ofdFont->m_fontData = dumpFontData;
+                    ofdFont->m_fontDataSize = dumpFontDataSize;
+                    ofdFont->Load(m_ofdPackage->GetSelf());
+                    commonData.DocumentRes->AddFont(ofdFont);
+                    showGfxFont(gfxFont);
+                } else {
+                    LOG(ERROR) << "Read dump font file " << dumpedFontFile << " failed.";
+                }
+
+            } else {
+                LOG(WARNING) << "Font (id=" << fontID << ") embeddedFontFile is empty.";
+            }
+        }
+
+        m_currentFont = ofdFont;
 
         cairo_font_face_t *font_face;
         cairo_matrix_t matrix, invert_matrix;

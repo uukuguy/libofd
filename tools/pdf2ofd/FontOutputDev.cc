@@ -82,6 +82,9 @@ void FontOutputDev::postProcess(){
     //for ( auto font : m_fonts ){
         //__attribute__((unused)) const FontInfo *fontInfo = installFont(font);
     //}
+    for ( auto ff : m_fontFiles ){
+        LOG(DEBUG) << "fontRef: " << ff.first << " FontFile: " << ff.second;
+    }
 }
 
 //// -------- FontOutputDev::drawString() --------

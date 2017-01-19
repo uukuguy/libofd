@@ -303,8 +303,8 @@ void OFDCairoRender::ImplCls::Draw(OFDPagePtr page, Render::DrawParams drawParam
     // -------- default font --------
     assert(page->GetOFDDocument() != nullptr);
     assert(page->GetOFDDocument()->GetDocumentRes() != nullptr);
-    OFDFontPtr defaultFont = page->GetOFDDocument()->GetDocumentRes()->GetFont(0);
-    assert(defaultFont != nullptr);
+    //OFDFontPtr defaultFont = page->GetOFDDocument()->GetDocumentRes()->GetFont(0);
+    //assert(defaultFont != nullptr);
 
     //double mm_per_inch = 25.4;
     double dpi = 96;
@@ -324,8 +324,9 @@ void OFDCairoRender::ImplCls::Draw(OFDPagePtr page, Render::DrawParams drawParam
             //cairo_select_font_face(cr, "Simsun", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
 
             //// FIXME
-            //OFDFontPtr font = textObject->GetFont();
-            OFDFontPtr font = defaultFont;
+            //OFDFontPtr font = defaultFont;
+            OFDFontPtr font = textObject->GetFont();
+
             assert(font != nullptr);
             assert(font->IsLoaded());
             cairo_font_face_t *font_face = font->GetFontFace();

@@ -759,6 +759,9 @@ void FontOutputDev::embedFont(const std::string & filepath, GfxFont * font, Font
     ffw_save(fn.c_str());
 
     ffw_close();
+
+    long long fontRef = hash_ref(font->getID());
+    m_fontFiles.insert(std::make_pair(fontRef, fn));
 }
 
 
@@ -766,12 +769,16 @@ const FontInfo * FontOutputDev::installFont(GfxFont * font) {
     assert(sizeof(long long) == 2*sizeof(int));
                 
     long long fn_id = (font == nullptr) ? 0 : hash_ref(font->getID());
+    //LOG(DEBUG) << "insatllFont() fn_id=" << fn_id << "total fonts:" << font_info_map.size();
 
     auto iter = font_info_map.find(fn_id);
-    if(iter != font_info_map.end())
+    if(iter != font_info_map.end()){
+        LOG(DEBUG) << "Font found. " << fn_id;
         return &(iter->second);
+    }
 
-    long long new_fn_id = font_info_map.size(); 
+    //long long new_fn_id = font_info_map.size(); 
+    long long new_fn_id = font->getID()->num;
 
     auto cur_info_iter = font_info_map.insert(std::make_pair(fn_id, FontInfo())).first;
 

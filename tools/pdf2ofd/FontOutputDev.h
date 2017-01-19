@@ -103,6 +103,16 @@ namespace ofd{
         std::unordered_map<long long, FontInfo> font_info_map;
 
 
+    public:
+        std::string GetEmbeddedFontFile(long long fontRef) const{
+            auto iter = m_fontFiles.find(fontRef);
+            if ( iter != m_fontFiles.end() ){
+                return iter->second;
+            } else {
+                return "";
+            }
+        };
+
     private:
         typedef struct Param{
             bool debug = true;
@@ -125,7 +135,8 @@ namespace ofd{
 
         Param m_param;
 
-        std::vector<GfxFont*> m_fonts;
+        //std::vector<GfxFont*> m_fonts;
+        std::unordered_map<long long, std::string> m_fontFiles;
 
     }; // FontOutputDev
 
