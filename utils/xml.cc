@@ -97,7 +97,10 @@ void XMLWriter::ImplCls::WriteAttribute(const std::string &name, const std::stri
 }
 
 void XMLWriter::ImplCls::WriteAttribute(const std::string &name, uint64_t value){
-    WriteAttribute(name, std::to_string(value));    
+    char buf[64];
+    sprintf(buf, "%llx", value);
+    WriteAttribute(name, std::string(buf));
+    //WriteAttribute(name, std::to_string(value));    
 }
 
 void XMLWriter::ImplCls::WriteAttribute(const std::string &name, double value, int precision){

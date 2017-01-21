@@ -30,12 +30,12 @@ extern GBool rawOrder;
 void OFDOutputDev::startPage(int pageNum, GfxState *state, XRef *xrefA) {
 
     /* set up some per page defaults */
-    if ( m_fillPattern != nullptr ){
-        cairo_pattern_destroy(m_fillPattern);
-    }
-    if ( m_strokePattern != nullptr ){
-        cairo_pattern_destroy(m_strokePattern);
-    }
+    //if ( m_fillPattern != nullptr ){
+        //cairo_pattern_destroy(m_fillPattern);
+    //}
+    //if ( m_strokePattern != nullptr ){
+        //cairo_pattern_destroy(m_strokePattern);
+    //}
 
     m_fillPattern = cairo_pattern_create_rgb(0., 0., 0.);
     m_fillColor.r = m_fillColor.g = m_fillColor.b = 0;
@@ -225,15 +225,15 @@ void OFDOutputDev::processTextPage(TextPage *textPage, OFDPagePtr currentOFDPage
 
     // OFDCairoRender
 
-    //int imageWidth = 794;
-    //int imageHeight = 1122;
-    //cairo_surface_t *imageSurface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, imageWidth, imageHeight);
-    //if ( imageSurface == nullptr ){
-        //LOG(ERROR) << "create_image_surface() failed. ";
-        //return;
-    //}
-    //OFDCairoRenderPtr cairoRender(new OFDCairoRender(imageSurface));
-    OFDCairoRenderPtr cairoRender = nullptr;
+    int imageWidth = 794;
+    int imageHeight = 1122;
+    cairo_surface_t *imageSurface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, imageWidth, imageHeight);
+    if ( imageSurface == nullptr ){
+        LOG(ERROR) << "create_image_surface() failed. ";
+        return;
+    }
+    OFDCairoRenderPtr cairoRender(new OFDCairoRender(imageSurface));
+    //OFDCairoRenderPtr cairoRender = nullptr;
 
     double xMin, yMin, xMax, yMax;
     for ( auto flow = textPage->getFlows(); flow != nullptr ; flow = flow->getNext()){
@@ -245,10 +245,10 @@ void OFDOutputDev::processTextPage(TextPage *textPage, OFDPagePtr currentOFDPage
         }
     }
 
-    //std::string png_filename = std::string("output/pdf2ofd/Page") + std::to_string(pageID) + ".png";
-    //cairo_surface_write_to_png(imageSurface, png_filename.c_str());
+    std::string png_filename = std::string("output/pdf2ofd/Page") + std::to_string(pageID) + ".png";
+    cairo_surface_write_to_png(imageSurface, png_filename.c_str());
 
-    //cairo_surface_destroy(imageSurface);
+    cairo_surface_destroy(imageSurface);
 }
 
 // -------- OFDOutputDev::endPage() --------

@@ -457,6 +457,7 @@ bool OFDPackage::ImplCls::Save(const std::string &filename){
             auto font = iter.second;
             if ( font->m_fontData != nullptr && font->m_fontDataSize > 0 ){
                 std::string fontFileName = resDir + "/" + font->GetFileName();
+                //LOG(ERROR) << "zip->AddFile() while save Font. file = " << fontFileName;
                 zip->AddFile(fontFileName, font->m_fontData, font->m_fontDataSize);
             }
         }

@@ -130,7 +130,11 @@ std::string OFDFont::ToString() const {
 }
 
 std::string OFDFont::GetFileName() const{
-    return std::string("Font_") + std::to_string(ID) + ".ttf";
+    char buf[1024];
+    sprintf(buf, "Font_%llx.ttf", ID);
+    //LOG(ERROR) << "------- GetFileName() ID:" << ID << " filename=" << std::string(buf);
+    return std::string(buf);
+    //return std::string("Font_") + std::to_string(ID) + ".ttf";
 }
 
 void OFDFont::GenerateXML(XMLWriter &writer) const{
@@ -315,27 +319,47 @@ bool OFDFont::CreateFromData(char *fontData, size_t fontDataSize){
 bool OFDFont::Load(OFDPackagePtr package, bool reload){
     if ( m_bLoaded && !reload ) return true;
 
-    bool ok = true;
+    // FIXME
+    //if ( ID > 0 ){
 
-    std::string fontFilePath = m_fontFilePath;
-    LOG(DEBUG) << "Load Font: " << fontFilePath;
+        //std::string fontFile = std::string("./data/embed/f") + std::to_string(ID) + ".otf";
+        ////std::string fontFile = "./data/embed/f2.otf";
+        //LOG(ERROR) << "Load fontFile: " << fontFile;
 
-    char *fontData = nullptr;
-    size_t fontDataSize = 0;
-    bool readOK = false;
-    std::tie(fontData, fontDataSize, readOK) = package->ReadZipFileRaw(fontFilePath);
-    if ( readOK ){
-        if ( CreateFromData(fontData, fontDataSize) ){
-            LOG(INFO) << "Font " << FontName << "(ID=" << ID << ") loaded.";
+        //char *fontData = nullptr;
+        //size_t fontDataSize = 0;
+        //bool readOK = false;
+        //std::tie(fontData, fontDataSize, readOK) = utils::ReadFileData(fontFile);
+
+        //m_bLoaded = CreateFromData(fontData, fontDataSize);
+
+    //} else {
+    // --------------
+        bool ok = true;
+
+        std::string fontFilePath = m_fontFilePath;
+        LOG(DEBUG) << "Load Font: " << fontFilePath;
+
+        char *fontData = nullptr;
+        size_t fontDataSize = 0;
+        bool readOK = false;
+        std::tie(fontData, fontDataSize, readOK) = package->ReadZipFileRaw(fontFilePath);
+        if ( readOK ){
+            if ( CreateFromData(fontData, fontDataSize) ){
+                LOG(INFO) << "Font " << FontName << "(ID=" << ID << ") loaded.";
+            } else {
+                LOG(ERROR) << "createCairoFontFace() in OFDFont::Load() failed.";
+                ok = false;
+            }
         } else {
-            LOG(ERROR) << "createCairoFontFace() in OFDFont::Load() failed.";
+            ok = false;
+            LOG(ERROR) << "Call ReadZipFileRaw() to read font file " << fontFilePath << " failed.";
         }
-    } else {
-        ok = false;
-        LOG(ERROR) << "Call ReadZipFileRaw() to read font file " << fontFilePath << " failed.";
-    }
 
-    return ok;
+        m_bLoaded = ok;
+    //}
+
+    return m_bLoaded;
 }
 
 unsigned long OFDFont::GetGlyph(unsigned int code, unsigned int *u, int uLen) const{

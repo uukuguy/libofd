@@ -773,7 +773,7 @@ const FontInfo * FontOutputDev::installFont(GfxFont * font) {
 
     auto iter = font_info_map.find(fn_id);
     if(iter != font_info_map.end()){
-        LOG(DEBUG) << "Font found. " << fn_id;
+        //LOG(DEBUG) << "Font found. " << fn_id;
         return &(iter->second);
     }
 

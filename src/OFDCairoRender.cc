@@ -303,6 +303,7 @@ void OFDCairoRender::ImplCls::Draw(OFDPagePtr page, Render::DrawParams drawParam
     // -------- default font --------
     assert(page->GetOFDDocument() != nullptr);
     assert(page->GetOFDDocument()->GetDocumentRes() != nullptr);
+    // FIXME
     //OFDFontPtr defaultFont = page->GetOFDDocument()->GetDocumentRes()->GetFont(0);
     //assert(defaultFont != nullptr);
 
@@ -410,6 +411,7 @@ void OFDCairoRender::ImplCls::DrawObject(OFDObjectPtr object){
 
         OFDFontPtr font = textObject->GetFont();
         assert(font != nullptr);
+        LOG(DEBUG) << "DrawTextObject using font (ID=" << font->ID << ")";
         assert(font->IsLoaded());
 
         cairo_font_face_t *font_face = font->GetFontFace();
