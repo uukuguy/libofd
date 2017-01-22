@@ -17,7 +17,7 @@ namespace ofd{
         OFDRender();
         virtual ~OFDRender();
 
-        virtual void Draw(OFDPagePtr page, Render::DrawParams draParams);
+        virtual void DrawPage(OFDPagePtr page, Render::DrawParams draParams);
         Render::DrawParams GetDrawParams() const;
         void SetDrawParams(Render::DrawParams drawParams);
 

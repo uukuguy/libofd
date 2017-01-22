@@ -18,7 +18,7 @@ namespace ofd{
         cairo_surface_t *GetCairoSurface() const;
         cairo_t *GetCairoContext() const;
 
-        virtual void Draw(OFDPagePtr page, Render::DrawParams drawParams) override;
+        virtual void DrawPage(OFDPagePtr page, Render::DrawParams drawParams) override;
         void DrawObject(OFDObjectPtr object);
 
     private:

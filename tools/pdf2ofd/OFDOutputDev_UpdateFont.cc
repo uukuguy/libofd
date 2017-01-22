@@ -274,32 +274,27 @@ void OFDOutputDev::updateFont(GfxState *state){
         assert(commonData.DocumentRes != nullptr );
         ofdFont = commonData.DocumentRes->GetFont(fontID);
 
-        //if ( ofdFont == nullptr ){
-            //LOG(WARNING) << "Font not found. fontID=" << fontID;
-            //return;
-        //}
-
-        // FIXME
+        ////FIXME
         //if ( ofdFont == nullptr ){
             //LOG(INFO) << "num_mkfonts=" << num_mkfonts;
             //num_mkfonts++;
-            ////std::string dumpFontFile = dump_embedded_font(gfxFont, m_xref);
-            ////FontInfo fontInfo;
-            ////fontInfo.id = fontID;
-            ////embed_font(dumpFontFile, gfxFont, fontInfo, false);
-            ////install_embedded_font(gfxFont, fontInfo);
-            ////install_external_font(gfxFont, fontInfo);
+            //std::string dumpFontFile = dump_embedded_font(gfxFont, m_xref);
+            //FontInfo fontInfo;
+            //fontInfo.id = fontID;
+            //embed_font(dumpFontFile, gfxFont, fontInfo, false);
+            //install_embedded_font(gfxFont, fontInfo);
+            //install_external_font(gfxFont, fontInfo);
 
             //ofdFont = GfxFont_to_OFDFont(gfxFont, m_xref);
 
-            //// -------- FontData --------
-            ////int fontDataSize = 0;
-            ////char *fontData = gfxFont->readEmbFontFile(m_xref, &fontDataSize);
+             //-------- FontData --------
+            //int fontDataSize = 0;
+            //char *fontData = gfxFont->readEmbFontFile(m_xref, &fontDataSize);
 
             //std::string fontFile = std::string("./data/embed/f") + std::to_string(ofdFont->ID) + ".otf";
-            ////std::string fontFile = "./data/embed/f2.otf";
+            //std::string fontFile = "./data/embed/f2.otf";
             //LOG(ERROR) << "fontFile: " << fontFile;
-            ////utils::WriteFileData(fontFile, fontData, fontDataSize);
+            //utils::WriteFileData(fontFile, fontData, fontDataSize);
 
             //char *fontData = nullptr;
             //size_t fontDataSize = 0;
@@ -319,6 +314,7 @@ void OFDOutputDev::updateFont(GfxState *state){
             
             ofdFont = GfxFont_to_OFDFont(gfxFont, m_xref);
 
+
             std::string dumpedFontFile = m_fontOutputDev->GetEmbeddedFontFile(hash_ref(ref));
             if (!dumpedFontFile.empty()){
                 //std::string strID = std::to_string(fontID);
@@ -335,6 +331,13 @@ void OFDOutputDev::updateFont(GfxState *state){
                 std::tie(dumpFontData, dumpFontDataSize, readDumpOK) = utils::ReadFileData(dumpedFontFile);
                     
                 if (readDumpOK ){
+
+                    int *codeToGID = nullptr;
+                    size_t codeToGIDLen = 0;
+                    std::tie(codeToGID, codeToGIDLen) = getCodeToGID(gfxFont, dumpFontData, dumpFontDataSize);
+                    ofdFont->m_codeToGID = codeToGID;
+                    ofdFont->m_codeToGIDLen = codeToGIDLen;
+
                     //ofdFont->m_fontData = dumpFontData;
                     //ofdFont->m_fontDataSize = dumpFontDataSize;
                     //ofdFont->Load(m_ofdPackage->GetSelf());
@@ -382,8 +385,8 @@ void OFDOutputDev::updateFont(GfxState *state){
         matrix.xy = -m[2] * fontSize;
         matrix.yy = -m[3] * fontSize;
 
-        matrix.x0 = 0;
-        matrix.y0 = 0;
+        matrix.x0 = 0.0;
+        matrix.y0 = 0.0;
 
         LOG(DEBUG) << "font matrix: " << matrix.xx << ", " << matrix.yx << ", " << matrix.xy << ", " << matrix.yy;
 

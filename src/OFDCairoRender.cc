@@ -19,7 +19,7 @@ public:
     ~ImplCls();
 
     void SetCairoSurface(cairo_surface_t *surface);
-    void Draw(OFDPagePtr page, Render::DrawParams drawParams);
+    void DrawPage(OFDPagePtr page, Render::DrawParams drawParams);
     void DrawObject(OFDObjectPtr object);
 
 private:
@@ -269,7 +269,7 @@ void DrawFreeTypeString(double X, double Y, const std::string &text, cairo_t *cr
 }
 
 // ======== OFDCairoRender::ImplCls::Draw() ========
-void OFDCairoRender::ImplCls::Draw(OFDPagePtr page, Render::DrawParams drawParams){
+void OFDCairoRender::ImplCls::DrawPage(OFDPagePtr page, Render::DrawParams drawParams){
     if ( page == nullptr ) return;
     if ( m_surface == nullptr ) return;
     double offsetX;
@@ -308,7 +308,7 @@ void OFDCairoRender::ImplCls::Draw(OFDPagePtr page, Render::DrawParams drawParam
     //assert(defaultFont != nullptr);
 
     //double mm_per_inch = 25.4;
-    double dpi = 96;
+    //double dpi = 96;
     //double pixels_per_mm = dpi / mm_per_inch;
 
     // -------- Set FontFace --------
@@ -319,75 +319,77 @@ void OFDCairoRender::ImplCls::Draw(OFDPagePtr page, Render::DrawParams drawParam
     for ( size_t i = 0 ; i < numObjects ; i++ ){
         const OFDObjectPtr object = bodyLayer->GetObject(i);
         assert(object != nullptr);
-        if ( object->Type == ofd::Object::Type::TEXT ){
-            OFDTextObject *textObject = static_cast<OFDTextObject*>(object.get());
 
-            //cairo_select_font_face(cr, "Simsun", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
+        DrawObject(object);
+        //if ( object->Type == ofd::Object::Type::TEXT ){
+            //OFDTextObject *textObject = static_cast<OFDTextObject*>(object.get());
 
-            //// FIXME
-            //OFDFontPtr font = defaultFont;
-            OFDFontPtr font = textObject->GetFont();
+            ////cairo_select_font_face(cr, "Simsun", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
 
-            assert(font != nullptr);
-            assert(font->IsLoaded());
-            cairo_font_face_t *font_face = font->GetFontFace();
-            assert(font_face != nullptr);
-            cairo_set_font_face(cr, font_face);
+            ////// FIXME
+            ////OFDFontPtr font = defaultFont;
+            //OFDFontPtr font = textObject->GetFont();
 
-            size_t numTextCodes = textObject->GetTextCodesCount();
-            //LOG(DEBUG) << "numTextCodes: " << numTextCodes;
-            for ( size_t n = 0 ; n < numTextCodes ; n++ ){
+            //assert(font != nullptr);
+            //assert(font->IsLoaded());
+            //cairo_font_face_t *font_face = font->GetFontFace();
+            //assert(font_face != nullptr);
+            //cairo_set_font_face(cr, font_face);
 
-                // -------- fontMatrix --------
-                double ctm[6] = {1.0, 0.0, 0.0, 1.0, 0.0, 0.0};
-                __attribute__((unused)) double xx = ctm[0];
-                __attribute__((unused)) double xy = ctm[1];
-                __attribute__((unused)) double yx = ctm[2];
-                __attribute__((unused)) double yy = ctm[3];
-                __attribute__((unused)) double x0 = ctm[4];
-                __attribute__((unused)) double y0 = ctm[5];
+            //size_t numTextCodes = textObject->GetTextCodesCount();
+            ////LOG(DEBUG) << "numTextCodes: " << numTextCodes;
+            //for ( size_t n = 0 ; n < numTextCodes ; n++ ){
 
-                cairo_matrix_t fontMatrix;
-                cairo_get_font_matrix(cr, &fontMatrix);
-                double fontSize = textObject->GetFontSize();
-                double fontPixels = dpi * fontSize / 72;
-                fontMatrix.xx = fontPixels * xx;
-                fontMatrix.yy = fontPixels * yy;
-                fontMatrix.x0 = x0;
-                fontMatrix.y0 = y0;
-                cairo_set_font_matrix(cr, &fontMatrix);
+                //// -------- fontMatrix --------
+                //double ctm[6] = {1.0, 0.0, 0.0, 1.0, 0.0, 0.0};
+                //__attribute__((unused)) double xx = ctm[0];
+                //__attribute__((unused)) double xy = ctm[1];
+                //__attribute__((unused)) double yx = ctm[2];
+                //__attribute__((unused)) double yy = ctm[3];
+                //__attribute__((unused)) double x0 = ctm[4];
+                //__attribute__((unused)) double y0 = ctm[5];
 
-                // -------- Draw Text --------
-                const Text::TextCode &textCode = textObject->GetTextCode(n);
-                double X = textCode.X;
-                double Y = textCode.Y;
-                std::string text = textCode.Text;
-
-                double X1 = X * dpi / 72;
-                double Y1 = Y * dpi / 72;
-                //double Y1 = Y - 500;// * dpi / 72;
-
+                //cairo_matrix_t fontMatrix;
+                //cairo_get_font_matrix(cr, &fontMatrix);
                 //double fontSize = textObject->GetFontSize();
                 //double fontPixels = dpi * fontSize / 72;
-                cairo_matrix_t font_matrix = {fontPixels, 0.0, 0.0, fontPixels, 0.0, 0.0};
-                cairo_matrix_t font_ctm = {1.0, 0.0, 0.0, 1.0, 0.0, 0.0}; 
-                cairo_font_options_t *font_options = cairo_font_options_create();
-                cairo_get_font_options(cr, font_options);
-                cairo_font_options_set_antialias(font_options, CAIRO_ANTIALIAS_DEFAULT);
-                DrawFreeTypeString(X1, Y1, text, cr, font_face,
-                //DrawFreeTypeString(X1, Y1, text, cr, 
-                        &font_matrix, &font_ctm, font_options);
-                cairo_font_options_destroy(font_options);
+                //fontMatrix.xx = fontPixels * xx;
+                //fontMatrix.yy = fontPixels * yy;
+                //fontMatrix.x0 = x0;
+                //fontMatrix.y0 = y0;
+                //cairo_set_font_matrix(cr, &fontMatrix);
 
-                //cairo_text_extents_t te;
-                //cairo_text_extents(cr, text.c_str(), &te);
-                ////cairo_move_to(cr, X1 + 0.5 - te.width / 2 - te.x_bearing, Y1 + 0.5 - te.height / 2 - te.y_bearing);
-                //cairo_move_to(cr, X1 + 0.5 - te.x_bearing, Y1 + 0.5 - te.height / 2 - te.y_bearing);
-                //cairo_show_text(cr, text.c_str());
-                //////LOG(DEBUG) << "X: " << X1 << " Y: " << Y1 << " Text: " << text;
+                //// -------- Draw Text --------
+                //const Text::TextCode &textCode = textObject->GetTextCode(n);
+                //double X = textCode.X;
+                //double Y = textCode.Y;
+                //std::string text = textCode.Text;
 
-            }
-        }
+                //double X1 = X * dpi / 72;
+                //double Y1 = Y * dpi / 72;
+                ////double Y1 = Y - 500;// * dpi / 72;
+
+                ////double fontSize = textObject->GetFontSize();
+                ////double fontPixels = dpi * fontSize / 72;
+                //cairo_matrix_t font_matrix = {fontPixels, 0.0, 0.0, fontPixels, 0.0, 0.0};
+                //cairo_matrix_t font_ctm = {1.0, 0.0, 0.0, 1.0, 0.0, 0.0}; 
+                //cairo_font_options_t *font_options = cairo_font_options_create();
+                //cairo_get_font_options(cr, font_options);
+                //cairo_font_options_set_antialias(font_options, CAIRO_ANTIALIAS_DEFAULT);
+                //DrawFreeTypeString(X1, Y1, text, cr, font_face,
+                ////DrawFreeTypeString(X1, Y1, text, cr, 
+                        //&font_matrix, &font_ctm, font_options);
+                //cairo_font_options_destroy(font_options);
+
+                ////cairo_text_extents_t te;
+                ////cairo_text_extents(cr, text.c_str(), &te);
+                //////cairo_move_to(cr, X1 + 0.5 - te.width / 2 - te.x_bearing, Y1 + 0.5 - te.height / 2 - te.y_bearing);
+                ////cairo_move_to(cr, X1 + 0.5 - te.x_bearing, Y1 + 0.5 - te.height / 2 - te.y_bearing);
+                ////cairo_show_text(cr, text.c_str());
+                ////////LOG(DEBUG) << "X: " << X1 << " Y: " << Y1 << " Text: " << text;
+
+            //}
+        //}
     }
 
 }
@@ -396,8 +398,8 @@ void OFDCairoRender::ImplCls::DrawObject(OFDObjectPtr object){
     cairo_t *cr = m_cr;
 
     cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
-    cairo_rectangle(cr, 0, 0 + 0.5, 18.1944, 18.1944 + 0.5);
-    cairo_stroke(cr);
+    //cairo_rectangle(cr, 0, 0 + 0.5, 18.1944, 18.1944 + 0.5);
+    //cairo_stroke(cr);
 
     double dpi = 96;
 
@@ -411,7 +413,7 @@ void OFDCairoRender::ImplCls::DrawObject(OFDObjectPtr object){
 
         OFDFontPtr font = textObject->GetFont();
         assert(font != nullptr);
-        LOG(DEBUG) << "DrawTextObject using font (ID=" << font->ID << ")";
+        //LOG(DEBUG) << "DrawTextObject using font (ID=" << font->ID << ")";
         assert(font->IsLoaded());
 
         cairo_font_face_t *font_face = font->GetFontFace();
@@ -449,21 +451,21 @@ void OFDCairoRender::ImplCls::DrawObject(OFDObjectPtr object){
         //double Y1 = Y - 500;// * dpi / 72;
 
         //double fontSize = textObject->GetFontSize();
-        ////double fontPixels = dpi * fontSize / 72;
-        //cairo_matrix_t font_matrix = {fontSize, 0.0, 0.0, fontSize, 0.0, 0.0};
-        //cairo_matrix_t font_ctm = {1.0, 0.0, 0.0, 1.0, 0.0, 0.0}; 
-        //cairo_font_options_t *font_options = cairo_font_options_create();
-        //cairo_get_font_options(cr, font_options);
-        //cairo_font_options_set_antialias(font_options, CAIRO_ANTIALIAS_DEFAULT);
-        //DrawFreeTypeString(X1, Y1, text, cr, font_face,
-        ////DrawFreeTypeString(X1, Y1, text, cr, 
-                //&font_matrix, &font_ctm, font_options);
-        //cairo_font_options_destroy(font_options);
+        //double fontPixels = dpi * fontSize / 72;
+        cairo_matrix_t font_matrix = {fontPixels, 0.0, 0.0, fontPixels, 0.0, 0.0};
+        cairo_matrix_t font_ctm = {1.0, 0.0, 0.0, 1.0, 0.0, 0.0}; 
+        cairo_font_options_t *font_options = cairo_font_options_create();
+        cairo_get_font_options(cr, font_options);
+        cairo_font_options_set_antialias(font_options, CAIRO_ANTIALIAS_DEFAULT);
+        DrawFreeTypeString(X1, Y1, text, cr, font_face,
+        //DrawFreeTypeString(X1, Y1, text, cr, 
+                &font_matrix, &font_ctm, font_options);
+        cairo_font_options_destroy(font_options);
 
-        cairo_text_extents_t te;
-        cairo_text_extents(cr, text.c_str(), &te);
-        cairo_move_to(cr, X1 + 0.5 - te.width / 2 - te.x_bearing, Y1 + 0.5 - te.height / 2 - te.y_bearing);
-        cairo_show_text(cr, text.c_str());
+        //cairo_text_extents_t te;
+        //cairo_text_extents(cr, text.c_str(), &te);
+        //cairo_move_to(cr, X1 + 0.5 - te.width / 2 - te.x_bearing, Y1 + 0.5 - te.height / 2 - te.y_bearing);
+        //cairo_show_text(cr, text.c_str());
         ////LOG(DEBUG) << "X: " << X1 << " Y: " << Y1 << " Text: " << text;
     }
 }
@@ -484,10 +486,10 @@ OFDCairoRender::OFDCairoRender(cairo_surface_t *surface){
 OFDCairoRender::~OFDCairoRender(){
 }
 
-// ======== OFDCairoRender::Draw() ========
-void OFDCairoRender::Draw(OFDPagePtr page, Render::DrawParams drawParams){
-    OFDRender::Draw(page, drawParams);
-    m_impl->Draw(page, drawParams);
+// ======== OFDCairoRender::DrawPage() ========
+void OFDCairoRender::DrawPage(OFDPagePtr page, Render::DrawParams drawParams){
+    OFDRender::DrawPage(page, drawParams);
+    m_impl->DrawPage(page, drawParams);
 }
 
 void OFDCairoRender::DrawObject(OFDObjectPtr object){
