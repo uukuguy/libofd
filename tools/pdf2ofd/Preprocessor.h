@@ -14,6 +14,7 @@
 #ifndef PREPROCESSOR_H__
 #define PREPROCESSOR_H__
 
+#include <memory>
 #include <unordered_map>
 
 #include <OutputDev.h>

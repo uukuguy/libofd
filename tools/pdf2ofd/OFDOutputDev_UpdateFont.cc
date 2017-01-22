@@ -274,6 +274,19 @@ void OFDOutputDev::updateFont(GfxState *state){
         assert(commonData.DocumentRes != nullptr );
         ofdFont = commonData.DocumentRes->GetFont(fontID);
 
+        if ( ofdFont == nullptr ){
+            // -------- FontData --------
+            int fontDataSize = 0;
+            char *fontData = gfxFont->readEmbFontFile(m_xref, &fontDataSize);
+
+            char szFontFile[256];
+            sprintf(szFontFile, "./data/embed/f%lx.otf", (uint64_t)gfxFont->getID()->num);
+            std::string fontFile(szFontFile);
+            //std::string fontFile = std::string("./data/embed/f") + std::to_string(ofdFont->ID) + ".otf";
+            LOG(DEBUG) << "fontFile: " << fontFile;
+            utils::WriteFileData(fontFile, fontData, fontDataSize);
+        }
+
         ////FIXME
         //if ( ofdFont == nullptr ){
             //LOG(INFO) << "num_mkfonts=" << num_mkfonts;
@@ -291,10 +304,12 @@ void OFDOutputDev::updateFont(GfxState *state){
             //int fontDataSize = 0;
             //char *fontData = gfxFont->readEmbFontFile(m_xref, &fontDataSize);
 
-            //std::string fontFile = std::string("./data/embed/f") + std::to_string(ofdFont->ID) + ".otf";
-            //std::string fontFile = "./data/embed/f2.otf";
+            //char szFontFile[256];
+            //sprintf(szFontFile, "./data/embed/f%lx.otf", (uint64_t)gfxFont->getID()->num);
+            //std::string fontFile(szFontFile);
             //LOG(ERROR) << "fontFile: " << fontFile;
-            //utils::WriteFileData(fontFile, fontData, fontDataSize);
+            
+            ////utils::WriteFileData(fontFile, fontData, fontDataSize);
 
             //char *fontData = nullptr;
             //size_t fontDataSize = 0;

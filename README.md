@@ -52,7 +52,7 @@ pdf2ofd is a tool translating a PDF file to a OFD file.
 ```
 $ sudo add-apt-repository ppa:fontforge/fontforge
 $ sudo apt-get update
-$ sudo apt-get insatll fontforge
+$ sudo apt-get insatll fontforge libfontforge-dev libspiro-dev
 ```
 ### libsdl
 
@@ -71,6 +71,7 @@ $ sudo apt-get insatll fontforge
 - libcairo2-dev http://cairographics.org
 - libzip-dev https://github.com/nih-at/libzip 
 - easylogging++ https://github.com/easylogging/easyloggingpp
+- uuid-dev libopenjpeg-dev
 
 
 ### poppler

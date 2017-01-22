@@ -131,7 +131,7 @@ std::string OFDFont::ToString() const {
 
 std::string OFDFont::GetFileName() const{
     char buf[1024];
-    sprintf(buf, "Font_%llx.ttf", ID);
+    sprintf(buf, "Font_%lx.ttf", ID);
     //LOG(ERROR) << "------- GetFileName() ID:" << ID << " filename=" << std::string(buf);
     return std::string(buf);
     //return std::string("Font_") + std::to_string(ID) + ".ttf";
