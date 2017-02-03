@@ -21,6 +21,7 @@ namespace ofd{
             TEXT,         // 文本对象
             PATH,         // 图形对象
             IMAGE,        // 图像对象
+            VIDEO,        // 视频对象
             COMPOSITE,    // 复合对象
         };
     }; // namespace Object

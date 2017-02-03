@@ -291,28 +291,30 @@ void OFDOutputDev::updateFont(GfxState *state){
         //if ( ofdFont == nullptr ){
             //LOG(INFO) << "num_mkfonts=" << num_mkfonts;
             //num_mkfonts++;
-            //std::string dumpFontFile = dump_embedded_font(gfxFont, m_xref);
-            //FontInfo fontInfo;
-            //fontInfo.id = fontID;
-            //embed_font(dumpFontFile, gfxFont, fontInfo, false);
-            //install_embedded_font(gfxFont, fontInfo);
-            //install_external_font(gfxFont, fontInfo);
+            ////std::string dumpFontFile = dump_embedded_font(gfxFont, m_xref);
+            ////FontInfo fontInfo;
+            ////fontInfo.id = fontID;
+            ////embed_font(dumpFontFile, gfxFont, fontInfo, false);
+            ////install_embedded_font(gfxFont, fontInfo);
+            ////install_external_font(gfxFont, fontInfo);
 
             //ofdFont = GfxFont_to_OFDFont(gfxFont, m_xref);
 
-             //-------- FontData --------
-            //int fontDataSize = 0;
-            //char *fontData = gfxFont->readEmbFontFile(m_xref, &fontDataSize);
+             //////-------- FontData --------
+            //size_t fontDataSize = 0;
+            //char *fontData = nullptr;
 
             //char szFontFile[256];
             //sprintf(szFontFile, "./data/embed/f%lx.otf", (uint64_t)gfxFont->getID()->num);
             //std::string fontFile(szFontFile);
             //LOG(ERROR) << "fontFile: " << fontFile;
             
+            ////fontData = gfxFont->readEmbFontFile(m_xref, &fontDataSize);
             ////utils::WriteFileData(fontFile, fontData, fontDataSize);
 
-            //char *fontData = nullptr;
-            //size_t fontDataSize = 0;
+            //// default font
+            ////std::string fontFile = "./data/default.otf";
+
             //bool readOK = false;
             //std::tie(fontData, fontDataSize, readOK) = utils::ReadFileData(fontFile);
 

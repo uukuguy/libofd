@@ -6,11 +6,6 @@
 #include "OFDObject.h"
 #include "OFDFont.h"
 
-namespace utils{
-    class XMLReader;
-    class XMLWriter;
-}
-
 namespace ofd{
 
     namespace Text {
