@@ -25,7 +25,7 @@ public:
     // -------- Private Attributes --------
 
 private:
-    OFDVideoObject *m_videoObject;
+    __attribute__((unused)) OFDVideoObject *m_videoObject;
 
 }; // class OFDVideoObject::ImplCls
 

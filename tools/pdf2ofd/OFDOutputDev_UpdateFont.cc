@@ -280,7 +280,7 @@ void OFDOutputDev::updateFont(GfxState *state){
             char *fontData = gfxFont->readEmbFontFile(m_xref, &fontDataSize);
 
             char szFontFile[256];
-            sprintf(szFontFile, "./data/embed/f%lx.otf", (uint64_t)gfxFont->getID()->num);
+            sprintf(szFontFile, "./data/embed/f%llu.otf", (uint64_t)gfxFont->getID()->num);
             std::string fontFile(szFontFile);
             //std::string fontFile = std::string("./data/embed/f") + std::to_string(ofdFont->ID) + ".otf";
             LOG(DEBUG) << "fontFile: " << fontFile;

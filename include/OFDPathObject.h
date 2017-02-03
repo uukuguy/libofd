@@ -3,6 +3,7 @@
 
 #include <memory>
 #include "OFDObject.h"
+#include "ofd/OfdPath.h"
 
 namespace ofd{
 
@@ -10,6 +11,8 @@ namespace ofd{
     namespace Path{
 
         typedef struct Path{
+        public:
+
         } *Path_t;
 
     }; // namespace ofd::Path
@@ -21,6 +24,9 @@ namespace ofd{
 
         OFDPathObject(OFDPagePtr page);
         virtual ~OFDPathObject();
+
+        OfdPathPtr GetPath() const;
+        void SetPath(OfdPathPtr path);
 
     protected:
         virtual void GenerateAttributesXML(utils::XMLWriter &writer) const override;

@@ -21,16 +21,20 @@ public:
     void GenerateAttributesXML(XMLWriter &writer) const;
     void GenerateElementsXML(XMLWriter &writer) const;
 
+    OfdPathPtr GetPath() const {return m_path;};
+    void SetPath(OfdPathPtr path) {m_path = path;};
+
     // -------- Private Attributes --------
 
 private:
-    OFDPathObject *m_pathObject;
+    __attribute__((unused)) OFDPathObject *m_pathObject;
+    OfdPathPtr m_path;
 
 }; // class OFDPathObject::ImplCls
 
 
 OFDPathObject::ImplCls::ImplCls(OFDPathObject *pathObject) :
-    m_pathObject(pathObject){
+    m_pathObject(pathObject), m_path(nullptr){
 }
 
 OFDPathObject::ImplCls::~ImplCls(){
@@ -88,5 +92,13 @@ bool OFDPathObject::IterateElementsXML(XMLElementPtr childElement){
         return m_impl->IterateElementsXML(childElement);
     }
     return false;
+}
+
+OfdPathPtr OFDPathObject::GetPath() const{
+    return m_impl->GetPath();
+}
+
+void OFDPathObject::SetPath(OfdPathPtr path){
+    m_impl->SetPath(path);
 }
 

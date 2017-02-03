@@ -25,7 +25,7 @@ public:
     // -------- Private Attributes --------
 
 private:
-    OFDImageObject *m_imageObject;
+    __attribute__((unused)) OFDImageObject *m_imageObject;
 
 }; // class OFDImageObject::ImplCls
 
