@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 #include <sstream>
+// for PRIu64
+#include <inttypes.h>
 
 namespace utils{
 

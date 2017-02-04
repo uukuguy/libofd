@@ -1,6 +1,9 @@
 #include <sstream>
 #include <iomanip>
 #include <assert.h>
+// for PRIu64
+#include <inttypes.h>
+
 #include <libxml/xmlwriter.h>
 #include "xml.h"
 #include "utils/logger.h"
@@ -98,7 +101,10 @@ void XMLWriter::ImplCls::WriteAttribute(const std::string &name, const std::stri
 
 void XMLWriter::ImplCls::WriteAttribute(const std::string &name, uint64_t value){
     char buf[64];
-    sprintf(buf, "%llu", value);
+    //sprintf(buf, "%llu", value);
+    // FIXME
+    sprintf(buf, "%" PRIu64, value);
+
     WriteAttribute(name, std::string(buf));
     //WriteAttribute(name, std::to_string(value));    
 }

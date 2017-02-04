@@ -27,7 +27,7 @@ public:
     // -------- Private Attributes --------
 
 private:
-    __attribute__((unused)) OFDPathObject *m_pathObject;
+    OFDPathObject *m_pathObject;
     OfdPathPtr m_path;
 
 }; // class OFDPathObject::ImplCls

@@ -7,15 +7,8 @@
 
 namespace ofd{
 
-
-    namespace Path{
-
-        typedef struct Path{
-        public:
-
-        } *Path_t;
-
-    }; // namespace ofd::Path
+    class OFDPathObject;
+    typedef std::shared_ptr<OFDPathObject> OFDPathObjectPtr;
 
     // ======== class OFDPathObject ========
     // OFD P52，Page.xsd.
@@ -40,7 +33,6 @@ namespace ofd{
         std::unique_ptr<ImplCls> m_impl;
 
     }; // class OFDPathObject
-    typedef std::shared_ptr<OFDPathObject> OFDPathObjectPtr;
 
 }; // namespace ofd
 

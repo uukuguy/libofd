@@ -2,6 +2,7 @@
 #include <list>
 #include <assert.h>
 #include <tuple>
+#include <inttypes.h>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -131,7 +132,7 @@ std::string OFDFont::ToString() const {
 
 std::string OFDFont::GetFileName() const{
     char buf[1024];
-    sprintf(buf, "Font_%llx.ttf", ID);
+    sprintf(buf, "Font_%" PRIu64 ".ttf", ID);
     //LOG(ERROR) << "------- GetFileName() ID:" << ID << " filename=" << std::string(buf);
     return std::string(buf);
     //return std::string("Font_") + std::to_string(ID) + ".ttf";

@@ -27,7 +27,7 @@ namespace ofd{
     }; // namespace Object
 
     // ======== class OFDObject ========
-    class OFDObject {
+    class OFDObject : public std::enable_shared_from_this<OFDObject> {
     public:
         OFDObject(OFDPagePtr page);
         virtual ~OFDObject();

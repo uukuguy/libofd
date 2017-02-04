@@ -24,7 +24,7 @@ public:
     // -------- Private Attributes --------
 
 private:
-    __attribute__((unused)) OFDCompositeObject *m_compositeObject;
+    OFDCompositeObject *m_compositeObject;
 
 }; // class OFDCompositeObject::ImplCls
 
