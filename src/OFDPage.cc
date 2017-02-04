@@ -564,3 +564,13 @@ OFDPagePtr OFDPage::CreateNewPage(OFDDocumentPtr ofdDocument){
     return ofdPage;
 }
 
+bool OFDPage::AddObject(OFDObjectPtr object){
+    OFDLayerPtr bodyLayer = GetBodyLayer();
+    if ( bodyLayer != nullptr ){
+        bodyLayer->AddObject(object);
+        return true;
+    } else {
+        return false;
+    }
+}
+

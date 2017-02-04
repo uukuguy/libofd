@@ -3,6 +3,7 @@
 #include "OFDOutputDev.h"
 #include "OFDFont.h"
 #include "utils/logger.h"
+#include "Gfx2Ofd.h"
 
 /***
  *
@@ -124,82 +125,6 @@ std::tuple<int*, size_t> getCodeToGID(GfxFont *gfxFont, char *fontData, size_t f
     }; 
 
     return std::make_tuple(codeToGID, codeToGIDLen);
-}
-
-// -------- GfxFont_to_OFDFont() --------
-OFDFontPtr GfxFont_to_OFDFont(GfxFont *gfxFont, XRef *xref){
-    OFDFontPtr ofdFont = std::make_shared<OFDFont>();
-
-    // -------- FontID --------
-    Ref *ref = gfxFont->getID();
-    ofdFont->ID = ref->num;
-
-    // -------- FontFamily --------
-    GooString *family = gfxFont->getFamily();
-    if ( family != nullptr ){
-        ofdFont->FamilyName = std::string(family->getCString());
-    }
-
-    // -------- FontName --------
-    GooString *name = gfxFont->getName();
-    if ( name != nullptr ){
-        ofdFont->FontName = std::string(name->getCString());
-    }
-
-    // -------- FontType --------
-    GfxFontType fontType = gfxFont->getType();
-    if ( fontType == fontCIDType2 ){
-        ofdFont->FontType = ofd::Font::Type::CIDType2;
-    } else if (fontType == fontType1 ){
-        ofdFont->FontType = ofd::Font::Type::Type1;
-    } else if (fontType == fontType3 ){
-        ofdFont->FontType = ofd::Font::Type::Type3;
-    } else if (fontType == fontTrueType ){
-        ofdFont->FontType = ofd::Font::Type::TrueType;
-    } else {
-        ofdFont->FontType = ofd::Font::Type::Unknown;
-    }
-
-    // -------- FontLoc --------
-    GfxFontLoc *fontLoc = gfxFont->locateFont(xref, nullptr);
-    if ( fontLoc != nullptr ){
-        if ( fontLoc->locType == gfxFontLocEmbedded ){
-            ofdFont->FontLoc = ofd::Font::Location::Embedded;
-        } else if ( fontLoc->locType == gfxFontLocExternal ){
-            ofdFont->FontLoc = ofd::Font::Location::External;
-            ofdFont->FontFile = std::string(fontLoc->path->getCString());
-        } else if ( fontLoc->locType == gfxFontLocResident ){
-            ofdFont->FontLoc = ofd::Font::Location::Resident;
-        } else {
-            ofdFont->FontLoc = ofd::Font::Location::Unknown;
-        }
-        delete fontLoc;
-        fontLoc = nullptr;
-    } else {
-        LOG(WARNING) << "fontLoc == nullptr.";
-    }
-
-    // -------- FontData --------
-    //int fontDataSize = 0;
-    //char *fontData = gfxFont->readEmbFontFile(xref, &fontDataSize);
-
-    // FIXME
-    //ofdFont->m_fontData = fontData;
-    //ofdFont->m_fontDataSize = fontDataSize;
-    //ofdFont->CreateFromData(fontData, fontDataSize);
-
-    //// FIXME
-    //// Export running font data.
-    //{
-        //std::string fontfile = std::string("font_running_") + std::to_string(ofdFont->ID) + ".ttf";
-        //utils::WriteFileData(fontfile, fontData, fontDataSize);
-    //}
-
-    //int *codeToGID = nullptr;
-    //size_t codeToGIDLen = 0;
-    //std::tie(codeToGID, codeToGIDLen) = getCodeToGID(gfxFont, fontData, fontDataSize);
-
-    return ofdFont;
 }
 
 // -------- getSubstitutionCorrection() --------

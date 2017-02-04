@@ -14,6 +14,7 @@
 #include "OFDFont.h"
 #include "OFDCairoRender.h"
 #include "FontOutputDev.h"
+#include "OFDCairoRender.h"
 #include "utils/StringFormatter.h"
 
 
@@ -221,6 +222,9 @@ private:
     XRef *m_xref;
     TextPage *m_textPage;	    
     ActualText *m_actualText;
+
+    cairo_surface_t *m_imageSurface;
+    ofd::OFDCairoRenderPtr m_cairoRender;
 
     ofd::OFDPackagePtr m_ofdPackage;
     ofd::OFDDocumentPtr m_ofdDocument;

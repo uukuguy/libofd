@@ -36,6 +36,8 @@ OFDOutputDev::OFDOutputDev(ofd::OFDPackagePtr ofdPackage) :
     m_pdfDoc(nullptr),
     m_xref(nullptr), m_textPage(nullptr), 
     m_actualText(nullptr),
+    m_imageSurface(nullptr),
+    m_cairoRender(nullptr),
     m_ofdPackage(ofdPackage), m_ofdDocument(nullptr), m_currentOFDPage(nullptr),
     m_currentFont(nullptr), m_currentFontSize(14.0), m_currentCTM(nullptr) {
 

@@ -1,7 +1,10 @@
 #include <Gfx.h>
 #include "OFDOutputDev.h"
+#include "OFDPathObject.h"
+#include "Gfx2Ofd.h"
 #include "utils/logger.h"
 
+using namespace ofd;
 
 /* Tolerance in pixels for checking if strokes are horizontal or vertical
  * lines in device space */
@@ -106,6 +109,15 @@ void OFDOutputDev::stroke(GfxState *state) {
 	  //return;
   //}
 
+    // Add PathObject
+    OfdPathPtr ofdPath = GfxPath_to_OfdPath(state->getPath());
+    if ( ofdPath != nullptr ){
+        OFDPathObjectPtr pathObject = std::make_shared<OFDPathObject>(m_currentOFDPage);
+        pathObject->SetPath(ofdPath);
+        m_currentOFDPage->AddObject(pathObject);
+    }
+
+
     if ( m_adjustedStrokeWidth ){
         m_alignStrokeCoords = true;
     }
@@ -186,7 +198,7 @@ void OFDOutputDev::eoFill(GfxState *state){
 // Defined in OFDOutputDev_utils.cc
 void setContextAntialias(cairo_t *cr, cairo_antialias_t antialias);
 
-GBool OFDOutputDev::tilingPatternFill(GfxState *state, Gfx *gfxA, Catalog *cat, Object *str,
+GBool OFDOutputDev::tilingPatternFill(GfxState *state, Gfx *gfxA, Catalog *cat, ::Object *str,
 					double *pmat, int paintType, int /*tilingType*/, Dict *resDict,
 					double *mat, double *bbox,
 					int x0, int y0, int x1, int y1,

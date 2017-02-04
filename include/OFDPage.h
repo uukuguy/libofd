@@ -63,6 +63,8 @@ namespace ofd{
         const OFDLayerPtr GetBodyLayer() const;
         OFDLayerPtr GetBodyLayer();
 
+        bool AddObject(OFDObjectPtr object);
+
         std::string GeneratePageXML() const;
 
         bool FromPageXML(const std::string &strPageXML);
