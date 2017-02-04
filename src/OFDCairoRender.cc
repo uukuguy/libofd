@@ -414,6 +414,18 @@ void OFDCairoRender::ImplCls::DrawObject(OFDObjectPtr object){
     if ( object->Type == ofd::Object::Type::TEXT ) {
         OFDTextObject *textObject = (OFDTextObject*)object.get();
         DrawTextObject(cr, textObject);
+    } else if ( object->Type == ofd::Object::Type::PATH ){
+        OFDPathObject *pathObject = (OFDPathObject*)object.get();
+        DrawPathObject(cr, pathObject);
+    } else if ( object->Type == ofd::Object::Type::IMAGE ){
+        OFDImageObject *imageObject = (OFDImageObject*)object.get();
+        DrawImageObject(cr, imageObject);
+    } else if ( object->Type == ofd::Object::Type::VIDEO ){
+        OFDVideoObject *videoObject = (OFDVideoObject*)object.get();
+        DrawVideoObject(cr, videoObject);
+    } else if ( object->Type == ofd::Object::Type::COMPOSITE ){
+        OFDCompositeObject *compositeObject = (OFDCompositeObject*)object.get();
+        DrawCompositeObject(cr, compositeObject);
     }
 }
 
@@ -488,6 +500,20 @@ void OFDCairoRender::ImplCls::DrawTextObject(cairo_t *cr, OFDTextObject *textObj
 
 void OFDCairoRender::ImplCls::DrawPathObject(cairo_t *cr, OFDPathObject *pathObject){
     if ( pathObject == nullptr ) return;
+
+    OfdPathPtr path = pathObject->GetPath();
+    size_t numSubpaths = path->GetNumSubpaths();
+    for ( size_t idx = 0 ; idx < numSubpaths ; idx++){
+        OfdSubpathPtr subpath = path->GetSubpath(idx);
+        if ( subpath == nullptr ) continue;
+        size_t numPoints = subpath->GetNumPoints();
+        for ( size_t n = 0 ; n < numPoints ; n++ ){
+            const Point &p = subpath->GetPoint(n);
+            LOG(DEBUG) << "[" << n << "] " << "(" << p.x << ", " << p.y << ") ";
+        }
+        if ( subpath->IsClosed() ){
+        }
+    }
 }
 
 void OFDCairoRender::ImplCls::DrawImageObject(cairo_t *cr, OFDImageObject *imageObject){

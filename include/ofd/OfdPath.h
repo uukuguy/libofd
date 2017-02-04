@@ -78,13 +78,14 @@ namespace ofd{
         void Offset(double dx, double dy);
         void Append(const OfdPath& otherPath);
 
-        size_t GetNumSubpathes() const {return m_subPathes.size();};
+        size_t GetNumSubpaths() const {return m_subpaths.size();};
+        OfdSubpathPtr GetSubpath(size_t idx) const {return m_subpaths[idx];};
         OfdSubpathPtr GetLastSubpath() const;
 
     private:
         bool m_bJustMoved;
         Point m_startPoint;
-        std::vector<OfdSubpathPtr> m_subPathes;
+        std::vector<OfdSubpathPtr> m_subpaths;
 
     }; // class OfdPath
 

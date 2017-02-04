@@ -83,9 +83,9 @@ OfdPath::~OfdPath(){
 }
 
 OfdSubpathPtr OfdPath::GetLastSubpath() const{
-    size_t numSubpathes = GetNumSubpathes();
-    if ( numSubpathes > 0 ){
-        return m_subPathes[numSubpathes - 1];
+    size_t numSubpaths = GetNumSubpaths();
+    if ( numSubpaths > 0 ){
+        return m_subpaths[numSubpaths - 1];
     } else {
         return nullptr;
     }
@@ -97,37 +97,42 @@ void OfdPath::MoveTo(const Point& startPoint){
 }
 
 void OfdPath::LineTo(const Point& point){
-    OfdSubpathPtr lastSubpath = GetLastSubpath();
-    if (lastSubpath == nullptr ) return;
 
     if ( m_bJustMoved ){
         OfdSubpathPtr subPath = std::make_shared<OfdSubpath>(m_startPoint);
-        m_subPathes.push_back(subPath);
-    } else if (lastSubpath->IsClosed()){
-        const Point& lastPoint = lastSubpath->GetLastPoint();
-        OfdSubpathPtr subPath = std::make_shared<OfdSubpath>(lastPoint);
-        m_subPathes.push_back(subPath);
+        m_subpaths.push_back(subPath);
+    } else {
+        OfdSubpathPtr lastSubpath = GetLastSubpath();
+        assert(lastSubpath != nullptr );
+
+        if (lastSubpath->IsClosed()){
+            const Point& lastPoint = lastSubpath->GetLastPoint();
+            OfdSubpathPtr subPath = std::make_shared<OfdSubpath>(lastPoint);
+            m_subpaths.push_back(subPath);
+        }
     }
 
-    lastSubpath = GetLastSubpath();
+    OfdSubpathPtr lastSubpath = GetLastSubpath();
     lastSubpath->LineTo(point);
     m_bJustMoved = false;
 }
 
 void OfdPath::CurveTo(const Point& p0, const Point& p1, const Point& p2){
-    OfdSubpathPtr lastSubpath = GetLastSubpath();
-    if (lastSubpath == nullptr ) return;
-
     if ( m_bJustMoved ){
         OfdSubpathPtr subPath = std::make_shared<OfdSubpath>(m_startPoint);
-        m_subPathes.push_back(subPath);
-    } else if (lastSubpath->IsClosed()){
-        const Point& lastPoint = lastSubpath->GetLastPoint();
-        OfdSubpathPtr subPath = std::make_shared<OfdSubpath>(lastPoint);
-        m_subPathes.push_back(subPath);
+        m_subpaths.push_back(subPath);
+    } else {
+        OfdSubpathPtr lastSubpath = GetLastSubpath();
+        assert(lastSubpath != nullptr );
+
+        if (lastSubpath->IsClosed()){
+            const Point& lastPoint = lastSubpath->GetLastPoint();
+            OfdSubpathPtr subPath = std::make_shared<OfdSubpath>(lastPoint);
+            m_subpaths.push_back(subPath);
+        }
     }
 
-    lastSubpath = GetLastSubpath();
+    OfdSubpathPtr lastSubpath = GetLastSubpath();
     lastSubpath->CurveTo(p0, p1, p2);
     m_bJustMoved = false;
 }
@@ -138,7 +143,7 @@ void OfdPath::ClosePath(){
 
     if ( m_bJustMoved ){
         OfdSubpathPtr subPath = std::make_shared<OfdSubpath>(m_startPoint);
-        m_subPathes.push_back(subPath);
+        m_subpaths.push_back(subPath);
         m_bJustMoved = false;
     }
 
@@ -147,16 +152,16 @@ void OfdPath::ClosePath(){
 }
 
 void OfdPath::Offset(double dx, double dy){
-    std::for_each(m_subPathes.begin(), m_subPathes.end(),
+    std::for_each(m_subpaths.begin(), m_subpaths.end(),
             [=](OfdSubpathPtr subPath){
                 subPath->Offset(dx, dy);
             });
 }
 
 void OfdPath::Append(const OfdPath& otherPath){
-    std::for_each(otherPath.m_subPathes.begin(), otherPath.m_subPathes.end(),
+    std::for_each(otherPath.m_subpaths.begin(), otherPath.m_subpaths.end(),
             [=](OfdSubpathPtr subPath){
-                m_subPathes.push_back(subPath->Clone());
+                m_subpaths.push_back(subPath->Clone());
             });
     m_bJustMoved = false;
     m_startPoint.Clear();
