@@ -36,6 +36,9 @@ void OFDOutputDev::setDefaultCTM(double *ctm) {
   if (m_cairoShape){
       cairo_transform(m_cairoShape, &matrix);
   }
+  if ( m_cairoRender != nullptr ){
+      m_cairoRender->Transform(&matrix);
+  }
 
   OutputDev::setDefaultCTM(ctm);
 }
@@ -70,6 +73,9 @@ void OFDOutputDev::updateCTM(GfxState *state, double m11, double m12, double m21
   cairo_transform(m_cairo, &matrix);
   if (m_cairoShape != nullptr){
     cairo_transform(m_cairoShape, &matrix);
+  }
+  if ( m_cairoRender != nullptr ){
+      m_cairoRender->Transform(&matrix);
   }
   updateLineDash(state);
   updateLineJoin(state);
@@ -186,6 +192,10 @@ void OFDOutputDev::updateFillColor(GfxState *state){
                 colToDbl(m_fillColor.b),
                 m_fillOpacity);
 
+        if ( m_cairoRender != nullptr ){
+            m_cairoRender->UpdateFillPattern(colToDbl(m_fillColor.r), colToDbl(m_fillColor.g),
+                colToDbl(m_fillColor.b), m_fillOpacity);
+        }
         LOG(DEBUG) <<  "fill color: " << m_fillColor.r << ", " <<  m_fillColor.g << ", " << m_fillColor.b;
     }
 }
@@ -196,7 +206,7 @@ void OFDOutputDev::updateStrokeColor(GfxState *state){
     if ( m_uncoloredPattern ) return;
 
     state->getStrokeRGB(&m_strokeColor);
-    if (cairo_pattern_get_type(m_fillPattern) != CAIRO_PATTERN_TYPE_SOLID ||
+    if (cairo_pattern_get_type(m_strokePattern) != CAIRO_PATTERN_TYPE_SOLID ||
             color.r != m_strokeColor.r ||
             color.g != m_strokeColor.g ||
             color.b != m_strokeColor.b)
@@ -206,6 +216,11 @@ void OFDOutputDev::updateStrokeColor(GfxState *state){
                 colToDbl(m_strokeColor.g),
                 colToDbl(m_strokeColor.b),
                 m_strokeOpacity);
+
+        if ( m_cairoRender != nullptr ){
+            m_cairoRender->UpdateStrokePattern(colToDbl(m_strokeColor.r), colToDbl(m_strokeColor.g),
+                colToDbl(m_strokeColor.b), m_strokeOpacity);
+        }
 
         LOG(DEBUG) <<  "stroke color: " << m_strokeColor.r << ", " << m_strokeColor.g << ", " <<  m_strokeColor.b;
     }
@@ -224,6 +239,10 @@ void OFDOutputDev::updateFillOpacity(GfxState *state){
                 colToDbl(m_fillColor.b),
                 m_fillOpacity);
 
+        if ( m_cairoRender != nullptr ){
+            m_cairoRender->UpdateFillPattern(colToDbl(m_fillColor.r), colToDbl(m_fillColor.g),
+                colToDbl(m_fillColor.b), m_fillOpacity);
+        }
         LOG(DEBUG) << "fill opacity: " << m_fillOpacity;
     }
 }
@@ -240,6 +259,11 @@ void OFDOutputDev::updateStrokeOpacity(GfxState *state){
                 colToDbl(m_strokeColor.g),
                 colToDbl(m_strokeColor.b),
                 m_strokeOpacity);
+
+        if ( m_cairoRender != nullptr ){
+            m_cairoRender->UpdateStrokePattern(colToDbl(m_strokeColor.r), colToDbl(m_strokeColor.g),
+                colToDbl(m_strokeColor.b), m_strokeOpacity);
+        }
 
         LOG(DEBUG) <<  "stroke opacity: " << m_strokeOpacity;
     }

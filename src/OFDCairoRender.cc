@@ -10,6 +10,7 @@
 #include "OFDImageObject.h"
 #include "OFDVideoObject.h"
 #include "OFDCompositeObject.h"
+//#include "ofd/OfdColor.h"
 #include "utils/logger.h"
 #include "utils/unicode.h"
 
@@ -26,6 +27,9 @@ public:
     void DrawPage(OFDPagePtr page, Render::DrawParams drawParams);
     void DrawObject(OFDObjectPtr object);
 
+    void UpdateStrokePattern(double R, double G, double B, double opacity);
+    void UpdateFillPattern(double R, double G, double B, double opacity);
+    void Transform(cairo_matrix_t *matrix);
 
 private:
     void DrawTextObject(cairo_t *cr, OFDTextObject *textObject);
@@ -39,16 +43,33 @@ public:
     cairo_surface_t *m_surface;
     cairo_t *m_cr;
 
+    cairo_pattern_t *m_fillPattern, *m_strokePattern;
+    //ofd::OfdRGB m_strokeColor;
+    //ofd::OfdRGB m_fillColor;
+
 }; // class OFDCairoRender::ImplCls
 
 OFDCairoRender::ImplCls::ImplCls(OFDCairoRender *cairoRender, cairo_surface_t *surface) : 
     m_cairoRender(cairoRender){
     SetCairoSurface(surface);
+
+    m_fillPattern = cairo_pattern_create_rgb(0., 0., 0.);
+    m_strokePattern = cairo_pattern_reference(m_fillPattern);
 }
 
 OFDCairoRender::ImplCls::~ImplCls(){
     if ( m_cr != nullptr ){
         cairo_destroy(m_cr);
+    }
+
+    if ( m_strokePattern != nullptr ){
+        cairo_pattern_destroy(m_strokePattern);
+        m_strokePattern = nullptr;
+    }
+
+    if ( m_fillPattern != nullptr ){
+        cairo_pattern_destroy(m_fillPattern);
+        m_fillPattern = nullptr;
     }
 }
 
@@ -56,7 +77,8 @@ void OFDCairoRender::ImplCls::SetCairoSurface(cairo_surface_t *surface){
     assert(surface != nullptr);
     m_surface = surface;
     m_cr = cairo_create(surface);
-    cairo_set_source_rgb(m_cr, .6, .6, .3);
+    //cairo_set_source_rgb(m_cr, .6, .6, .3);
+    cairo_set_source_rgb(m_cr, 1., 1., 1.);
     cairo_paint(m_cr);
 }
 
@@ -503,17 +525,31 @@ void OFDCairoRender::ImplCls::DrawPathObject(cairo_t *cr, OFDPathObject *pathObj
 
     OfdPathPtr path = pathObject->GetPath();
     size_t numSubpaths = path->GetNumSubpaths();
+    if ( numSubpaths == 0 ) return;
+
+    cairo_new_path(cr);
+
     for ( size_t idx = 0 ; idx < numSubpaths ; idx++){
         OfdSubpathPtr subpath = path->GetSubpath(idx);
         if ( subpath == nullptr ) continue;
         size_t numPoints = subpath->GetNumPoints();
-        for ( size_t n = 0 ; n < numPoints ; n++ ){
+        if ( numPoints < 2 ) continue;
+
+        const Point &p0 = subpath->GetPoint(0);
+        cairo_move_to(cr, p0.x, p0.y);
+
+        for ( size_t n = 1 ; n < numPoints ; n++ ){
             const Point &p = subpath->GetPoint(n);
+            cairo_line_to(cr, p.x, p.y);
             LOG(DEBUG) << "[" << n << "] " << "(" << p.x << ", " << p.y << ") ";
         }
         if ( subpath->IsClosed() ){
+            cairo_close_path(cr);
         }
     }
+
+    cairo_set_source(cr, m_strokePattern);
+    cairo_stroke(cr);
 }
 
 void OFDCairoRender::ImplCls::DrawImageObject(cairo_t *cr, OFDImageObject *imageObject){
@@ -526,6 +562,26 @@ void OFDCairoRender::ImplCls::DrawVideoObject(cairo_t *cr, OFDVideoObject *video
 
 void OFDCairoRender::ImplCls::DrawCompositeObject(cairo_t *cr, OFDCompositeObject *compositeObject){
     if ( compositeObject == nullptr ) return;
+}
+
+void OFDCairoRender::ImplCls::UpdateStrokePattern(double r, double g, double b, double opacity){
+    if ( m_strokePattern != nullptr ){
+        cairo_pattern_destroy(m_strokePattern);
+        m_strokePattern = nullptr;
+    }
+    m_strokePattern = cairo_pattern_create_rgba(r, g, b, opacity);
+}
+
+void OFDCairoRender::ImplCls::UpdateFillPattern(double r, double g, double b, double opacity){
+    if ( m_fillPattern != nullptr ){
+        cairo_pattern_destroy(m_fillPattern);
+        m_fillPattern = nullptr;
+    }
+    m_fillPattern = cairo_pattern_create_rgba(r, g, b, opacity);
+}
+
+void OFDCairoRender::ImplCls::Transform(cairo_matrix_t *matrix){
+    //cairo_transform(m_cr, matrix);
 }
 
 // **************** class OFDCairoRender ****************
@@ -552,4 +608,16 @@ void OFDCairoRender::DrawPage(OFDPagePtr page, Render::DrawParams drawParams){
 
 void OFDCairoRender::DrawObject(OFDObjectPtr object){
     m_impl->DrawObject(object);
+}
+
+void OFDCairoRender::UpdateStrokePattern(double r, double g, double b, double opacity){
+    m_impl->UpdateStrokePattern(r, g, b, opacity);
+}
+
+void OFDCairoRender::UpdateFillPattern(double r, double g, double b, double opacity){
+    m_impl->UpdateFillPattern(r, g, b, opacity);
+}
+
+void OFDCairoRender::Transform(cairo_matrix_t *matrix){
+    m_impl->Transform(matrix);
 }
