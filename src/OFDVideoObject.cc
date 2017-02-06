@@ -27,6 +27,8 @@ public:
 private:
     OFDVideoObject *m_videoObject;
 
+    const OFDPagePtr GetPage() const {return m_videoObject->GetPage();};
+
 }; // class OFDVideoObject::ImplCls
 
 

@@ -26,6 +26,8 @@ public:
 private:
     OFDCompositeObject *m_compositeObject;
 
+    const OFDPagePtr GetPage() const {return m_compositeObject->GetPage();};
+
 }; // class OFDCompositeObject::ImplCls
 
 

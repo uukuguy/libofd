@@ -115,6 +115,11 @@ void OFDOutputDev::stroke(GfxState *state) {
         OFDPathObjectPtr pathObject = std::make_shared<OFDPathObject>(m_currentOFDPage);
         pathObject->SetPath(ofdPath);
         m_currentOFDPage->AddObject(pathObject);
+
+        if ( m_cairoRender != nullptr ){
+            OFDObjectPtr object = std::shared_ptr<OFDObject>(pathObject);
+            m_cairoRender->DrawObject(object);
+        }
     }
 
 

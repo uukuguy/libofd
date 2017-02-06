@@ -14,7 +14,6 @@
 #include "OFDFont.h"
 #include "OFDCairoRender.h"
 #include "FontOutputDev.h"
-#include "OFDCairoRender.h"
 #include "utils/StringFormatter.h"
 
 
@@ -230,7 +229,7 @@ private:
     ofd::OFDDocumentPtr m_ofdDocument;
     ofd::OFDPagePtr m_currentOFDPage;
 
-    void processTextLine(TextLine *line, ofd::OFDLayerPtr bodyLayer, ofd::OFDCairoRenderPtr cairoRender);
+    void processTextLine(TextLine *line, ofd::OFDLayerPtr bodyLayer);
     void processTextPage(TextPage *textPage, ofd::OFDPagePtr currentOFDPage);
 
     std::string dump_embedded_font(GfxFont * font, XRef * xref); 

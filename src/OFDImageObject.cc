@@ -27,6 +27,8 @@ public:
 private:
     OFDImageObject *m_imageObject;
 
+    const OFDPagePtr GetPage() const {return m_imageObject->GetPage();};
+
 }; // class OFDImageObject::ImplCls
 
 

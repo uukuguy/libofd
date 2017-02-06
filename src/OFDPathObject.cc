@@ -30,6 +30,8 @@ private:
     OFDPathObject *m_pathObject;
     OfdPathPtr m_path;
 
+    const OFDPagePtr GetPage() const {return m_pathObject->GetPage();};
+
 }; // class OFDPathObject::ImplCls
 
 

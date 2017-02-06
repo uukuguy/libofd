@@ -109,7 +109,7 @@ void OFDOutputDev::startPage(int pageNum, GfxState *state, XRef *xrefA) {
 }
 
 // -------- OFDOutputDev::processTextLine() --------
-void OFDOutputDev::processTextLine(TextLine *line, OFDLayerPtr bodyLayer, OFDCairoRenderPtr cairoRender){
+void OFDOutputDev::processTextLine(TextLine *line, OFDLayerPtr bodyLayer){
     double xMin, yMin, xMax, yMax;
     double lineXMin = 0, lineYMin = 0, lineXMax = 0, lineYMax = 0;
     TextWord *word;
@@ -214,8 +214,8 @@ void OFDOutputDev::processTextLine(TextLine *line, OFDLayerPtr bodyLayer, OFDCai
             OFDObjectPtr object = std::shared_ptr<OFDObject>(textObject);
             m_currentOFDPage->AddObject(object);
 
-            if ( cairoRender != nullptr ){
-                cairoRender->DrawObject(object);
+            if ( m_cairoRender != nullptr ){
+                m_cairoRender->DrawObject(object);
             }
         }
     }
@@ -251,7 +251,7 @@ void OFDOutputDev::processTextPage(TextPage *textPage, OFDPagePtr currentOFDPage
         for ( auto blk = flow->getBlocks(); blk != nullptr ; blk = blk->getNext()){
             blk->getBBox(&xMin, &yMin, &xMax, &yMax);
             for ( auto line = blk->getLines(); line != nullptr ; line = line->getNext()){
-                processTextLine(line, bodyLayer, m_cairoRender);
+                processTextLine(line, bodyLayer);
             }
         }
     }
