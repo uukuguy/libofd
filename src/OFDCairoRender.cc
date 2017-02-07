@@ -27,6 +27,7 @@ public:
     void DrawPage(OFDPagePtr page, Render::DrawParams drawParams);
     void DrawObject(OFDObjectPtr object);
 
+    void SetLineWidth(double lineWidth);
     void UpdateStrokePattern(double R, double G, double B, double opacity);
     void UpdateFillPattern(double R, double G, double B, double opacity);
     void Transform(cairo_matrix_t *matrix);
@@ -42,6 +43,7 @@ public:
     OFDCairoRender *m_cairoRender;
     cairo_surface_t *m_surface;
     cairo_t *m_cr;
+    double m_lineWidth;
 
     cairo_pattern_t *m_fillPattern, *m_strokePattern;
     //ofd::OfdRGB m_strokeColor;
@@ -50,7 +52,9 @@ public:
 }; // class OFDCairoRender::ImplCls
 
 OFDCairoRender::ImplCls::ImplCls(OFDCairoRender *cairoRender, cairo_surface_t *surface) : 
-    m_cairoRender(cairoRender){
+    m_cairoRender(cairoRender),
+    m_lineWidth(1.0){
+
     SetCairoSurface(surface);
 
     m_fillPattern = cairo_pattern_create_rgb(0., 0., 0.);
@@ -564,6 +568,11 @@ void OFDCairoRender::ImplCls::DrawCompositeObject(cairo_t *cr, OFDCompositeObjec
     if ( compositeObject == nullptr ) return;
 }
 
+void OFDCairoRender::ImplCls::SetLineWidth(double lineWidth){
+    cairo_set_line_width(m_cr, lineWidth);
+    m_lineWidth = lineWidth;
+}
+
 void OFDCairoRender::ImplCls::UpdateStrokePattern(double r, double g, double b, double opacity){
     if ( m_strokePattern != nullptr ){
         cairo_pattern_destroy(m_strokePattern);
@@ -608,6 +617,10 @@ void OFDCairoRender::DrawPage(OFDPagePtr page, Render::DrawParams drawParams){
 
 void OFDCairoRender::DrawObject(OFDObjectPtr object){
     m_impl->DrawObject(object);
+}
+
+void OFDCairoRender::SetLineWidth(double lineWidth){
+    m_impl->SetLineWidth(lineWidth);
 }
 
 void OFDCairoRender::UpdateStrokePattern(double r, double g, double b, double opacity){

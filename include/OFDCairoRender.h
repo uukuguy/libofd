@@ -21,6 +21,7 @@ namespace ofd{
         virtual void DrawPage(OFDPagePtr page, Render::DrawParams drawParams) override;
         void DrawObject(OFDObjectPtr object);
 
+        void SetLineWidth(double lineWidth);
         void UpdateStrokePattern(double r, double g, double b, double opacity);
         void UpdateFillPattern(double r, double g, double b, double opacity);
         void Transform(cairo_matrix_t *matrix);

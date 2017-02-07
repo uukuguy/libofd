@@ -169,6 +169,9 @@ void OFDOutputDev::updateLineWidth(GfxState *state){
         width = std::min(fabs(x),fabs(y));
     }
     cairo_set_line_width(m_cairo, width);
+    if ( m_cairoRender != nullptr ){
+        m_cairoRender->SetLineWidth(width);
+    }
     if (m_cairoShape){
         cairo_set_line_width(m_cairoShape, cairo_get_line_width (m_cairo));
     }
