@@ -12,42 +12,41 @@ using namespace ofd;
 
 /* Align stroke coordinate i if the point is the start or end of a
  * horizontal or vertical line */
-void OFDOutputDev::alignStrokeCoords(GfxSubpath *subpath, int i, double *x, double *y)
-{
-  double x1, y1, x2, y2;
-  GBool align = gFalse;
+void OFDOutputDev::alignStrokeCoords(GfxSubpath *subpath, int i, double *x, double *y) {
+    double x1, y1, x2, y2;
+    GBool align = gFalse;
 
-  x1 = subpath->getX(i);
-  y1 = subpath->getY(i);
-  cairo_user_to_device(m_cairo, &x1, &y1);
+    x1 = subpath->getX(i);
+    y1 = subpath->getY(i);
+    cairo_user_to_device(m_cairo, &x1, &y1);
 
-  // Does the current coord and prev coord form a horiz or vert line?
-  if (i > 0 && !subpath->getCurve(i - 1)) {
-    x2 = subpath->getX(i - 1);
-    y2 = subpath->getY(i - 1);
-    cairo_user_to_device(m_cairo, &x2, &y2);
-    if (fabs(x2 - x1) < STROKE_COORD_TOLERANCE || fabs(y2 - y1) < STROKE_COORD_TOLERANCE)
-      align = gTrue;
-  }
+    // Does the current coord and prev coord form a horiz or vert line?
+    if (i > 0 && !subpath->getCurve(i - 1)) {
+        x2 = subpath->getX(i - 1);
+        y2 = subpath->getY(i - 1);
+        cairo_user_to_device(m_cairo, &x2, &y2);
+        if (fabs(x2 - x1) < STROKE_COORD_TOLERANCE || fabs(y2 - y1) < STROKE_COORD_TOLERANCE)
+            align = gTrue;
+    }
 
-  // Does the current coord and next coord form a horiz or vert line?
-  if (i < subpath->getNumPoints() - 1 && !subpath->getCurve(i + 1)) {
-    x2 = subpath->getX(i + 1);
-    y2 = subpath->getY(i + 1);
-    cairo_user_to_device(m_cairo, &x2, &y2);
-    if (fabs(x2 - x1) < STROKE_COORD_TOLERANCE || fabs(y2 - y1) < STROKE_COORD_TOLERANCE)
-      align = gTrue;
-  }
+    // Does the current coord and next coord form a horiz or vert line?
+    if (i < subpath->getNumPoints() - 1 && !subpath->getCurve(i + 1)) {
+        x2 = subpath->getX(i + 1);
+        y2 = subpath->getY(i + 1);
+        cairo_user_to_device(m_cairo, &x2, &y2);
+        if (fabs(x2 - x1) < STROKE_COORD_TOLERANCE || fabs(y2 - y1) < STROKE_COORD_TOLERANCE)
+            align = gTrue;
+    }
 
-  *x = subpath->getX(i);
-  *y = subpath->getY(i);
-  if (align) {
-    /* see http://www.cairographics.org/FAQ/#sharp_lines */
-    cairo_user_to_device(m_cairo, x, y);
-    *x = floor(*x) + 0.5;
-    *y = floor(*y) + 0.5;
-    cairo_device_to_user(m_cairo, x, y);
-  }
+    *x = subpath->getX(i);
+    *y = subpath->getY(i);
+    if (align) {
+        /* see http://www.cairographics.org/FAQ/#sharp_lines */
+        cairo_user_to_device(m_cairo, x, y);
+        *x = floor(*x) + 0.5;
+        *y = floor(*y) + 0.5;
+        cairo_device_to_user(m_cairo, x, y);
+    }
 }
 
 #undef STROKE_COORD_TOLERANCE
@@ -411,6 +410,11 @@ void OFDOutputDev::clip(GfxState *state) {
         doPath(m_cairoShape, state, state->getPath());
         cairo_set_fill_rule(m_cairoShape, CAIRO_FILL_RULE_WINDING);
         cairo_clip(m_cairoShape);
+    }
+
+    if ( m_cairoRender != nullptr ){
+        OfdPathPtr clipPath = GfxPath_to_OfdPath(state->getPath());
+        m_cairoRender->Clip(clipPath);
     }
 }
 

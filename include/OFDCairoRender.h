@@ -4,6 +4,7 @@
 #include <memory>
 #include <cairo/cairo.h>
 #include "OFDRender.h"
+#include "ofd/OfdPath.h"
 
 namespace ofd{
 
@@ -25,6 +26,10 @@ namespace ofd{
         void UpdateStrokePattern(double r, double g, double b, double opacity);
         void UpdateFillPattern(double r, double g, double b, double opacity);
         void Transform(cairo_matrix_t *matrix);
+
+        void SaveState();
+        void RestoreState();
+        void Clip(OfdPathPtr clipPath);
 
     private:
         class ImplCls;

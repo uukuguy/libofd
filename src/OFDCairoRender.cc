@@ -10,7 +10,7 @@
 #include "OFDImageObject.h"
 #include "OFDVideoObject.h"
 #include "OFDCompositeObject.h"
-//#include "ofd/OfdColor.h"
+#include "ofd/OfdPath.h"
 #include "utils/logger.h"
 #include "utils/unicode.h"
 
@@ -31,6 +31,10 @@ public:
     void UpdateStrokePattern(double R, double G, double B, double opacity);
     void UpdateFillPattern(double R, double G, double B, double opacity);
     void Transform(cairo_matrix_t *matrix);
+
+    void SaveState();
+    void RestoreState();
+    void Clip(OfdPathPtr clipPath);
 
 private:
     void DrawTextObject(cairo_t *cr, OFDTextObject *textObject);
@@ -84,6 +88,11 @@ void OFDCairoRender::ImplCls::SetCairoSurface(cairo_surface_t *surface){
     //cairo_set_source_rgb(m_cr, .6, .6, .3);
     cairo_set_source_rgb(m_cr, 1., 1., 1.);
     cairo_paint(m_cr);
+
+    // FIXME
+    double m_resolutionX = 150.0;
+    double m_resolutionY = 150.0;
+    cairo_scale(m_cr, m_resolutionX/ 72.0, m_resolutionY / 72.0);
 }
 
 void OFDCairoRender::SetCairoSurface(cairo_surface_t *surface){
@@ -433,6 +442,7 @@ void OFDCairoRender::ImplCls::DrawPage(OFDPagePtr page, Render::DrawParams drawP
 void OFDCairoRender::ImplCls::DrawObject(OFDObjectPtr object){
     cairo_t *cr = m_cr;
 
+    // FIXME
     cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
     //cairo_rectangle(cr, 0, 0 + 0.5, 18.1944, 18.1944 + 0.5);
     //cairo_stroke(cr);
@@ -524,10 +534,7 @@ void OFDCairoRender::ImplCls::DrawTextObject(cairo_t *cr, OFDTextObject *textObj
     return;
 }
 
-void OFDCairoRender::ImplCls::DrawPathObject(cairo_t *cr, OFDPathObject *pathObject){
-    if ( pathObject == nullptr ) return;
-
-    OfdPathPtr path = pathObject->GetPath();
+void DoCairoPath(cairo_t *cr, OfdPathPtr path){
     size_t numSubpaths = path->GetNumSubpaths();
     if ( numSubpaths == 0 ) return;
 
@@ -551,6 +558,13 @@ void OFDCairoRender::ImplCls::DrawPathObject(cairo_t *cr, OFDPathObject *pathObj
             cairo_close_path(cr);
         }
     }
+}
+
+void OFDCairoRender::ImplCls::DrawPathObject(cairo_t *cr, OFDPathObject *pathObject){
+    if ( pathObject == nullptr ) return;
+
+    OfdPathPtr path = pathObject->GetPath();
+    DoCairoPath(cr, path);
 
     cairo_set_source(cr, m_strokePattern);
     cairo_stroke(cr);
@@ -593,6 +607,20 @@ void OFDCairoRender::ImplCls::Transform(cairo_matrix_t *matrix){
     //cairo_transform(m_cr, matrix);
 }
 
+void OFDCairoRender::ImplCls::SaveState(){
+    cairo_save(m_cr);
+}
+
+void OFDCairoRender::ImplCls::RestoreState(){
+    cairo_restore(m_cr);
+}
+
+void OFDCairoRender::ImplCls::Clip(OfdPathPtr clipPath){
+    DoCairoPath(m_cr, clipPath);
+    cairo_set_fill_rule(m_cr, CAIRO_FILL_RULE_WINDING);
+    cairo_clip(m_cr);
+}
+
 // **************** class OFDCairoRender ****************
 
 // ======== OFDCairoRender::OFDCairoRender() ========
@@ -633,4 +661,16 @@ void OFDCairoRender::UpdateFillPattern(double r, double g, double b, double opac
 
 void OFDCairoRender::Transform(cairo_matrix_t *matrix){
     m_impl->Transform(matrix);
+}
+
+void OFDCairoRender::SaveState(){
+    m_impl->SaveState();
+}
+
+void OFDCairoRender::RestoreState(){
+    m_impl->RestoreState();
+}
+
+void OFDCairoRender::Clip(OfdPathPtr clipPath){
+    m_impl->Clip(clipPath);
 }

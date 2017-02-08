@@ -293,6 +293,10 @@ void OFDOutputDev::saveState(GfxState *state){
         cairo_save(m_cairoShape);
     }
 
+    if ( m_cairoRender != nullptr ){
+        m_cairoRender->SaveState();
+    }
+
     //MaskStack *ms = new MaskStack;
     //ms->mask = cairo_pattern_reference(mask);
     //ms->mask_matrix = mask_matrix;
@@ -313,6 +317,10 @@ void OFDOutputDev::restoreState(GfxState *state){
     cairo_restore(m_cairo);
     if ( m_cairoShape != nullptr ){
         cairo_restore(m_cairoShape);
+    }
+
+    if ( m_cairoRender != nullptr ){
+        m_cairoRender->RestoreState();
     }
 
     m_textMatrixValid = true;
