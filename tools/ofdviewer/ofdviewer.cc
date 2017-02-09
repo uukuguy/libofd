@@ -8,6 +8,8 @@
 #include "utils/logger.h"
 
 using namespace ofd;
+double g_resolutionX = 150;
+double g_resolutionY = 150;
 
 // -------- create_image_surface() --------
 SDL_Surface *create_image_surface(int width, int height, int bpp){
@@ -67,8 +69,12 @@ protected:
 private:
     std::string m_title;
     bool m_fullscreen;
+
+protected:
     double m_screenWidth;
     double m_screenHeight;
+
+private:
     int m_screenBPP;
 
     SDL_Window *m_mainWindow;
@@ -355,10 +361,11 @@ void MySDLApp::OnRender(cairo_surface_t *surface){
         if ( totalPages > 0 ){
             OFDPagePtr currentPage = m_document->GetPage(m_pageIndex);
             if ( currentPage->Open() ){
-                std::unique_ptr<OFDCairoRender> cairoRender(new OFDCairoRender(surface));
+                std::unique_ptr<OFDCairoRender> cairoRender(new OFDCairoRender(m_screenWidth, m_screenHeight, g_resolutionX, g_resolutionY));
 
                 ofd::Render::DrawParams drawParams = std::make_tuple(0.0, 0.0, 1.0);
                 cairoRender->DrawPage(currentPage, drawParams);
+                cairoRender->Paint(surface);
             } else {
                 LOG(ERROR) << "currentPage->Open() failed. pageIndex=" << m_pageIndex;
             }

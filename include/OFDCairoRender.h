@@ -11,11 +11,15 @@ namespace ofd{
     // ======== class OFDCairoRender ========
     class OFDCairoRender : public OFDRender {
     public:
-        OFDCairoRender();
-        OFDCairoRender(cairo_surface_t *surface);
+        //OFDCairoRender();
+        OFDCairoRender(double pixelWidth, double pixelHeight, double resolutionX, double resolutionY);
+        //OFDCairoRender(cairo_surface_t *surface);
         virtual ~OFDCairoRender();
 
-        void SetCairoSurface(cairo_surface_t *surface);
+        void Paint(cairo_surface_t *surface);
+
+        void Rebuild(double pixelWidth, double pixelHeight, double resolutionX, double resolutionY);
+        //void SetCairoSurface(cairo_surface_t *surface);
         cairo_surface_t *GetCairoSurface() const;
         cairo_t *GetCairoContext() const;
 

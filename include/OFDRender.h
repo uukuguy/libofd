@@ -34,7 +34,7 @@ namespace ofd{
 
     class OFDRenderFactory{
     public:
-        static OFDRenderPtr CreateRenderInstance(RenderType renderType); 
+        //static OFDRenderPtr CreateRenderInstance(RenderType renderType); 
     }; // class OFDRenderFactory
 
 }; // namespace ofd

@@ -21,10 +21,10 @@ void OFDRender::SetDrawParams(Render::DrawParams drawParams){
     m_drawParams = drawParams;
 }
 
-OFDRenderPtr OFDRenderFactory::CreateRenderInstance(RenderType renderType){
-    if ( renderType == RenderType::Cairo ){
-        return std::make_shared<OFDCairoRender>();
-    } else {
-        return nullptr;
-    }
-}
+//OFDRenderPtr OFDRenderFactory::CreateRenderInstance(RenderType renderType){
+    //if ( renderType == RenderType::Cairo ){
+        //return std::make_shared<OFDCairoRender>();
+    //} else {
+        //return nullptr;
+    //}
+//}

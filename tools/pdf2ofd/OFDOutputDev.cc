@@ -407,14 +407,15 @@ void OFDOutputDev::beforePage(double w, double h) {
     } else {
         m_outputSurface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, ceil(w), ceil(h));
 
-        int imageWidth = w;//794;
-        int imageHeight = h;//1122;
-        m_imageSurface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, imageWidth, imageHeight);
-        if ( m_imageSurface == nullptr ){
-            LOG(ERROR) << "create_image_surface() failed. ";
-            return;
-        }
-        m_cairoRender = std::make_shared<OFDCairoRender>(m_imageSurface);
+        //int imageWidth = w;//794;
+        //int imageHeight = h;//1122;
+        //m_imageSurface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, imageWidth, imageHeight);
+        //if ( m_imageSurface == nullptr ){
+            //LOG(ERROR) << "create_image_surface() failed. ";
+            //return;
+        //}
+        //m_cairoRender = std::make_shared<OFDCairoRender>(m_imageSurface);
+        m_cairoRender = std::make_shared<OFDCairoRender>(w, h, m_resolutionX, m_resolutionY);
     }
 }
 
