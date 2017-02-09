@@ -37,7 +37,7 @@ static void get_singular_values (const cairo_matrix_t *matrix,
         *minor = sqrt (f - delta);
 }
 
-void OFDOutputDev::getScaledSize(const cairo_matrix_t *matrix,
+void OFDOutputDev::getImageScaledSize(const cairo_matrix_t *matrix,
                                    int                   orig_width,
 				   int                   orig_height,
 				   int                  *scaledWidth,
@@ -94,7 +94,7 @@ cairo_filter_t OFDOutputDev::getFilterForSurface(cairo_surface_t *image, GBool i
     cairo_matrix_t matrix;
     cairo_get_matrix(m_cairo, &matrix);
     int scaled_width, scaled_height;
-    getScaledSize(&matrix, orig_width, orig_height, &scaled_width, &scaled_height);
+    getImageScaledSize(&matrix, orig_width, orig_height, &scaled_width, &scaled_height);
 
     /* When scale factor is >= 400% we don't interpolate. See bugs #25268, #9860 */
     if (scaled_width / orig_width >= 4 || scaled_height / orig_height >= 4)
@@ -457,7 +457,7 @@ void OFDOutputDev::drawImage(GfxState *state, Object *ref, Stream *str,
     LOG(DEBUG) << "drawImage " << widthA << " x " <<  heightA;
 
     cairo_get_matrix(m_cairo, &matrix);
-    getScaledSize (&matrix, widthA, heightA, &scaledWidth, &scaledHeight);
+    getImageScaledSize (&matrix, widthA, heightA, &scaledWidth, &scaledHeight);
     image = rescale.getSourceImage(str, widthA, heightA, scaledWidth, scaledHeight, m_printing, colorMap, maskColors);
     if (!image)
         return;

@@ -468,7 +468,7 @@ void OFDCairoRender::ImplCls::DrawObject(OFDObjectPtr object){
 void OFDCairoRender::ImplCls::DrawTextObject(cairo_t *cr, OFDTextObject *textObject){
     if ( textObject == nullptr ) return;
 
-    double dpi = 96;
+    //double dpi = 150;
 
     // -------- Font Face --------
     // FIXME
@@ -496,7 +496,10 @@ void OFDCairoRender::ImplCls::DrawTextObject(cairo_t *cr, OFDTextObject *textObj
     cairo_matrix_t fontMatrix;
     cairo_get_font_matrix(cr, &fontMatrix);
     double fontSize = textObject->GetFontSize();
-    double fontPixels = dpi * fontSize / 72;
+    // FIXME
+    //double fontPixels = dpi * fontSize / 72;
+    double fontPixels = fontSize;
+
     fontMatrix.xx = fontPixels * xx;
     fontMatrix.yy = fontPixels * yy;
     fontMatrix.x0 = x0;
@@ -509,8 +512,11 @@ void OFDCairoRender::ImplCls::DrawTextObject(cairo_t *cr, OFDTextObject *textObj
     double Y = textCode.Y;
     std::string text = textCode.Text;
 
-    double X1 = X * dpi / 72;
-    double Y1 = Y * dpi / 72;
+    // FIXME
+    //double X1 = X * dpi / 72;
+    //double Y1 = Y * dpi / 72;
+    double X1 = X;
+    double Y1 = Y;
     //double Y1 = Y - 500;// * dpi / 72;
 
     //double fontSize = textObject->GetFontSize();

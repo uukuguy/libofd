@@ -155,6 +155,39 @@ OFDOutputDev::~OFDOutputDev(){
     }
 }
 
+std::tuple<double, double, double, double> getPageScaledSize(double originW, double originH, bool bRotate, double scaleTo, double scaleToX, double scaleToY){
+    double pg_w = originW;
+    double pg_h = originH;
+
+    if ( bRotate ) {
+        double tmp = pg_w; pg_w = pg_h; pg_h = tmp;
+    }
+
+    double resolution;
+    double resolutionX = 150;
+    double resolutionY = 150;
+
+    // Scale page to pixel box.
+    if ( scaleTo != 0 ){
+        resolution = (72.0 * scaleTo) / (pg_w > pg_h ? pg_w : pg_h);
+        resolutionX = resolutionY = resolution;
+    } else {
+        if ( scaleToX > 0) {
+            resolutionX = (72.0 * scaleToX) / pg_w;
+            if ( scaleToY == 0)
+                resolutionY = resolutionX;
+        }
+        if ( scaleToX > 0) {
+            resolutionY = (72.0 * scaleToY) / pg_h;
+            if ( scaleToX == 0 ){
+                resolutionX = resolutionY;
+            }
+        }
+    }
+
+    return std::make_tuple(pg_w, pg_h, resolutionX, resolutionY);
+}
+
 // -------- OFDOutputDev::getPageSize() --------
 std::tuple<double, double> OFDOutputDev::getPageSize(PDFDocPtr pdfDoc, int pg, int firstPage){
     double pg_w, pg_h;
@@ -172,28 +205,39 @@ std::tuple<double, double> OFDOutputDev::getPageSize(PDFDocPtr pdfDoc, int pg, i
         }
     }
 
-    if ( ( pdfDoc->getPageRotate(pg) == 90 ) || 
-            ( pdfDoc->getPageRotate(pg) == 270 ) ){
-        double tmp = pg_w; pg_w = pg_h; pg_h = tmp;
+    bool bRotate = false;
+    //if ( ( pdfDoc->getPageRotate(pg) == 90 ) || 
+            //( pdfDoc->getPageRotate(pg) == 270 ) ){
+    if ( pdfDoc->getPageRotate(pg) != 0 ){
+        bRotate = true;
     }
 
-    // Scale page to pixel box.
-    if ( m_scaleTo != 0 ){
-        m_resolution = (72.0 * m_scaleTo) / (pg_w > pg_h ? pg_w : pg_h);
-        m_resolutionX = m_resolutionY = m_resolution;
-    } else {
-        if ( m_scaleToX > 0) {
-            m_resolutionX = (72.0 * m_scaleToX) / pg_w;
-            if ( m_scaleToY == 0)
-                m_resolutionY = m_resolutionX;
-        }
-        if ( m_scaleToX > 0) {
-            m_resolutionY = (72.0 * m_scaleToY) / pg_h;
-            if ( m_scaleToX == 0 ){
-                m_resolutionX = m_resolutionY;
-            }
-        }
-    }
+    std::tie(pg_w, pg_h, m_resolutionX, m_resolutionY) = getPageScaledSize(pg_w, pg_h, bRotate, m_scaleTo, m_scaleToX, m_scaleToY);
+    //LOG(ERROR) << "pg_w=" << pg_w << " pg_h=" << pg_h << " m_resolutionX=" << m_resolutionX << " m_resolutionY=" << m_resolutionY;
+
+    //if ( bRotate ){
+        //double tmp = pg_w; pg_w = pg_h; pg_h = tmp;
+    //}
+
+    //// Scale page to pixel box.
+    //if ( m_scaleTo != 0 ){
+        //m_resolution = (72.0 * m_scaleTo) / (pg_w > pg_h ? pg_w : pg_h);
+        //m_resolutionX = m_resolutionY = m_resolution;
+    //} else {
+        //if ( m_scaleToX > 0) {
+            //m_resolutionX = (72.0 * m_scaleToX) / pg_w;
+            //if ( m_scaleToY == 0)
+                //m_resolutionY = m_resolutionX;
+        //}
+        //if ( m_scaleToX > 0) {
+            //m_resolutionY = (72.0 * m_scaleToY) / pg_h;
+            //if ( m_scaleToX == 0 ){
+                //m_resolutionX = m_resolutionY;
+            //}
+        //}
+    //}
+
+    //LOG(ERROR) << "pg_w=" << pg_w << " pg_h=" << pg_h << " m_resolutionX=" << m_resolutionX << " m_resolutionY=" << m_resolutionY;
 
     return std::make_tuple(pg_w, pg_h);
 }
