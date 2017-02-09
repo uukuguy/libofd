@@ -113,6 +113,10 @@ void OFDOutputDev::paintTransparencyGroup(GfxState * /*state*/, double * /*bbox*
     cairo_save(m_cairo);
     cairo_set_matrix(m_cairo, &m_groupColorSpaceStack->group_matrix);
 
+    if ( m_cairoRender != nullptr ){
+        m_cairoRender->SaveState();
+    }
+
     if ( m_shapePattern) {
         /* OPERATOR_SOURCE w/ a mask is defined as (src IN mask) ADD (dest OUT mask)
          * however our source has already been clipped to mask so we only need to
@@ -136,9 +140,15 @@ void OFDOutputDev::paintTransparencyGroup(GfxState * /*state*/, double * /*bbox*
             cairo_push_group(m_cairo);
         }
         cairo_save(m_cairo);
+        if ( m_cairoRender != nullptr ){
+            m_cairoRender->SaveState();
+        }
         cairo_set_matrix(m_cairo, &m_mask_matrix);
         cairo_mask(m_cairo, m_maskPattern);
         cairo_restore(m_cairo);
+        if ( m_cairoRender != nullptr ){
+            m_cairoRender->RestoreState();
+        }
         if ( m_fillOpacity < 1.0 ) {
             cairo_pop_group_to_source(m_cairo);
             cairo_paint_with_alpha(m_cairo, m_fillOpacity);
@@ -159,6 +169,9 @@ void OFDOutputDev::paintTransparencyGroup(GfxState * /*state*/, double * /*bbox*
 
     popTransparencyGroup();
     cairo_restore(m_cairo);
+    if ( m_cairoRender != nullptr ){
+        m_cairoRender->RestoreState();
+    }
 }
 
 /* XXX: do we need to deal with shape here? */

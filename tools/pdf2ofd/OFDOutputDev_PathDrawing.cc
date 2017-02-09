@@ -156,6 +156,9 @@ void OFDOutputDev::fill(GfxState *state) {
   //XXX: how do we get the path
   if ( m_maskPattern != nullptr ) {
     cairo_save(m_cairo);
+    if ( m_cairoRender != nullptr ){
+        m_cairoRender->SaveState();
+    }
     cairo_clip(m_cairo);
     if ( m_strokePathClip) {
       cairo_push_group(m_cairo);
@@ -165,6 +168,9 @@ void OFDOutputDev::fill(GfxState *state) {
     cairo_set_matrix(m_cairo, &m_mask_matrix);
     cairo_mask(m_cairo, m_maskPattern);
     cairo_restore(m_cairo);
+    if ( m_cairoRender != nullptr ){
+        m_cairoRender->RestoreState();
+    }
   } else if ( m_strokePathClip) {
     fillToStrokePathClip(state);
   } else {
@@ -185,10 +191,16 @@ void OFDOutputDev::eoFill(GfxState *state){
 
     if ( m_maskPattern != nullptr) {
         cairo_save(m_cairo);
+        if ( m_cairoRender != nullptr ){
+            m_cairoRender->SaveState();
+        }
         cairo_clip(m_cairo);
         cairo_set_matrix(m_cairo, &m_mask_matrix);
         cairo_mask(m_cairo, m_maskPattern);
         cairo_restore(m_cairo);
+        if ( m_cairoRender != nullptr ){
+            m_cairoRender->RestoreState();
+        }
     } else {
         cairo_fill(m_cairo);
     }
@@ -450,6 +462,9 @@ void OFDOutputDev::clipToStrokePath(GfxState *state){
 #endif /* CAIRO_VERSION >= CAIRO_VERSION_ENCODE(1, 12, 0) */
 void OFDOutputDev::fillToStrokePathClip(GfxState *state) {
     cairo_save(m_cairo);
+    if ( m_cairoRender != nullptr ){
+        m_cairoRender->SaveState();
+    }
 
     cairo_set_matrix(m_cairo, &m_strokePathClip->ctm);
     cairo_set_line_width(m_cairo, m_strokePathClip->line_width);
@@ -461,6 +476,9 @@ void OFDOutputDev::fillToStrokePathClip(GfxState *state) {
     cairo_stroke(m_cairo);
 
     cairo_restore(m_cairo);
+    if ( m_cairoRender != nullptr ){
+        m_cairoRender->RestoreState();
+    }
 }
 
 GBool OFDOutputDev::axialShadedFill(GfxState *state, GfxAxialShading *shading, double tMin, double tMax) {

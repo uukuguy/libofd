@@ -406,6 +406,15 @@ void OFDOutputDev::beforePage(double w, double h) {
 
     } else {
         m_outputSurface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, ceil(w), ceil(h));
+
+        int imageWidth = w;//794;
+        int imageHeight = h;//1122;
+        m_imageSurface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, imageWidth, imageHeight);
+        if ( m_imageSurface == nullptr ){
+            LOG(ERROR) << "create_image_surface() failed. ";
+            return;
+        }
+        m_cairoRender = std::make_shared<OFDCairoRender>(m_imageSurface);
     }
 }
 
@@ -422,6 +431,17 @@ void OFDOutputDev::afterPage(const std::string &imageFileName){
             LOG(ERROR) << "cairo error: " << cairo_status_to_string(status);
         }
         cairo_surface_destroy(m_outputSurface);
+
+
+        if ( m_imageSurface != nullptr ){
+            m_cairoRender = nullptr;
+            uint64_t pageID = m_currentOFDPage->GetID();
+            std::string png_filename = std::string("output/pdf2ofd/Page") + std::to_string(pageID) + ".png";
+            cairo_surface_write_to_png(m_imageSurface, png_filename.c_str());
+
+            cairo_surface_destroy(m_imageSurface);
+            m_imageSurface = nullptr;
+        }
     }
 }
 
@@ -438,6 +458,10 @@ void OFDOutputDev::renderPage(int pg, double page_w, double page_h, double outpu
     this->SetAntialias(m_antialiasEnum);
 
     cairo_save(cr);
+    if ( m_cairoRender != nullptr ){
+        m_cairoRender->SaveState();
+    }
+
     if ( ps && output_w > output_h) {
         // rotate 90 deg for landscape
         cairo_translate (cr, 0, output_w);
@@ -470,15 +494,26 @@ void OFDOutputDev::renderPage(int pg, double page_w, double page_h, double outpu
             //m_printing,
             //-1, -1, -1, -1);
     cairo_restore(cr);
+    if ( m_cairoRender != nullptr ){
+        m_cairoRender->RestoreState();
+    }
     this->SetCairo(nullptr);
 
     // Blend onto white page
     if (!m_printing && !m_transp) {
         cairo_save(cr);
+        if ( m_cairoRender != nullptr ){
+            m_cairoRender->SaveState();
+        }
+
         cairo_set_operator(cr, CAIRO_OPERATOR_DEST_OVER);
         cairo_set_source_rgb(cr, 1, 1, 1);
         cairo_paint(cr);
         cairo_restore(cr);
+        if ( m_cairoRender != nullptr ){
+            m_cairoRender->RestoreState();
+        }
+
     }
 
     status = cairo_status(cr);
