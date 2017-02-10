@@ -180,6 +180,7 @@ public:
   double getFontSize() { return fontSize; }
   int getRotation() { return rot; }
   int getCharPos() { return charPos[0]; }
+  //int getCharPos(int idx) { return charPos[idx]; }
   int getCharLen() { return charPos[len] - charPos[0]; }
   GBool getSpaceAfter() { return spaceAfter; }
 #endif

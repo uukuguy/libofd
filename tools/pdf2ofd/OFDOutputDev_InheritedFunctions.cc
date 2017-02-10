@@ -1,6 +1,8 @@
 #include <iomanip>
 #include <UTF.h>
 #include <cairo.h>
+#include <GlobalParams.h>
+#include <UnicodeMap.h>
 #include "OFDOutputDev.h"
 #include "OFDTextObject.h"
 #include "utils/logger.h"
@@ -135,84 +137,178 @@ void OFDOutputDev::processTextLine(TextLine *line, OFDLayerPtr bodyLayer){
         // TextWord Font
         double fontSize = word->getFontSize();
         int numChars = word->getLength();
-        //LOG(INFO) << "TextWord FontSize=" << fontSize << " numChars=" << numChars << " len(string)=" << myString.length() << " size(string)=" << myString.size();
-        for ( int k = 0 ; k < numChars ; k++ ){
-            //TextFontInfo *fontInfo = word->getFontInfo(k);
+        LOG(INFO) << "TextWord FontSize=" << fontSize << " numChars=" << numChars << " len(string)=" << myString.length() << " size(string)=" << myString.size() << " word->getText()->getLength() = " << word->getText()->getLength();
 
+        __attribute__((unused)) std::function<int (TextWord*)> WordToTextObject = [=](TextWord *word) -> int{
+            UnicodeMap *uMap = globalParams->getTextEncoding();
+            int numChars = word->getLength();
+            double fontSize = word->getFontSize();
+            //uint64_t prevFontID = 0;
+            std::vector<std::pair<int, uint64_t> > positions;
+            for ( int k = 0 ; k < numChars ; k++){
+                TextFontInfo *fontInfo = word->getFontInfo(k);
+                Ref *ref = fontInfo->gfxFont->getID();
+                uint64_t fontID = ref->num;
+                //if ( fontID != prevFontID ){
+                    positions.push_back(std::make_pair(k, fontID));
+                    //prevFontID = fontID;
+                //}
+            }
+            positions.push_back(std::make_pair(numChars, 0));
+
+            double x = xMin;
+            double y = yMin;
+            size_t numStrings = positions.size() - 1;
+            for ( size_t i = 0 ; i < numStrings ; i++ ){
+                GooString *aText = new GooString();
+                int pos0 = positions[i].first;
+                uint64_t fontID = positions[i].second;
+
+                double xMinA, yMinA, xMaxA, yMaxA;
+                word->getCharBBox(i, &xMinA, &yMinA, &xMaxA, &yMaxA);
+                // FIXME
+                //fontSize = (xMaxA - xMinA);
+                LOG(DEBUG) << "........ " << i << " CharBBox(" << xMinA << ", " << yMinA << ", " << xMaxA << ", " << yMaxA << ") fontID: " << fontID << " fontSize: " << fontSize;
+
+                OFDDocument::CommonData &commonData = m_ofdDocument->GetCommonData();
+                assert(commonData.DocumentRes != nullptr );
+                auto textFont = commonData.DocumentRes->GetFont(fontID);
+
+                int pos1 = positions[i+1].first;
+                for ( int j = pos0 ; j < pos1 ; j++ ){
+                    const Unicode *uni = word->getChar(j); 
+                    char buf[8];
+                    int n = uMap->mapUnicode(*uni, buf, sizeof(buf));
+                    aText->append(buf, n);
+                }
+                std::string str(aText->getCString());
+                int nChars = pos1 - pos0;
+                double edge = word->getEdge(pos0);
+                double baseLine = word->getBaseline();
+                x = edge;
+                y = baseLine;
+
+                LOG(DEBUG) << "-------- (" << x << "," << y << ") edge: " << edge << " baseLine: " << baseLine << " str: " << str << " nChars: " << nChars;
+
+
+                OFDTextObject *textObject = new OFDTextObject(m_currentOFDPage);
+
+                // OFDObject::Boundary
+                //textObject->Boundary = ST_Box(xMin, yMin, xMax - xMin, yMax - yMin);
+
+                // OFDTextObject::TextCode
+                Text::TextCode textCode;
+                textCode.X = x;
+                textCode.Y = y;
+                textCode.Text = str;
+                textObject->AddTextCode(textCode);
+
+                textObject->SetFont(textFont);
+                textObject->SetFontSize(fontSize);
+
+                OFDObjectPtr object = std::shared_ptr<OFDObject>(textObject);
+                m_currentOFDPage->AddObject(object);
+
+                if ( m_cairoRender != nullptr ){
+                    m_cairoRender->DrawObject(object);
+                }
+
+                //x += fontSize * (pos1 - pos0);
+                delete aText;
+            }
+            uMap->decRefCnt();
+            return 0;
+        };
+
+        WordToTextObject(word);
+        //UnicodeMap *uMap = globalParams->getTextEncoding();
+        //for ( int k = 0 ; k < numChars ; k++ ){
+            //TextFontInfo *fontInfo = word->getFontInfo(k);
             //Ref *ref = fontInfo->gfxFont->getID();
             //uint64_t fontID = ref->num;
+            ////GooString *fontName = fontInfo->getFontName();
 
-            //GooString *fontName = fontInfo->getFontName();
-            char tCh[4];
-            tCh[0] = myString[k*3];
-            tCh[1] = myString[k*3+1];
-            tCh[2] = myString[k*3+2];
-            tCh[3] = '\0';
-
-            //double ascent = fontInfo->getAscent();
-            //double descent = fontInfo->getDescent();
-
-            //double xMinA, yMinA, xMaxA, yMaxA;
-            //word->getCharBBox(k, &xMinA, &yMinA, &xMaxA, &yMaxA);
-
-            //double edge = word->getEdge(k);
+            //const Unicode *uni = word->getChar(k); 
+            //assert(uMap != nullptr);
+            //GooString *aText = new GooString();
+            //char buf[8];
+            //int n;
+            //n = uMap->mapUnicode(*uni, buf, sizeof(buf));
+            //aText->append(buf, n);
 
 
-            GooString *aText = new GooString(tCh);
-            //Unicode *uni = NULL;
-            //__attribute__((unused)) int length = TextStringToUCS4(aText, &uni);
+            ////char tCh[4];
+            ////tCh[0] = myString[k*3];
+            ////tCh[1] = myString[k*3+1];
+            ////tCh[2] = myString[k*3+2];
+            ////tCh[3] = '\0';
+
+            ////double ascent = fontInfo->getAscent();
+            ////double descent = fontInfo->getDescent();
+
+            ////double xMinA, yMinA, xMaxA, yMaxA;
+            ////word->getCharBBox(k, &xMinA, &yMinA, &xMaxA, &yMaxA);
+
+            ////double edge = word->getEdge(k);
 
 
-            //LOG(INFO) << tCh << "(" << xMinA << ", " << yMinA << ", " << xMaxA << ", " << yMaxA << ") " << " Edge: " << edge << " Ascent: " << ascent << " Descent: " << descent << " Font[" << k << "] name: " << std::string(fontName->getCString()) << " (" << fontID << ")";
+            ////GooString *aText = new GooString(tCh);
+            ////Unicode *uni = NULL;
+            ////__attribute__((unused)) int length = TextStringToUCS4(aText, &uni);
 
-            //LOG(DEBUG) << "UCS code:" << std::hex << std::setw(4) << std::setfill('0') << *uni << std::dec;
+            //LOG(DEBUG) << "[" << k << "] " << std::string(aText->getCString()) << " font: " << fontID;
+
+            ////LOG(INFO) << tCh << "(" << xMinA << ", " << yMinA << ", " << xMaxA << ", " << yMaxA << ") " << " Edge: " << edge << " Ascent: " << ascent << " Descent: " << descent << " Font[" << k << "] name: " << std::string(fontName->getCString()) << " (" << fontID << ")";
+
+            ////LOG(DEBUG) << "UCS code:" << std::hex << std::setw(4) << std::setfill('0') << *uni << std::dec;
             
-            //gfree(uni);
-            delete aText;
-        }
+            ////gfree(uni);
+            //delete aText;
+        //}
+        //uMap->decRefCnt();
 
-        TextFontInfo *fontInfo = word->getFontInfo(0);
-        Ref *ref = fontInfo->gfxFont->getID();
-        uint64_t fontID = ref->num;
+        //TextFontInfo *fontInfo = word->getFontInfo(0);
+        //Ref *ref = fontInfo->gfxFont->getID();
+        //uint64_t fontID = ref->num;
 
-        OFDDocument::CommonData &commonData = m_ofdDocument->GetCommonData();
-        assert(commonData.DocumentRes != nullptr );
-        auto textFont = commonData.DocumentRes->GetFont(fontID);
+        //OFDDocument::CommonData &commonData = m_ofdDocument->GetCommonData();
+        //assert(commonData.DocumentRes != nullptr );
+        //auto textFont = commonData.DocumentRes->GetFont(fontID);
 
-        std::stringstream ss;
-        ss << "          <word xMin=\"" << xMin << "\" yMin=\"" << yMin << "\" xMax=\"" <<
-            xMax << "\" yMax=\"" << yMax << "\">" << myString << "</word>\n";
-        LOG(DEBUG) << ss.str();
+        //std::stringstream ss;
+        //ss << "          <word xMin=\"" << xMin << "\" yMin=\"" << yMin << "\" xMax=\"" <<
+            //xMax << "\" yMax=\"" << yMax << "\">" << myString << "</word>\n";
+        //LOG(DEBUG) << ss.str() << " Length: " << myString.length();
 
-        wordXML << ss.str();
+        //wordXML << ss.str();
 
-        assert( bodyLayer != nullptr );
-        {
-            OFDTextObject *textObject = new OFDTextObject(m_currentOFDPage);
+        //assert( bodyLayer != nullptr );
+        //{
+            //OFDTextObject *textObject = new OFDTextObject(m_currentOFDPage);
 
-            // OFDObject::Boundary
-            textObject->Boundary = ST_Box(xMin, yMin, xMax - xMin, yMax - yMin);
+            //// OFDObject::Boundary
+            //textObject->Boundary = ST_Box(xMin, yMin, xMax - xMin, yMax - yMin);
 
-            // OFDTextObject::TextCode
-            Text::TextCode textCode;
-            textCode.X = xMin;
-            textCode.Y = yMin;
-            textCode.Text = myString;
-            textObject->AddTextCode(textCode);
+            //// OFDTextObject::TextCode
+            //Text::TextCode textCode;
+            //textCode.X = xMin;
+            //textCode.Y = yMin;
+            //textCode.Text = myString;
+            //textObject->AddTextCode(textCode);
 
-            textObject->SetFont(textFont);
-            textObject->SetFontSize(fontSize);
+            //textObject->SetFont(textFont);
+            //textObject->SetFontSize(fontSize);
 
-            OFDObjectPtr object = std::shared_ptr<OFDObject>(textObject);
-            m_currentOFDPage->AddObject(object);
+            //OFDObjectPtr object = std::shared_ptr<OFDObject>(textObject);
+            //m_currentOFDPage->AddObject(object);
 
-            if ( m_cairoRender != nullptr ){
-                m_cairoRender->DrawObject(object);
-            }
-        }
+            //if ( m_cairoRender != nullptr ){
+                //m_cairoRender->DrawObject(object);
+            //}
+        //}
     }
 
-    LOG(DEBUG) << wordXML.str();
+    //LOG(DEBUG) << wordXML.str();
 }
 
 // -------- OFDOutputDev::processTextPage() --------

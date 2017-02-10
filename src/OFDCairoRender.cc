@@ -561,8 +561,8 @@ void OFDCairoRender::ImplCls::DrawTextObject(cairo_t *cr, OFDTextObject *textObj
     __attribute__((unused)) double xy = ctm[1];
 
     // FIXME
-    __attribute__((unused)) double yx = ctm[2];
-    __attribute__((unused)) double yy = ctm[3];
+    __attribute__((unused)) double yx = -ctm[2];
+    __attribute__((unused)) double yy = -ctm[3];
 
     __attribute__((unused)) double x0 = ctm[4];
     __attribute__((unused)) double y0 = ctm[5];
@@ -583,8 +583,8 @@ void OFDCairoRender::ImplCls::DrawTextObject(cairo_t *cr, OFDTextObject *textObj
     // -------- Draw Text --------
     const Text::TextCode &textCode = textObject->GetTextCode(0);
     double X = textCode.X;
-    //double Y = 841.89 - textCode.Y;
-    double Y = textCode.Y;
+    double Y = 841.89 - textCode.Y;
+    //double Y = textCode.Y;
     std::string text = textCode.Text;
 
     // FIXME
