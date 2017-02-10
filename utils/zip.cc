@@ -199,13 +199,16 @@ std::tuple<char*, size_t, bool> Zip::ReadFileRaw(const std::string &fileinzip) c
 }
 
 bool Zip::AddFile(const std::string &filename, const std::string &text) {
+    LOG(DEBUG) << "Zip::AddFile(). filename: " << filename;
     return m_impl->AddFileString(filename, text);
 }
 
 bool Zip::AddFile(const std::string &filename, const char *buf, size_t bufSize) {
+    LOG(DEBUG) << "Zip::AddFile(). filename: " << filename;
     return m_impl->AddFileRaw(filename, buf, bufSize);
 }
 
 bool Zip::AddDir(const std::string &dirName) {
+    LOG(DEBUG) << "Zip::AddDir(). dirame: " << dirName;
     return m_impl->AddDir(dirName);
 }

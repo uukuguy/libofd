@@ -30,14 +30,17 @@ ofdtest: sample0.ofd ${OFDTEST}
 
 sample0: ${PDF2OFD}
 	mkdir -p output/pdf2ofd
+	rm -f output/sample0.ofd
 	${PDF2OFD} --v=1 ./data/sample0.pdf ./output/sample0.ofd && rm -fr ./output/sample0 && unzip -d ./output/sample0 ./output/sample0.ofd >> /dev/null 
 
 sample1: ${PDF2OFD}
 	mkdir -p output/pdf2ofd
+	rm -f output/sample1.ofd
 	${PDF2OFD} --v=1 ./data/sample1.pdf ./output/sample1.ofd && rm -fr ./output/sample1 && unzip -d ./output/sample1 ./output/sample1.ofd >> /dev/null 
 
 sample2: ${PDF2OFD}
 	mkdir -p output/pdf2ofd
+	rm -f output/sample2.ofd
 	${PDF2OFD} --v=1 ./data/sample2.pdf ./output/sample2.ofd && rm -fr ./output/sample2 && unzip -d ./output/sample2 ./output/sample2.ofd >> /dev/null 
 
 view0: ${OFDVIEWER} 

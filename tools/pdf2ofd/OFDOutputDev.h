@@ -222,7 +222,7 @@ private:
     TextPage *m_textPage;	    
     ActualText *m_actualText;
 
-    cairo_surface_t *m_imageSurface;
+    //cairo_surface_t *m_imageSurface;
     ofd::OFDCairoRenderPtr m_cairoRender;
 
     ofd::OFDPackagePtr m_ofdPackage;

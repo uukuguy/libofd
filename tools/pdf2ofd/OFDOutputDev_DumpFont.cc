@@ -235,6 +235,7 @@ std::string OFDOutputDev::dump_embedded_font(GfxFont * font, XRef * xref) {
 
         std::string tmpDir = "/tmp";
         filepath = tmpDir + "/f" + std::to_string(fn_id) + suffix;
+        LOG(DEBUG) << "...... tmp font name: " << filepath << " fontid: " << fn_id;
         //tmp_files.add(filepath);
 
         ofstream outf(filepath.c_str(), ofstream::binary);
@@ -601,7 +602,7 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
 
             //if(param.debug)
             //{
-                //map_outf << hex << cur_code << ' ' << mapped_code << ' ' << u << endl;
+                //map_outf << hex << cur_code << ' ' << mapped_code << ' ' << u << dec << endl;
             //}
         }
 

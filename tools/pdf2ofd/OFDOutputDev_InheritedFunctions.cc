@@ -165,7 +165,7 @@ void OFDOutputDev::processTextLine(TextLine *line, OFDLayerPtr bodyLayer){
 
             //LOG(INFO) << tCh << "(" << xMinA << ", " << yMinA << ", " << xMaxA << ", " << yMaxA << ") " << " Edge: " << edge << " Ascent: " << ascent << " Descent: " << descent << " Font[" << k << "] name: " << std::string(fontName->getCString()) << " (" << fontID << ")";
 
-            //LOG(DEBUG) << "UCS code:" << std::hex << std::setw(4) << std::setfill('0') << *uni;
+            //LOG(DEBUG) << "UCS code:" << std::hex << std::setw(4) << std::setfill('0') << *uni << std::dec;
             
             //gfree(uni);
             delete aText;
@@ -196,7 +196,7 @@ void OFDOutputDev::processTextLine(TextLine *line, OFDLayerPtr bodyLayer){
             // OFDTextObject::TextCode
             Text::TextCode textCode;
             textCode.X = xMin;
-            textCode.Y = yMax;
+            textCode.Y = yMin;
             textCode.Text = myString;
             textObject->AddTextCode(textCode);
 

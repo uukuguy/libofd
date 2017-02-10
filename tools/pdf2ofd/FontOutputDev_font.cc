@@ -12,6 +12,7 @@
 #include <sstream>
 #include <cctype>
 #include <unordered_set>
+#include <inttypes.h>
 
 #include <GlobalParams.h>
 #include <fofi/FoFiTrueType.h>
@@ -656,7 +657,7 @@ void FontOutputDev::embedFont(const std::string & filepath, GfxFont * font, Font
 
             if(m_param.debug)
             {
-                map_outf << std::hex << cur_code << ' ' << mapped_code << ' ' << u;
+                map_outf << std::hex << cur_code << ' ' << mapped_code << ' ' << u << std::dec;
             }
         }
 
@@ -682,7 +683,7 @@ void FontOutputDev::embedFont(const std::string & filepath, GfxFont * font, Font
 
             ffw_add_empty_char((int32_t)' ', (int)floor(info.space_width * info.em_size + 0.5));
             if(m_param.debug) {
-                LOG(DEBUG) << "Missing space width in font " << std::hex << info.id << ": set to " << std::dec << info.space_width;
+                LOG(DEBUG) << "Missing space width in font " << std::hex << info.id << std::dec << ": set to " << std::dec << info.space_width;
             }
         }
 
@@ -744,7 +745,7 @@ void FontOutputDev::embedFont(const std::string & filepath, GfxFont * font, Font
      * Ascent/Descent are not used in PDF, and the values in PDF may be wrong or inconsistent (there are 3 sets of them)
      * We need to reload in order to retrieve/fix accurate ascent/descent, some info won't be written to the font by fontforge until saved.
      */
-    std::string fn = (char*)str_fmt("%s/f%llx.%s", 
+    std::string fn = (char*)str_fmt("%s/f%" PRIu64 ".%s", 
         (m_param.embedFont ? m_param.tmpDir : m_param.destDir).c_str(),
         info.id, m_param.fontFormat.c_str());
 

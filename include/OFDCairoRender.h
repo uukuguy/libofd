@@ -17,6 +17,7 @@ namespace ofd{
         virtual ~OFDCairoRender();
 
         void Paint(cairo_surface_t *surface);
+        bool WriteToPNG(const std::string &filename);
 
         void Rebuild(double pixelWidth, double pixelHeight, double resolutionX, double resolutionY);
         //void SetCairoSurface(cairo_surface_t *surface);

@@ -163,14 +163,14 @@ void OFDOutputDev::drawChar(GfxState *state, double x, double y,
 
     LOG(DEBUG) << "(x,y,dx,dy):" << std::setprecision(3) << "(" << x << ", " << y << ", " << dx << ", " << dy << ")" 
         << " (originX, originY):" << "(" << originX << ", " << originY << ")"
-        << " mapUnicode() = \"" << buf << "\" tlen:" << tLen << " tounicode() = " << std::hex << unic << " ucLen=" <<ucLen
-        << " code:" << std::hex << std::setw(4) << std::setfill('0') << code
-        << " unicode:" << std::hex << std::setw(4) << std::setfill('0') << *u
+        << " mapUnicode() = \"" << buf << "\" tlen:" << tLen << " tounicode() = " << std::hex << unic << std::dec << " ucLen=" <<ucLen
+        << " code:" << std::hex << std::setw(4) << std::setfill('0') << code << std::dec
+        << " unicode:" << std::hex << std::setw(4) << std::setfill('0') << *u << std::dec
         << " nBytes:" << nBytes << " uLen:" << uLen;
 
-    //LOG(DEBUG) << "code:" << std::hex << std::setw(4) << std::setfill('0') << code << " nBytes:" << nBytes << " uLen:" << uLen;
+    //LOG(DEBUG) << "code:" << std::hex << std::setw(4) << std::setfill('0') << code << std::dec << " nBytes:" << nBytes << " uLen:" << uLen;
     if ( m_textPage != nullptr ){
-        //LOG(INFO) << "code:" << std::hex << std::setw(4) << std::setfill('0') << code << " nBytes:" << nBytes << " uLen:" << uLen;
+        //LOG(INFO) << "code:" << std::hex << std::setw(4) << std::setfill('0') << code << std::dec << " nBytes:" << nBytes << " uLen:" << uLen;
         m_actualText->addChar(state, x, y, dx, dy, code, nBytes, u, uLen);
     }
 

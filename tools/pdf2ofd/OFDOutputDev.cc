@@ -36,7 +36,7 @@ OFDOutputDev::OFDOutputDev(ofd::OFDPackagePtr ofdPackage) :
     m_pdfDoc(nullptr),
     m_xref(nullptr), m_textPage(nullptr), 
     m_actualText(nullptr),
-    m_imageSurface(nullptr),
+    //m_imageSurface(nullptr),
     m_cairoRender(nullptr),
     m_ofdPackage(ofdPackage), m_ofdDocument(nullptr), m_currentOFDPage(nullptr),
     m_currentFont(nullptr), m_currentFontSize(14.0), m_currentCTM(nullptr) {
@@ -434,14 +434,14 @@ void OFDOutputDev::afterPage(const std::string &imageFileName){
         cairo_surface_destroy(m_outputSurface);
 
 
-        if ( m_imageSurface != nullptr ){
-            m_cairoRender = nullptr;
+        if ( m_cairoRender != nullptr ){
             uint64_t pageID = m_currentOFDPage->GetID();
             std::string png_filename = std::string("output/pdf2ofd/Page") + std::to_string(pageID) + ".png";
-            cairo_surface_write_to_png(m_imageSurface, png_filename.c_str());
+            m_cairoRender->WriteToPNG(png_filename);
+            m_cairoRender = nullptr;
 
-            cairo_surface_destroy(m_imageSurface);
-            m_imageSurface = nullptr;
+            //cairo_surface_destroy(m_imageSurface);
+            //m_imageSurface = nullptr;
         }
     }
 }

@@ -30,6 +30,7 @@ public:
     void DrawObject(OFDObjectPtr object);
 
     void Paint(cairo_surface_t *surface);
+    bool WriteToPNG(const std::string &filename);
 
     void SetLineWidth(double lineWidth);
     void UpdateStrokePattern(double R, double G, double B, double opacity);
@@ -103,6 +104,10 @@ void OFDCairoRender::ImplCls::Rebuild(double pixelWidth, double pixelHeight, dou
     // Repaint background
     cairo_set_source_rgb(m_cr, 1., 1., 1.);
     cairo_paint(m_cr);
+}
+
+bool OFDCairoRender::ImplCls::WriteToPNG(const std::string &filename){
+    return cairo_surface_write_to_png(m_surface, filename.c_str());
 }
 
 void OFDCairoRender::ImplCls::Paint(cairo_surface_t *surface){
@@ -541,9 +546,9 @@ void OFDCairoRender::ImplCls::DrawTextObject(cairo_t *cr, OFDTextObject *textObj
     //LOG(DEBUG) << "DrawTextObject using font (ID=" << font->ID << ")";
     assert(font->IsLoaded());
 
-    if ( font->ID != 3 ) {
-        return;
-    }
+    //if ( font->ID != 3 ) {
+        //return;
+    //}
 
     cairo_font_face_t *font_face = font->GetFontFace();
     assert(font_face != nullptr);
@@ -719,6 +724,14 @@ OFDCairoRender::OFDCairoRender(double pixelWidth, double pixelHeight, double res
 OFDCairoRender::~OFDCairoRender(){
 }
 
+void OFDCairoRender::Paint(cairo_surface_t *surface){
+    m_impl->Paint(surface);
+}
+
+bool OFDCairoRender::WriteToPNG(const std::string &filename){
+    return m_impl->WriteToPNG(filename);
+}
+
 //void OFDCairoRender::SetCairoSurface(cairo_surface_t *surface){
     //m_impl->SetCairoSurface(surface);
 //}
@@ -773,7 +786,4 @@ void OFDCairoRender::Rebuild(double pixelWidth, double pixelHeight, double resol
     m_impl->Rebuild(pixelWidth, pixelHeight, resolutionX, resolutionY);
 }
 
-void OFDCairoRender::Paint(cairo_surface_t *surface){
-    m_impl->Paint(surface);
-}
 
