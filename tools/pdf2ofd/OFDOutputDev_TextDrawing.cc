@@ -233,18 +233,44 @@ void OFDOutputDev::endActualText(GfxState *state) {
 
 #include "utils/unicode.h"
 void OFDOutputDev::drawString(GfxState *state, GooString * s){
-    char *buf = s->getCString();
-    size_t len = s->getLength();
+    //char *buf = s->getCString();
+    //size_t len = s->getLength();
 
-    unsigned char utf8[8];
-    int tLen = enc_unicode_to_utf8_one(*((unsigned long*)buf), utf8, 7); 
-    utf8[tLen] = '\0';
+    //LOG(DEBUG) << "======== drawString() s=" << std::string(buf);
+    //unsigned char utf8[8];
+    //int tLen = enc_unicode_to_utf8_one(*((unsigned long*)buf), utf8, 7); 
+    //utf8[tLen] = '\0';
 
-    char bb[1024];
-    sprintf(bb, "[%02X%02X]", buf[0], buf[1]);
-    std::stringstream ss;
-    ss << "======== " << bb;
-    LOG(DEBUG) << ss.str();
-    LOG(DEBUG) << "======== drawString() len=" << len << " tLen=" << tLen << " string: " << utf8[0];
+    //char bb[1024];
+    //sprintf(bb, "[%02X%02X]", buf[0], buf[1]);
+    //std::stringstream ss;
+    //ss << "======== " << bb;
+    //LOG(DEBUG) << ss.str();
+    //LOG(DEBUG) << "======== drawString() len=" << len << " tLen=" << tLen << " string: " << utf8[0];
+
+    auto font = state->getFont();
+
+    CharCode code;
+    Unicode *u = nullptr;
+    char *p = s->getCString();
+    int len = s->getLength();
+    //advance of current char, in glyph space
+    double ax, ay;
+    //origin of current char, in glyph space
+    double ox, oy;
+    int uLen;
+    while (len > 0) {
+        auto n = font->getNextChar(p, len, &code, &u, &uLen, &ax, &ay, &ox, &oy);
+
+        unsigned char buf[8];
+        int tLen = enc_unicode_to_utf8_one(*u, buf, 7); 
+        buf[tLen] = '\0';
+
+        LOG(DEBUG) << "........ len=" << len << " u = \"" << buf << "\" tlen:" << tLen;
+
+        p += n;
+        len -= n;
+    }
+
 }
 

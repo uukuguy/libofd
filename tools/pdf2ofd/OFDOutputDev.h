@@ -65,8 +65,7 @@ public:
     virtual GBool upsideDown() { return gTrue; }
 
     // Does this device use drawChar() or drawString()?
-    //virtual GBool useDrawChar() { return gTrue; }
-    virtual GBool useDrawChar() { return gTrue; }
+    virtual GBool useDrawChar() { return gFalse; }
 
     // Does this device use tilingPatternFill()?  If this returns false,
     // tiling pattern fills will be reduced to a series of other drawing
