@@ -10,7 +10,6 @@
 #include "OFDPage.h"
 #include "utils/logger.h"
 
-using namespace ofd;
 
 GBool rawOrder = gFalse;
 
@@ -31,14 +30,57 @@ extern "C"{
 #include "utils/ffw.h"
 }
 
+
+class MyTextPage : public TextPage {
+public:
+  MyTextPage(OFDOutputDev * outputDev, GBool rawOrderA) : 
+      TextPage(rawOrderA), m_outputDev(outputDev){
+  }
+
+  virtual void beginWord(GfxState *state);
+  virtual void endWord();
+
+private:
+  __attribute__((unused)) OFDOutputDev *m_outputDev;
+  GfxState *m_state;
+}; // class MyTextPage
+
+void MyTextPage::beginWord(GfxState *state){
+    m_state = state;
+    TextPage::beginWord(state);
+}
+
+void MyTextPage::endWord(){
+    m_outputDev->OnWord(curWord, m_state);
+    TextPage::endWord();
+}
+
+using namespace ofd;
+
+void OFDOutputDev::OnWord(TextWord *word, GfxState *state){
+    GfxRGB strokeColor;
+    GfxRGB fillColor;
+    state->getStrokeRGB(&strokeColor);
+    state->getFillRGB(&fillColor);
+
+    //ExportWord(word, fillColor);
+
+    const std::string myString = word->getText()->getCString();
+    double fontSize = word->getFontSize();
+    int numChars = word->getLength();
+    LOG(INFO) << "........ OnWord() strokeColor=(" << strokeColor.r << "," << strokeColor.g << "," << strokeColor.b << ") fillColor=(" << fillColor.r << "," << fillColor.g << "," << fillColor.b << ")";
+    LOG(INFO) << "TextWord FontSize=" << fontSize << " numChars=" << numChars << " len(string)=" << myString.length() << " size(string)=" << myString.size() << " word->getText()->getLength() = " << word->getText()->getLength();
+
+}
+
 // ======== OFDOutputDev::OFDOutputDev() ========
-OFDOutputDev::OFDOutputDev(ofd::OFDPackagePtr ofdPackage) :
+OFDOutputDev::OFDOutputDev(ofd::PackagePtr package) :
     m_pdfDoc(nullptr),
     m_xref(nullptr), m_textPage(nullptr), 
     m_actualText(nullptr),
     //m_imageSurface(nullptr),
     m_cairoRender(nullptr),
-    m_ofdPackage(ofdPackage), m_ofdDocument(nullptr), m_currentOFDPage(nullptr),
+    m_package(package), m_document(nullptr), m_currentOFDPage(nullptr),
     m_currentFont(nullptr), m_currentFontSize(14.0), m_currentCTM(nullptr) {
 
     ffw_init(false);
@@ -46,7 +88,10 @@ OFDOutputDev::OFDOutputDev(ofd::OFDPackagePtr ofdPackage) :
     cur_mapping2.resize(0x100);
     width_list.resize(0x10000);
 
-    m_textPage = new TextPage(rawOrder);
+    // FIXME
+    //m_textPage = new TextPage(rawOrder);
+    m_textPage = new MyTextPage(this, rawOrder);
+
     m_actualText = new ActualText(m_textPage);
     m_textClipPath = nullptr;
 
@@ -113,8 +158,8 @@ OFDOutputDev::OFDOutputDev(ofd::OFDPackagePtr ofdPackage) :
     m_strokePathClip = nullptr;
     m_knockoutCount = 0;
 
-    if ( ofdPackage != nullptr ){
-        m_ofdDocument = ofdPackage->AddNewDocument();
+    if ( package != nullptr ){
+        m_document = package->AddNewDocument();
     }
 }
 
@@ -435,7 +480,7 @@ void OFDOutputDev::afterPage(const std::string &imageFileName){
 
 
         if ( m_cairoRender != nullptr ){
-            uint64_t pageID = m_currentOFDPage->GetID();
+            uint64_t pageID = m_currentOFDPage->ID;
             std::string png_filename = std::string("output/pdf2ofd/Page") + std::to_string(pageID) + ".png";
             m_cairoRender->WriteToPNG(png_filename);
             m_cairoRender = nullptr;

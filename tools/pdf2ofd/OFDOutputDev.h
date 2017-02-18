@@ -7,11 +7,11 @@
 #include "TextOutputDev.h"
 #include <PDFDoc.h>
 #include <GfxState.h>
-#include "OFDCommon.h"
-#include "OFDPackage.h"
-#include "OFDDocument.h"
-#include "OFDPage.h"
-#include "OFDFont.h"
+#include "ofd/Common.h"
+#include "ofd/Package.h"
+#include "ofd/Document.h"
+#include "ofd/Page.h"
+#include "ofd/Font.h"
 #include "OFDCairoRender.h"
 #include "FontOutputDev.h"
 #include "utils/StringFormatter.h"
@@ -47,7 +47,11 @@ struct FontInfo
 
 class OFDOutputDev : public OutputDev {
 public:
-    OFDOutputDev(ofd::OFDPackagePtr ofdPackage);
+    void OnWord(TextWord *word, GfxState *state);
+    void ExportWord(TextWord *word, GfxRGB wordColor);
+
+public:
+    OFDOutputDev(ofd::PackagePtr package);
     virtual ~OFDOutputDev();
 
     void ProcessDoc(PDFDocPtr pdfDoc);
@@ -65,7 +69,7 @@ public:
     virtual GBool upsideDown() { return gTrue; }
 
     // Does this device use drawChar() or drawString()?
-    virtual GBool useDrawChar() { return gFalse; }
+    virtual GBool useDrawChar() { return gTrue; }
 
     // Does this device use tilingPatternFill()?  If this returns false,
     // tiling pattern fills will be reduced to a series of other drawing
@@ -224,12 +228,12 @@ private:
     //cairo_surface_t *m_imageSurface;
     ofd::OFDCairoRenderPtr m_cairoRender;
 
-    ofd::OFDPackagePtr m_ofdPackage;
-    ofd::OFDDocumentPtr m_ofdDocument;
-    ofd::OFDPagePtr m_currentOFDPage;
+    ofd::PackagePtr m_package;
+    ofd::DocumentPtr m_document;
+    ofd::PagePtr m_currentOFDPage;
 
-    void processTextLine(TextLine *line, ofd::OFDLayerPtr bodyLayer);
-    void processTextPage(TextPage *textPage, ofd::OFDPagePtr currentOFDPage);
+    void processTextLine(TextLine *line, ofd::LayerPtr bodyLayer);
+    void processTextPage(TextPage *textPage, ofd::PagePtr currentOFDPage);
 
     std::string dump_embedded_font(GfxFont * font, XRef * xref); 
     void embed_font(const std::string & filepath, GfxFont * font, FontInfo & info, bool get_metric_only = false);
@@ -296,7 +300,7 @@ public:
     int m_utf8Count;
     int m_utf8Max;
     bool m_textMatrixValid;
-    ofd::OFDFontPtr m_currentFont;
+    ofd::FontPtr m_currentFont;
     double m_currentFontSize;
     double *m_currentCTM;
     cairo_pattern_t *m_fillPattern, *m_strokePattern;

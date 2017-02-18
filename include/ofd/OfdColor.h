@@ -1,5 +1,5 @@
-#ifndef __OFD_COLOR_H__
-#define __OFD_COLOR_H__
+#ifndef __OfdCOLOR_H__
+#define __OfdCOLOR_H__
 
 #include <memory>
 #include <string.h>
@@ -97,4 +97,4 @@ namespace ofd {
 
 }; // namespace ofd
 
-#endif // __OFD_COLOR_H__
+#endif // __OfdCOLOR_H__

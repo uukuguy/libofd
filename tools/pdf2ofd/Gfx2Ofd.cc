@@ -3,13 +3,13 @@
 
 using namespace ofd;
 
-OfdPathPtr GfxPath_to_OfdPath(GfxPath *gfxPath){
+PathPtr GfxPath_to_OfdPath(GfxPath *gfxPath){
     if ( gfxPath == nullptr ) return nullptr;
 
-    OfdPathPtr ofdPath = nullptr;
+    PathPtr ofdPath = nullptr;
     int numSubpaths = gfxPath->getNumSubpaths();
     if ( numSubpaths == 0 ) return nullptr;
-    ofdPath = std::make_shared<OfdPath>();
+    ofdPath = std::make_shared<Path>();
 
     double x, y;
     int j;
@@ -48,8 +48,8 @@ OfdPathPtr GfxPath_to_OfdPath(GfxPath *gfxPath){
 }
 
 // -------- GfxFont_to_OFDFont() --------
-OFDFontPtr GfxFont_to_OFDFont(GfxFont *gfxFont, XRef *xref){
-    OFDFontPtr ofdFont = std::make_shared<OFDFont>();
+FontPtr GfxFont_to_OFDFont(GfxFont *gfxFont, XRef *xref){
+    FontPtr ofdFont = std::make_shared<Font>();
 
     // -------- FontID --------
     Ref *ref = gfxFont->getID();
@@ -70,29 +70,29 @@ OFDFontPtr GfxFont_to_OFDFont(GfxFont *gfxFont, XRef *xref){
     // -------- FontType --------
     GfxFontType fontType = gfxFont->getType();
     if ( fontType == fontCIDType2 ){
-        ofdFont->FontType = ofd::Font::Type::CIDType2;
+        ofdFont->FontType = ofd::FontType::CIDType2;
     } else if (fontType == fontType1 ){
-        ofdFont->FontType = ofd::Font::Type::Type1;
+        ofdFont->FontType = ofd::FontType::Type1;
     } else if (fontType == fontType3 ){
-        ofdFont->FontType = ofd::Font::Type::Type3;
+        ofdFont->FontType = ofd::FontType::Type3;
     } else if (fontType == fontTrueType ){
-        ofdFont->FontType = ofd::Font::Type::TrueType;
+        ofdFont->FontType = ofd::FontType::TrueType;
     } else {
-        ofdFont->FontType = ofd::Font::Type::Unknown;
+        ofdFont->FontType = ofd::FontType::Unknown;
     }
 
     // -------- FontLoc --------
     GfxFontLoc *fontLoc = gfxFont->locateFont(xref, nullptr);
     if ( fontLoc != nullptr ){
         if ( fontLoc->locType == gfxFontLocEmbedded ){
-            ofdFont->FontLoc = ofd::Font::Location::Embedded;
+            ofdFont->FontLoc = ofd::FontLocation::Embedded;
         } else if ( fontLoc->locType == gfxFontLocExternal ){
-            ofdFont->FontLoc = ofd::Font::Location::External;
+            ofdFont->FontLoc = ofd::FontLocation::External;
             ofdFont->FontFile = std::string(fontLoc->path->getCString());
         } else if ( fontLoc->locType == gfxFontLocResident ){
-            ofdFont->FontLoc = ofd::Font::Location::Resident;
+            ofdFont->FontLoc = ofd::FontLocation::Resident;
         } else {
-            ofdFont->FontLoc = ofd::Font::Location::Unknown;
+            ofdFont->FontLoc = ofd::FontLocation::Unknown;
         }
         delete fontLoc;
         fontLoc = nullptr;

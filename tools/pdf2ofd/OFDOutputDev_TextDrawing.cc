@@ -2,7 +2,9 @@
 #include <GlobalParams.h>
 #include <UnicodeMap.h>
 #include "OFDOutputDev.h"
+#include "utils/unicode.h"
 #include "utils/logger.h"
+#include "utils/utils.h"
 
 //#include <UTF.h>
 //#include <UTF8.h>
@@ -136,10 +138,6 @@ void OFDOutputDev::endTextObject(GfxState *state) {
     }
 }
 
-//#include <UnicodeMap.h>
-//#include <UTF8.h>
-
-#include "utils/unicode.h"
 void OFDOutputDev::drawChar(GfxState *state, double x, double y,
         double dx, double dy,
         double originX, double originY,
@@ -249,24 +247,63 @@ void OFDOutputDev::drawString(GfxState *state, GooString * s){
     //LOG(DEBUG) << "======== drawString() len=" << len << " tLen=" << tLen << " string: " << utf8[0];
 
     auto font = state->getFont();
+    double charSpace = state->getCharSpace();
+    double wordSpace = state->getWordSpace();
+    double horizScaling = state->getHorizScaling();
+    double x0 = state->getCurX();
+    double y0 = state->getCurY();
+
+    double riseX = 0.0; 
+    double riseY = 0.0;
+    state->textTransformDelta(0, state->getRise(), &riseX, &riseY);
 
     CharCode code;
     Unicode *u = nullptr;
     char *p = s->getCString();
     int len = s->getLength();
+
+    LOG(DEBUG) << "........ len=" << len << " FontSize=" << m_currentFontSize << " charSpace:" << charSpace << " wordSpace:" << wordSpace << " horizScaling:" << horizScaling;
+    LOG(DEBUG) << "         (x0,y0)=(" << x0 << "," << y0 << ") (riseX, riseY)=(" << riseX << "," << riseY << ")";
+
+    //accumulated displacement of chars in this string, in text object space
+    double dx = 0; double dy = 0;
+    //displacement of current char, in text object space, including letter space but not word space.
+    double ddx, ddy;
     //advance of current char, in glyph space
     double ax, ay;
     //origin of current char, in glyph space
     double ox, oy;
-    int uLen;
+
     while (len > 0) {
+        int uLen;
         auto n = font->getNextChar(p, len, &code, &u, &uLen, &ax, &ay, &ox, &oy);
+
+        // TODO
+        if( !(utils::equal(ox, 0) && utils::equal(oy, 0)) ){
+            LOG(WARNING) << "TODO: origin of char is not (0,0)";
+        }
+        ddx = ax * m_currentFontSize + charSpace;
+        ddy = ay * m_currentFontSize;
+
+        bool isSpace = false;
+        if ( n == 1 && *p == ' ' ) {
+            isSpace = true;
+        }
 
         unsigned char buf[8];
         int tLen = enc_unicode_to_utf8_one(*u, buf, 7); 
         buf[tLen] = '\0';
 
-        LOG(DEBUG) << "........ len=" << len << " u = \"" << buf << "\" tlen:" << tLen;
+        LOG(DEBUG) << "........ origin:(" << ox << "," << oy << ") " << " advance:(" << ax << "," << ay << ") " << " displacement:(" << ddx  << "," << ddy << ") ";
+        LOG(DEBUG) << "........ u = \"" << buf << "\" tlen:" << tLen;
+
+
+        dx += ddx * horizScaling;
+        dy += ddy;
+        if (isSpace) {
+            dx += wordSpace * horizScaling;
+        }
+        LOG(DEBUG) << "-------- Accumulated Displacement:(" << dx << "," << dy <<") ";
 
         p += n;
         len -= n;

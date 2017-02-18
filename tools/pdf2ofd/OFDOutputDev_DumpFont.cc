@@ -8,6 +8,7 @@
 #include <fofi/FoFiTrueType.h>
 #include "OFDOutputDev.h"
 #include "utils/logger.h"
+#include "utils/utils.h"
 
 using namespace std;
 
@@ -298,9 +299,6 @@ std::string get_suffix(const std::string & path) {
     }
 }
 
-#include <math.h>
-bool equal(double x, double y) { return fabs(x-y) <= 0.000001; };
-
 void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo & info, bool get_metric_only) {
 
     LOG(DEBUG) << "embed_font() filepath: " << filepath;
@@ -589,7 +587,7 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
                      * space_width==0 often means no spaces are used in the PDF
                      * so setting it to be 0.001 should be safe
                      */
-                    if(equal(cur_width, 0))
+                    if(utils::equal(cur_width, 0))
                         Unicode unicode_from_font (CharCode code, GfxFont * font);
                     cur_width = 0.001;
 
@@ -624,7 +622,7 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
             info.space_width /= info.font_size_scale;
 
             /* See comments above */
-            if(equal(info.space_width,0)){
+            if(utils::equal(info.space_width,0)){
                 info.space_width = 0.001;
             }
 

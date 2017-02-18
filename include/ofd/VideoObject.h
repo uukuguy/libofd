@@ -2,18 +2,17 @@
 #define __OFD_VIDEOOBJECT_H__
 
 #include <memory>
-#include "OFDObject.h"
+#include "ofd/Object.h"
 
 namespace ofd{
 
-
     // ======== class OFDVideoObject ========
     // OFD P71，Page.xsd.
-    class OFDVideoObject : public OFDObject{
+    class VideoObject : public Object{
     public:
 
-        OFDVideoObject(OFDPagePtr page);
-        virtual ~OFDVideoObject();
+        VideoObject(LayerPtr layer);
+        virtual ~VideoObject();
 
     protected:
         virtual void GenerateAttributesXML(utils::XMLWriter &writer) const override;
@@ -22,12 +21,8 @@ namespace ofd{
         virtual bool FromAttributesXML(utils::XMLElementPtr objectElement) override;
         virtual bool IterateElementsXML(utils::XMLElementPtr childElement) override;
 
-    private:
-        class ImplCls;
-        std::unique_ptr<ImplCls> m_impl;
-
     }; // class OFDVideoObject
-    typedef std::shared_ptr<OFDVideoObject> OFDVideoObjectPtr;
+    typedef std::shared_ptr<VideoObject> VideoObjectPtr;
 
 }; // namespace ofd
 

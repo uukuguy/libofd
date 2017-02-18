@@ -1,6 +1,6 @@
 #include <Gfx.h>
 #include "OFDOutputDev.h"
-#include "OFDPathObject.h"
+#include "ofd/PathObject.h"
 #include "Gfx2Ofd.h"
 #include "utils/logger.h"
 
@@ -109,14 +109,14 @@ void OFDOutputDev::stroke(GfxState *state) {
   //}
 
     // Add PathObject
-    OfdPathPtr ofdPath = GfxPath_to_OfdPath(state->getPath());
+    PathPtr ofdPath = GfxPath_to_OfdPath(state->getPath());
     if ( ofdPath != nullptr ){
-        OFDPathObjectPtr pathObject = std::make_shared<OFDPathObject>(m_currentOFDPage);
+        PathObjectPtr pathObject = std::make_shared<PathObject>(m_currentOFDPage->GetBodyLayer());
         pathObject->SetPath(ofdPath);
         m_currentOFDPage->AddObject(pathObject);
 
         if ( m_cairoRender != nullptr ){
-            OFDObjectPtr object = std::shared_ptr<OFDObject>(pathObject);
+            ObjectPtr object = std::shared_ptr<ofd::Object>(pathObject);
             m_cairoRender->DrawObject(object);
         }
     }
@@ -425,7 +425,7 @@ void OFDOutputDev::clip(GfxState *state) {
     }
 
     if ( m_cairoRender != nullptr ){
-        OfdPathPtr clipPath = GfxPath_to_OfdPath(state->getPath());
+        PathPtr clipPath = GfxPath_to_OfdPath(state->getPath());
         m_cairoRender->Clip(clipPath);
     }
 }

@@ -4,7 +4,7 @@
 #include <memory>
 #include <cairo/cairo.h>
 #include "OFDRender.h"
-#include "ofd/OfdPath.h"
+#include "ofd/Path.h"
 
 namespace ofd{
 
@@ -24,8 +24,8 @@ namespace ofd{
         cairo_surface_t *GetCairoSurface() const;
         cairo_t *GetCairoContext() const;
 
-        virtual void DrawPage(OFDPagePtr page, Render::DrawParams drawParams) override;
-        void DrawObject(OFDObjectPtr object);
+        virtual void DrawPage(PagePtr page, Render::DrawParams drawParams) override;
+        void DrawObject(ObjectPtr object);
 
         void SetLineWidth(double lineWidth);
         void UpdateStrokePattern(double r, double g, double b, double opacity);
@@ -34,7 +34,7 @@ namespace ofd{
 
         void SaveState();
         void RestoreState();
-        void Clip(OfdPathPtr clipPath);
+        void Clip(PathPtr clipPath);
 
     private:
         class ImplCls;

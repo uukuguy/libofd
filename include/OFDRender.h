@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <tuple>
-#include "OFDCommon.h"
+#include "ofd/Common.h"
 
 namespace ofd{
 
@@ -17,7 +17,7 @@ namespace ofd{
         OFDRender();
         virtual ~OFDRender();
 
-        virtual void DrawPage(OFDPagePtr page, Render::DrawParams draParams);
+        virtual void DrawPage(PagePtr page, Render::DrawParams draParams);
         Render::DrawParams GetDrawParams() const;
         void SetDrawParams(Render::DrawParams drawParams);
 

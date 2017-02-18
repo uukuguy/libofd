@@ -546,7 +546,7 @@ public:
   void updateFont(GfxState *state);
 
   // Begin a new word.
-  void beginWord(GfxState *state);
+  virtual void beginWord(GfxState *state);
 
   // Add a character to the current word.
   void addChar(GfxState *state, double x, double y,
@@ -557,7 +557,7 @@ public:
   void incCharCount(int nChars);
 
   // End the current word, sorting it into the list of words.
-  void endWord();
+  virtual void endWord();
 
   // Add a word, sorting it into the list of words.
   void addWord(TextWord *word);
@@ -638,11 +638,11 @@ public:
   TextWordList *makeWordList(GBool physLayout);
 #endif
 
-private:
+public:
   
   // Destructor.
-  ~TextPage();
-  
+  virtual ~TextPage();
+protected:
   void clear();
   void assignColumns(TextLineFrag *frags, int nFrags, GBool rot);
   int dumpFragment(Unicode *text, int len, UnicodeMap *uMap, GooString *s);

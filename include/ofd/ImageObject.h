@@ -2,18 +2,17 @@
 #define __OFD_IMAGEOBJECT_H__
 
 #include <memory>
-#include "OFDObject.h"
+#include "ofd/Object.h"
 
 namespace ofd{
 
-
-    // ======== class OFDImageObject ========
+    // ======== class ImageObject ========
     // OFD P52，Page.xsd.
-    class OFDImageObject : public OFDObject{
+    class ImageObject : public Object{
     public:
 
-        OFDImageObject(OFDPagePtr page);
-        virtual ~OFDImageObject();
+        ImageObject(LayerPtr layer);
+        virtual ~ImageObject();
 
     protected:
         virtual void GenerateAttributesXML(utils::XMLWriter &writer) const override;
@@ -22,12 +21,8 @@ namespace ofd{
         virtual bool FromAttributesXML(utils::XMLElementPtr objectElement) override;
         virtual bool IterateElementsXML(utils::XMLElementPtr childElement) override;
 
-    private:
-        class ImplCls;
-        std::unique_ptr<ImplCls> m_impl;
-
     }; // class OFDImageObject
-    typedef std::shared_ptr<OFDImageObject> OFDImageObjectPtr;
+    typedef std::shared_ptr<ImageObject> ImageObjectPtr;
 
 }; // namespace ofd
 

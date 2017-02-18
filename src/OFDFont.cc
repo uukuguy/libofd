@@ -4,10 +4,6 @@
 #include <tuple>
 #include <inttypes.h>
 
-#include <ft2build.h>
-#include FT_FREETYPE_H
-#include FT_GLYPH_H
-
 #include <cairo/cairo.h>
 #include <cairo/cairo-ft.h>
 
@@ -21,442 +17,370 @@
 using namespace ofd;
 using namespace utils;
 
-class FreetypeInitiator{
-public:
-    FreetypeInitiator(){
-        InitializeFreetype();
-    }
+//OFDFont::OFDFont() : 
+    //Charset("unicode"), Serif(false), Bold(false), Italic(false), FixedWidth(false),
+    //FontType(ofd::FontType::TrueType), FontLoc(ofd::FontLocation::Embedded),
+    //m_fontData(nullptr), m_fontDataSize(0),
+    //m_fontFace(nullptr), m_codeToGID(nullptr), m_codeToGIDLen(0),
+    //m_substitute(false), m_printing(false),
+    //m_bLoaded(false){
+//}
 
-    ~FreetypeInitiator(){
-        FinalizeFreetype();
-    }
+//OFDFont::~OFDFont(){
+    //if ( m_fontFace != nullptr ){
+        //cairo_font_face_destroy(m_fontFace);
+        //m_fontFace = nullptr;
+    //}
+    //if ( m_codeToGID != nullptr ){
+        //delete m_codeToGID;
+        //m_codeToGID = nullptr;
+    //}
+    //if ( m_fontData != nullptr ){
+        //delete m_fontData;
+        //m_fontData = nullptr;
+    //}
+//}
 
-    bool InitializeFreetype();
-    void FinalizeFreetype();
+//std::string OFDFont::ToString() const {
+    //std::stringstream ss;
+    //ss << std::endl 
+        //<< "------------------------------" << std::endl
+        //<< "OFDFont" << std::endl;
 
-public:
-    static FT_Library ft_lib;
-private:
-    static bool ft_lib_initialized;
-};
+        //ss << "ID: " << ID << std::endl;
+        //ss << "FontName: " << FontName << std::endl;
+        //ss << "FamilyName: " << FamilyName << std::endl;
+        //ss << "Charset: " << Charset << std::endl;
+        //ss << "FontFile: " << FontFile << std::endl;
 
-bool FreetypeInitiator::InitializeFreetype(){
-    if ( ft_lib_initialized ) return true;
+        //if ( FontType == ofd::FontType::CIDType2 ){
+            //ss << "FontType: CIDType2" << std::endl;
+        //} else if ( FontType == ofd::FontType::Type1 ){
+            //ss << "FontType: Type1" << std::endl;
+        //} else if ( FontType == ofd::FontType::Type3 ){
+            //ss << "FontType: Type3" << std::endl;
+        //} else if ( FontType == ofd::FontType::TrueType ){
+            //ss << "FontType: TrueType" << std::endl;
+        //} else {
+            //ss << "FontType: Unknown" << std::endl;
+        //}
 
-    FT_Error error = FT_Init_FreeType(&ft_lib);
-    if ( error ){
-        LOG(ERROR) << "FT_Init_FreeType() in OFDRes::InitializeFreetype() failed.";
-    } else {
-        ft_lib_initialized = true;
-    }
+        //if ( FontLoc == ofd::FontLocation::Embedded ){
+            //ss << "FontLoc: Embedded" << std::endl;
+        //} else if ( FontLoc == ofd::FontLocation::External ){
+            //ss << "FontLoc: External" << std::endl;
+        //} else if ( FontLoc == ofd::FontLocation::Resident ){
+            //ss << "FontLoc: Resident" << std::endl;
+        //} else {
+            //ss << "FontLoc: Unknown" << std::endl;
+        //}
 
-    return ft_lib_initialized;
-}
+        //ss << "FontData Size: " << m_fontDataSize << std::endl;
+        //ss << std::endl
+           //<< "------------------------------" << std::endl;
 
-void FreetypeInitiator::FinalizeFreetype(){
-    if ( ft_lib_initialized ){
-        FT_Done_FreeType(ft_lib);
-        ft_lib = nullptr;
-        ft_lib_initialized = false;
-    }
-}
+    //return ss.str();
+//}
 
-FT_Library FreetypeInitiator::ft_lib = nullptr;
-bool FreetypeInitiator::ft_lib_initialized = false;
-FreetypeInitiator ftInitiator;
+//std::string OFDFont::GetFileName() const{
+    //char buf[1024];
+    //sprintf(buf, "Font_%" PRIu64 ".ttf", ID);
+    //LOG(DEBUG) << "------- GetFileName() ID:" << ID << " filename=" << std::string(buf);
+    //return std::string(buf);
+    ////return std::string("Font_") + std::to_string(ID) + ".ttf";
+//}
 
-OFDFont::OFDFont() : 
-    Charset("unicode"), Serif(false), Bold(false), Italic(false), FixedWidth(false),
-    FontType(Font::Type::Unknown), FontLoc(Font::Location::Unknown),
-    m_fontData(nullptr), m_fontDataSize(0),
-    m_fontFace(nullptr), m_codeToGID(nullptr), m_codeToGIDLen(0),
-    m_substitute(false), m_printing(false),
-    m_bLoaded(false){
-}
+//void OFDFont::GenerateXML(XMLWriter &writer) const{
 
-OFDFont::~OFDFont(){
-    if ( m_fontFace != nullptr ){
-        cairo_font_face_destroy(m_fontFace);
-        m_fontFace = nullptr;
-    }
-    if ( m_codeToGID != nullptr ){
-        delete m_codeToGID;
-        m_codeToGID = nullptr;
-    }
-    if ( m_fontData != nullptr ){
-        delete m_fontData;
-        m_fontData = nullptr;
-    }
-}
+    //writer.StartElement("Font");{
+        //// -------- <Font ID="">
+        //writer.WriteAttribute("ID", ID);
 
-std::string OFDFont::ToString() const {
-    std::stringstream ss;
-    ss << std::endl 
-        << "------------------------------" << std::endl
-        << "OFDFont" << std::endl;
+        //// -------- <Font FontName="">
+        //// Required.
+        //writer.WriteAttribute("FontName", FontName);
 
-        ss << "ID: " << ID << std::endl;
-        ss << "FontName: " << FontName << std::endl;
-        ss << "FamilyName: " << FamilyName << std::endl;
-        ss << "Charset: " << Charset << std::endl;
-        ss << "FontFile: " << FontFile << std::endl;
+        //// -------- <Font FamilyName="">
+        //// Optional.
+        //if ( !FamilyName.empty() ){
+            //writer.WriteAttribute("FamilyName", FamilyName);
+        //}
 
-        if ( FontType == Font::Type::CIDType2 ){
-            ss << "FontType: CIDType2" << std::endl;
-        } else if ( FontType == Font::Type::Type1 ){
-            ss << "FontType: Type1" << std::endl;
-        } else if ( FontType == Font::Type::Type3 ){
-            ss << "FontType: Type3" << std::endl;
-        } else if ( FontType == Font::Type::TrueType ){
-            ss << "FontType: TrueType" << std::endl;
-        } else {
-            ss << "FontType: Unknown" << std::endl;
-        }
+        //// -------- <Font Charset="">
+        //// Optional.
+        //if ( !Charset.empty() ){
+            //writer.WriteAttribute("Charset", Charset);
+        //}
 
-        if ( FontLoc == Font::Location::Embedded ){
-            ss << "FontLoc: Embedded" << std::endl;
-        } else if ( FontLoc == Font::Location::External ){
-            ss << "FontLoc: External" << std::endl;
-        } else if ( FontLoc == Font::Location::Resident ){
-            ss << "FontLoc: Resident" << std::endl;
-        } else {
-            ss << "FontLoc: Unknown" << std::endl;
-        }
+        //// -------- <Font Serif="">
+        //// Optional.
+        //if ( Serif ){
+            //writer.WriteAttribute("Serif", true);
+        //}
 
-        ss << "FontData Size: " << m_fontDataSize << std::endl;
-        ss << std::endl
-           << "------------------------------" << std::endl;
+        //// -------- <Font Bold="">
+        //// Optional.
+        //if ( Bold ){
+            //writer.WriteAttribute("Bold", true);
+        //}
 
-    return ss.str();
-}
+        //// -------- <Font Italic="">
+        //// Optional.
+        //if ( Italic ){
+            //writer.WriteAttribute("Italic", true);
+        //}
 
-std::string OFDFont::GetFileName() const{
-    char buf[1024];
-    sprintf(buf, "Font_%" PRIu64 ".ttf", ID);
-    LOG(DEBUG) << "------- GetFileName() ID:" << ID << " filename=" << std::string(buf);
-    return std::string(buf);
-    //return std::string("Font_") + std::to_string(ID) + ".ttf";
-}
+        //// -------- <Font FixedWidth="">
+        //// Optional.
+        //if ( FixedWidth ){
+            //writer.WriteAttribute("FixedWidth", true);
+        //}
 
-void OFDFont::GenerateXML(XMLWriter &writer) const{
+        //// -------- <FontFile>
+        //// Optional
+        //writer.WriteElement("FontFile", FontFile);
 
-    writer.StartElement("Font");{
-        // -------- <Font ID="">
-        writer.WriteAttribute("ID", ID);
+    //} writer.EndElement();
 
-        // -------- <Font FontName="">
-        // Required.
-        writer.WriteAttribute("FontName", FontName);
+//}
 
-        // -------- <Font FamilyName="">
-        // Optional.
-        if ( !FamilyName.empty() ){
-            writer.WriteAttribute("FamilyName", FamilyName);
-        }
+//bool OFDFont::FromXML(XMLElementPtr fontElement){
 
-        // -------- <Font Charset="">
-        // Optional.
-        if ( !Charset.empty() ){
-            writer.WriteAttribute("Charset", Charset);
-        }
+    //bool ok = false;
+    //OFDFontPtr font = nullptr;
 
-        // -------- <Font Serif="">
-        // Optional.
-        if ( Serif ){
-            writer.WriteAttribute("Serif", true);
-        }
+    //std::string childName = fontElement->GetName();
 
-        // -------- <Font Bold="">
-        // Optional.
-        if ( Bold ){
-            writer.WriteAttribute("Bold", true);
-        }
+    //// -------- <Font>
+    //// OFD (section 11.1) P61. Res.xsd.
+    //if ( childName == "Font" ){
+        //bool exist = false;
 
-        // -------- <Font Italic="">
-        // Optional.
-        if ( Italic ){
-            writer.WriteAttribute("Italic", true);
-        }
+        //// -------- <Font FontName="">
+        //// Required.
+        //std::tie(ID, exist) = fontElement->GetIntAttribute("ID");
+        //if ( exist ){
+            //// -------- <Font FontName="">
+            //// Required.
+            //std::tie(FontName, exist) = fontElement->GetStringAttribute("FontName");
+            //if ( !exist ){
+                //LOG(ERROR) << "Attribute FontName is required in Font XML.";
+            //}
+        //} else {
+            //LOG(ERROR) << "Attribute ID is required in Font XML.";
+        //}
 
-        // -------- <Font FixedWidth="">
-        // Optional.
-        if ( FixedWidth ){
-            writer.WriteAttribute("FixedWidth", true);
-        }
+        //if ( exist ) {
 
-        // -------- <FontFile>
-        // Optional
-        writer.WriteElement("FontFile", FontFile);
+            //// -------- <Font FamilyName="">
+            //// Optional
+            //std::tie(FamilyName, std::ignore) = fontElement->GetStringAttribute("FamilyName");
 
-    } writer.EndElement();
+            //// -------- <Font Charset="">
+            //// Optional
+            //std::tie(Charset, std::ignore) = fontElement->GetStringAttribute("Charset");
 
-}
+            //// -------- <Font Charset="">
+            //// Optional
+            //std::tie(Charset, std::ignore) = fontElement->GetStringAttribute("Charset");
 
-bool OFDFont::FromXML(XMLElementPtr fontElement){
+            //// -------- <Font Serif="">
+            //// Optional
+            //std::tie(Serif, std::ignore) = fontElement->GetBooleanAttribute("Serif");
 
-    bool ok = false;
-    OFDFontPtr font = nullptr;
+            //// -------- <Font Bold="">
+            //// Optional
+            //std::tie(Bold, std::ignore) = fontElement->GetBooleanAttribute("Bold");
 
-    std::string childName = fontElement->GetName();
+            //// -------- <Font Italic="">
+            //// Optional
+            //std::tie(Italic, std::ignore) = fontElement->GetBooleanAttribute("Italic");
 
-    // -------- <Font>
-    // OFD (section 11.1) P61. Res.xsd.
-    if ( childName == "Font" ){
-        bool exist = false;
+            //// -------- <Font FixedWidth="">
+            //// Optional
+            //std::tie(FixedWidth, std::ignore) = fontElement->GetBooleanAttribute("FixedWidth");
 
-        // -------- <Font FontName="">
-        // Required.
-        std::tie(ID, exist) = fontElement->GetIntAttribute("ID");
-        if ( exist ){
-            // -------- <Font FontName="">
-            // Required.
-            std::tie(FontName, exist) = fontElement->GetStringAttribute("FontName");
-            if ( !exist ){
-                LOG(ERROR) << "Attribute FontName is required in Font XML.";
-            }
-        } else {
-            LOG(ERROR) << "Attribute ID is required in Font XML.";
-        }
+            //XMLElementPtr fontFileElement = fontElement->GetFirstChildElement();
+            //if ( fontFileElement != nullptr && fontFileElement->GetName() == "FontFile" ){
+                //std::tie(FontFile, std::ignore) = fontFileElement->GetStringValue();
+            //}
 
-        if ( exist ) {
+            //ok = true;
+        //} else {
+            //ok = false;
+        //}
+    //}
 
-            // -------- <Font FamilyName="">
-            // Optional
-            std::tie(FamilyName, std::ignore) = fontElement->GetStringAttribute("FamilyName");
+    //return ok;
+//}
 
-            // -------- <Font Charset="">
-            // Optional
-            std::tie(Charset, std::ignore) = fontElement->GetStringAttribute("Charset");
+//// defined in ofd/Font.cc
+//std::tuple<FT_Face, cairo_font_face_t*, bool> CreateCairoFontFace(char *fontData, size_t fontDataLen);
 
-            // -------- <Font Charset="">
-            // Optional
-            std::tie(Charset, std::ignore) = fontElement->GetStringAttribute("Charset");
+//bool OFDFont::CreateFromData(char *fontData, size_t fontDataSize){
+    //bool ok = true;
 
-            // -------- <Font Serif="">
-            // Optional
-            std::tie(Serif, std::ignore) = fontElement->GetBooleanAttribute("Serif");
+    //LOG(INFO) << "@@@@@@@@ ID: " << ID << " FontName: " << FontName << " fontDataSize: " << fontDataSize;
 
-            // -------- <Font Bold="">
-            // Optional
-            std::tie(Bold, std::ignore) = fontElement->GetBooleanAttribute("Bold");
+    //if ( m_fontData != nullptr ){
+        //delete m_fontData;
+        //m_fontData = nullptr;
+    //}
+    //m_fontDataSize = fontDataSize;
+    //m_fontData = fontData;
+    ////m_fontData = new char[fontDataSize];
+    ////memcpy(m_fontData, fontData, fontDataSize);
 
-            // -------- <Font Italic="">
-            // Optional
-            std::tie(Italic, std::ignore) = fontElement->GetBooleanAttribute("Italic");
+    //FT_Face face;
+    //cairo_font_face_t *font_face;
+    //std::tie(face, font_face, ok) = CreateCairoFontFace(m_fontData, m_fontDataSize); 
 
-            // -------- <Font FixedWidth="">
-            // Optional
-            std::tie(FixedWidth, std::ignore) = fontElement->GetBooleanAttribute("FixedWidth");
+    //m_fontFace = font_face;
+    //m_bLoaded = true;
 
-            XMLElementPtr fontFileElement = fontElement->GetFirstChildElement();
-            if ( fontFileElement != nullptr && fontFileElement->GetName() == "FontFile" ){
-                std::tie(FontFile, std::ignore) = fontFileElement->GetStringValue();
-            }
+    //return ok;
+//}
 
-            ok = true;
-        } else {
-            ok = false;
-        }
-    }
+//bool OFDFont::Load(OFDPackagePtr package, bool reload){
+    //if ( m_bLoaded && !reload ) return true;
 
-    return ok;
-}
+    //// FIXME
+    ////if ( ID > 0 ){
 
-static cairo_user_data_key_t _ft_cairo_key;
-static void _ft_done_face_uncached (void *closure)
-{
-    FT_Face face = (FT_Face) closure;
-    FT_Done_Face (face);
-}
+        ////std::string fontFile = std::string("./data/embed/f") + std::to_string(ID) + ".otf";
+        //////std::string fontFile = "./data/embed/f2.otf";
+        ////LOG(ERROR) << "Load fontFile: " << fontFile;
 
-std::tuple<FT_Face, cairo_font_face_t*, bool> createCairoFontFace(char *fontData, size_t fontDataLen){
-    bool ok = false;
+        ////char *fontData = nullptr;
+        ////size_t fontDataSize = 0;
+        ////bool readOK = false;
+        ////std::tie(fontData, fontDataSize, readOK) = utils::ReadFileData(fontFile);
 
-    FT_Face face;
-    cairo_font_face_t *font_face;
+        ////m_bLoaded = CreateFromData(fontData, fontDataSize);
 
-    if ( FT_New_Memory_Face(FreetypeInitiator::ft_lib, (unsigned char *)fontData, fontDataLen, 0, &face) != 0 ){
-        LOG(ERROR) << "FT_New_Memory_Face() in OFDFont::createCairoFontFace() failed.";
-    } else {
+    ////} else {
+    //// --------------
+        //bool ok = true;
 
-        font_face = cairo_ft_font_face_create_for_ft_face (face, FT_LOAD_NO_HINTING | FT_LOAD_NO_BITMAP);
-        if ( cairo_font_face_set_user_data (font_face, &_ft_cairo_key, face, _ft_done_face_uncached) != 0 ) {
-            LOG(ERROR) << "cairo_font_face_set_user_data() in OFDFont::createCairoFontFace() failed.";
-            _ft_done_face_uncached(face);
-            cairo_font_face_destroy(font_face);
-            font_face = nullptr;
-        } else {
-            ok = true;
-        }
-    }
-
-    return std::make_tuple(face, font_face, ok);
-}
-
-bool OFDFont::CreateFromData(char *fontData, size_t fontDataSize){
-    bool ok = true;
-
-    LOG(INFO) << "@@@@@@@@ ID: " << ID << " FontName: " << FontName << " fontDataSize: " << fontDataSize;
-
-    if ( m_fontData != nullptr ){
-        delete m_fontData;
-        m_fontData = nullptr;
-    }
-    m_fontDataSize = fontDataSize;
-    m_fontData = fontData;
-    //m_fontData = new char[fontDataSize];
-    //memcpy(m_fontData, fontData, fontDataSize);
-
-    FT_Face face;
-    cairo_font_face_t *font_face;
-    std::tie(face, font_face, ok) = createCairoFontFace(m_fontData, m_fontDataSize); 
-
-    m_fontFace = font_face;
-    m_bLoaded = true;
-
-    return ok;
-}
-
-bool OFDFont::Load(OFDPackagePtr package, bool reload){
-    if ( m_bLoaded && !reload ) return true;
-
-    // FIXME
-    //if ( ID > 0 ){
-
-        //std::string fontFile = std::string("./data/embed/f") + std::to_string(ID) + ".otf";
-        ////std::string fontFile = "./data/embed/f2.otf";
-        //LOG(ERROR) << "Load fontFile: " << fontFile;
+        //std::string fontFilePath = m_fontFilePath;
+        //LOG(DEBUG) << "Load Font: " << fontFilePath;
 
         //char *fontData = nullptr;
         //size_t fontDataSize = 0;
         //bool readOK = false;
-        //std::tie(fontData, fontDataSize, readOK) = utils::ReadFileData(fontFile);
+        //std::tie(fontData, fontDataSize, readOK) = package->ReadZipFileRaw(fontFilePath);
+        //if ( readOK ){
+            //if ( CreateFromData(fontData, fontDataSize) ){
+                //LOG(INFO) << "Font " << FontName << "(ID=" << ID << ") loaded.";
+            //} else {
+                //LOG(ERROR) << "createCairoFontFace() in OFDFont::Load() failed.";
+                //ok = false;
+            //}
+        //} else {
+            //ok = false;
+            //LOG(ERROR) << "Call ReadZipFileRaw() to read font file " << fontFilePath << " failed.";
+        //}
 
-        //m_bLoaded = CreateFromData(fontData, fontDataSize);
+        //m_bLoaded = ok;
+    ////}
 
+    //return m_bLoaded;
+//}
+
+//unsigned long OFDFont::GetGlyph(unsigned int code, unsigned int *u, int uLen) const{
+    //FT_UInt gid;
+
+    //if ( m_codeToGID && code < m_codeToGIDLen) {
+        //gid = (FT_UInt)m_codeToGID[code];
     //} else {
-    // --------------
-        bool ok = true;
+        //gid = (FT_UInt)code;
+    //}
+    //return gid;
+//}
 
-        std::string fontFilePath = m_fontFilePath;
-        LOG(DEBUG) << "Load Font: " << fontFilePath;
+//// **************** class OFDFontEngine::ImplCls ****************
 
-        char *fontData = nullptr;
-        size_t fontDataSize = 0;
-        bool readOK = false;
-        std::tie(fontData, fontDataSize, readOK) = package->ReadZipFileRaw(fontFilePath);
-        if ( readOK ){
-            if ( CreateFromData(fontData, fontDataSize) ){
-                LOG(INFO) << "Font " << FontName << "(ID=" << ID << ") loaded.";
-            } else {
-                LOG(ERROR) << "createCairoFontFace() in OFDFont::Load() failed.";
-                ok = false;
-            }
-        } else {
-            ok = false;
-            LOG(ERROR) << "Call ReadZipFileRaw() to read font file " << fontFilePath << " failed.";
-        }
+//class OFDFontEngine::ImplCls{
+//public:
+    //ImplCls(OFDFontEngine *fontEngine, OFDDocumentPtr document);
+    //~ImplCls();
 
-        m_bLoaded = ok;
+    //OFDFontPtr GetFont(uint64_t fontID);
+
+    //// -------- Private Attributes --------
+//public:
+    //std::list<OFDFontPtr> m_cachedFonts;
+    //OFDFontEngine *m_fontEngine;
+
+//private:
+    //std::weak_ptr<OFDDocument> m_document;
+
+//}; // class OFDFontEngine::ImplCls
+
+
+//OFDFontEngine::ImplCls::ImplCls(OFDFontEngine *fontEngine, OFDDocumentPtr document) :
+    //m_fontEngine(fontEngine), m_document(document) {
+    //assert(fontEngine != nullptr);
+    //assert(document != nullptr);
+//}
+
+//OFDFontEngine::ImplCls::~ImplCls(){
+//}
+
+//OFDFontPtr OFDFontEngine::ImplCls::GetFont(uint64_t fontID){
+    //OFDFontPtr font = nullptr;
+
+    //for ( auto iter = m_cachedFonts.begin(); iter != m_cachedFonts.end() ; iter++ ){
+        //font = *iter;
+        //if ( font != nullptr && font->ID == fontID ){
+            //m_cachedFonts.erase(iter);
+            //break;
+        //}
+    //}
+    //if ( font != nullptr ){
+        //m_cachedFonts.push_front(font);
+    //} else {
+        //const FontMap &fonts = m_document.lock()->GetFonts();
+        //auto it = fonts.find(fontID);
+        //if ( it != fonts.end() ){
+            //font = it->second;
+
+            //// LoadFont
+            //OFDPackagePtr package = m_document.lock()->GetOFDPackage();
+            //assert(package != nullptr);
+            //if ( !font->Load(package) ){
+                //LOG(ERROR) << "font->Load(package) in OFDFontEngine::GetFont() failed. fontID=" << fontID;
+                //font = nullptr;
+            //} else {
+                //if ( m_cachedFonts.size() >= OFDFontEngine::MaxCachedFonts ){
+                    //m_cachedFonts.pop_back();
+                //}
+                //m_cachedFonts.push_front(font);
+            //}
+        //} else {
+            //LOG(WARNING) << "The font (ID=" << fontID << ") is not found in document fonts.";
+        //}
     //}
 
-    return m_bLoaded;
-}
+    //return font;
+//}
 
-unsigned long OFDFont::GetGlyph(unsigned int code, unsigned int *u, int uLen) const{
-    FT_UInt gid;
+//// **************** class OFDFontEngine ****************
 
-    if ( m_codeToGID && code < m_codeToGIDLen) {
-        gid = (FT_UInt)m_codeToGID[code];
-    } else {
-        gid = (FT_UInt)code;
-    }
-    return gid;
-}
-
-// **************** class OFDFontEngine::ImplCls ****************
-
-class OFDFontEngine::ImplCls{
-public:
-    ImplCls(OFDFontEngine *fontEngine, OFDDocumentPtr document);
-    ~ImplCls();
-
-    OFDFontPtr GetFont(uint64_t fontID);
-
-    // -------- Private Attributes --------
-public:
-    std::list<OFDFontPtr> m_cachedFonts;
-    OFDFontEngine *m_fontEngine;
-
-private:
-    std::weak_ptr<OFDDocument> m_document;
-
-}; // class OFDFontEngine::ImplCls
-
-
-OFDFontEngine::ImplCls::ImplCls(OFDFontEngine *fontEngine, OFDDocumentPtr document) :
-    m_fontEngine(fontEngine), m_document(document) {
-    assert(fontEngine != nullptr);
-    assert(document != nullptr);
-}
-
-OFDFontEngine::ImplCls::~ImplCls(){
-}
-
-OFDFontPtr OFDFontEngine::ImplCls::GetFont(uint64_t fontID){
-    OFDFontPtr font = nullptr;
-
-    for ( auto iter = m_cachedFonts.begin(); iter != m_cachedFonts.end() ; iter++ ){
-        font = *iter;
-        if ( font != nullptr && font->ID == fontID ){
-            m_cachedFonts.erase(iter);
-            break;
-        }
-    }
-    if ( font != nullptr ){
-        m_cachedFonts.push_front(font);
-    } else {
-        const FontMap &fonts = m_document.lock()->GetFonts();
-        auto it = fonts.find(fontID);
-        if ( it != fonts.end() ){
-            font = it->second;
-
-            // LoadFont
-            OFDPackagePtr package = m_document.lock()->GetOFDPackage();
-            assert(package != nullptr);
-            if ( !font->Load(package) ){
-                LOG(ERROR) << "font->Load(package) in OFDFontEngine::GetFont() failed. fontID=" << fontID;
-                font = nullptr;
-            } else {
-                if ( m_cachedFonts.size() >= OFDFontEngine::MaxCachedFonts ){
-                    m_cachedFonts.pop_back();
-                }
-                m_cachedFonts.push_front(font);
-            }
-        } else {
-            LOG(WARNING) << "The font (ID=" << fontID << ") is not found in document fonts.";
-        }
-    }
-
-    return font;
-}
-
-// **************** class OFDFontEngine ****************
-
-OFDFontEngine::OFDFontEngine(OFDDocumentPtr ofdDocument) :
-    m_impl(utils::make_unique<OFDFontEngine::ImplCls>(this, ofdDocument)){ 
+//OFDFontEngine::OFDFontEngine(OFDDocumentPtr ofdDocument) :
+    //m_impl(utils::make_unique<OFDFontEngine::ImplCls>(this, ofdDocument)){ 
     
 
-}
+//}
 
-OFDFontEngine::~OFDFontEngine(){
-}
+//OFDFontEngine::~OFDFontEngine(){
+//}
 
-OFDFontPtr OFDFontEngine::GetFont(uint64_t fontID){
-    return m_impl->GetFont(fontID);
-}
+//OFDFontPtr OFDFontEngine::GetFont(uint64_t fontID){
+    //return m_impl->GetFont(fontID);
+//}
 
-OFDFontEnginePtr OFDFontEngine::GetSelf(){
-    return shared_from_this();
-}
+//OFDFontEnginePtr OFDFontEngine::GetSelf(){
+    //return shared_from_this();
+//}
 

@@ -2,15 +2,18 @@
 #include <cairo.h>
 #include <cairo-ft.h>
 #include "OFDCairoRender.h"
-#include "OFDDocument.h"
-#include "OFDPage.h"
-#include "OFDObject.h"
-#include "OFDTextObject.h"
-#include "OFDPathObject.h"
-#include "OFDImageObject.h"
-#include "OFDVideoObject.h"
-#include "OFDCompositeObject.h"
-#include "ofd/OfdPath.h"
+#include "ofd/Document.h"
+#include "ofd/Page.h"
+#include "ofd/Layer.h"
+#include "ofd/Object.h"
+#include "ofd/Font.h"
+#include "ofd/Object.h"
+#include "ofd/TextObject.h"
+#include "ofd/PathObject.h"
+#include "ofd/ImageObject.h"
+#include "ofd/VideoObject.h"
+#include "ofd/CompositeObject.h"
+#include "ofd/Path.h"
 #include "utils/logger.h"
 #include "utils/unicode.h"
 
@@ -26,11 +29,11 @@ public:
 
     void Rebuild(double pixelWidth, double pixelHeight, double resolutionX, double resolutionY);
     //void SetCairoSurface(cairo_surface_t *surface);
-    void DrawPage(OFDPagePtr page, Render::DrawParams drawParams);
-    void DrawObject(OFDObjectPtr object);
+    void DrawPage(PagePtr page, Render::DrawParams drawParams);
+    void DrawObject(ObjectPtr object);
 
     void Paint(cairo_surface_t *surface);
-    bool WriteToPNG(const std::string &filename);
+    bool WriteToPNG(const string &filename);
 
     void SetLineWidth(double lineWidth);
     void UpdateStrokePattern(double R, double G, double B, double opacity);
@@ -39,15 +42,15 @@ public:
 
     void SaveState();
     void RestoreState();
-    void Clip(OfdPathPtr clipPath);
+    void Clip(PathPtr clipPath);
 
 private:
     void Destroy();
-    void DrawTextObject(cairo_t *cr, OFDTextObject *textObject);
-    void DrawPathObject(cairo_t *cr, OFDPathObject *pathObject);
-    void DrawImageObject(cairo_t *cr, OFDImageObject *imageObject);
-    void DrawVideoObject(cairo_t *cr, OFDVideoObject *videoObject);
-    void DrawCompositeObject(cairo_t *cr, OFDCompositeObject *compositeObject);
+    void DrawTextObject(cairo_t *cr, TextObject *textObject);
+    void DrawPathObject(cairo_t *cr, PathObject *pathObject);
+    void DrawImageObject(cairo_t *cr, ImageObject *imageObject);
+    void DrawVideoObject(cairo_t *cr, VideoObject *videoObject);
+    void DrawCompositeObject(cairo_t *cr, CompositeObject *compositeObject);
 
 public:
     OFDCairoRender *m_cairoRender;
@@ -106,7 +109,7 @@ void OFDCairoRender::ImplCls::Rebuild(double pixelWidth, double pixelHeight, dou
     cairo_paint(m_cr);
 }
 
-bool OFDCairoRender::ImplCls::WriteToPNG(const std::string &filename){
+bool OFDCairoRender::ImplCls::WriteToPNG(const string &filename){
     return cairo_surface_write_to_png(m_surface, filename.c_str());
 }
 
@@ -156,14 +159,14 @@ OFDCairoRender::ImplCls::~ImplCls(){
     //cairo_scale(m_cr, m_resolutionX/ 72.0, m_resolutionY / 72.0);
 //}
 
-void TestDrawPage(OFDPagePtr page, cairo_surface_t *surface) {
+void TestDrawPage(PagePtr page, cairo_surface_t *surface) {
 
-    const OFDLayerPtr bodyLayer = page->GetBodyLayer(); 
+    const LayerPtr bodyLayer = page->GetBodyLayer(); 
     if ( bodyLayer == nullptr ) {
         LOG(WARNING) << "page->GetBodyLayer() return nullptr. Maybe NULL content.";
         return;
     }
-    size_t numObjects = bodyLayer->GetObjectsCount();
+    size_t numObjects = bodyLayer->GetNumObjects();
     if ( numObjects == 0 ){
         return;
     }
@@ -186,13 +189,13 @@ void TestDrawPage(OFDPagePtr page, cairo_surface_t *surface) {
     cairo_scale(cr, pixels_per_mm, pixels_per_mm);
 
     for ( size_t i = 0 ; i < numObjects ; i++ ){
-        const OFDObjectPtr object = bodyLayer->GetObject(i);
+        const ObjectPtr object = bodyLayer->GetObject(i);
         assert(object != nullptr);
-        if ( object->Type == ofd::Object::Type::TEXT ){
-            OFDTextObject *textObject = static_cast<OFDTextObject*>(object.get());
+        if ( object->Type == ofd::ObjectType::TEXT ){
+            TextObject *textObject = static_cast<TextObject*>(object.get());
 
             // FIXME
-            OFDFontPtr font = textObject->GetFont();
+            FontPtr font = textObject->GetFont();
             if ( font == nullptr ) {
                 LOG(ERROR) << "TextObject Font  is nullptr.";
                 continue;
@@ -202,7 +205,7 @@ void TestDrawPage(OFDPagePtr page, cairo_surface_t *surface) {
             //assert(font_face != nullptr);
             //cairo_set_font_face(cr, font_face);
 
-            size_t numTextCodes = textObject->GetTextCodesCount();
+            size_t numTextCodes = textObject->GetNumTextCodes();
             //LOG(DEBUG) << "numTextCodes: " << numTextCodes;
             for ( size_t n = 0 ; n < numTextCodes ; n++ ){
 
@@ -229,7 +232,7 @@ void TestDrawPage(OFDPagePtr page, cairo_surface_t *surface) {
                 const Text::TextCode &textCode = textObject->GetTextCode(n);
                 double X = textCode.X;
                 double Y = textCode.Y;
-                std::string text = textCode.Text;
+                string text = textCode.Text;
 
                 double X1 = X * dpi / 72;
                 double Y1 = Y - 500;// * dpi / 72;
@@ -243,12 +246,12 @@ void TestDrawPage(OFDPagePtr page, cairo_surface_t *surface) {
     }
 }
 
-void DrawFreeTypeString(double X, double Y, const std::string &text, cairo_t *cr, cairo_font_face_t *font_face,
+void DrawFreeTypeString(double X, double Y, const string &text, cairo_t *cr, cairo_font_face_t *font_face,
         const cairo_matrix_t *font_matrix, const cairo_matrix_t *ctm, const cairo_font_options_t *font_options, cairo_pattern_t *strokePattern){
 
     cairo_scaled_font_t *scaled_font = cairo_scaled_font_create(font_face, font_matrix, ctm, font_options);
 
-//void DrawFreeTypeString(double X, double Y, const std::string &text, cairo_t *cr, 
+//void DrawFreeTypeString(double X, double Y, const string &text, cairo_t *cr, 
         //const cairo_matrix_t *font_matrix, const cairo_matrix_t *ctm, const cairo_font_options_t *font_options){
 
     //cairo_scaled_font_t *scaled_font = cairo_get_scaled_font(cr);
@@ -367,7 +370,7 @@ void DrawFreeTypeString(double X, double Y, const std::string &text, cairo_t *cr
 }
 
 // ======== OFDCairoRender::ImplCls::Draw() ========
-void OFDCairoRender::ImplCls::DrawPage(OFDPagePtr page, Render::DrawParams drawParams){
+void OFDCairoRender::ImplCls::DrawPage(PagePtr page, Render::DrawParams drawParams){
     if ( page == nullptr ) return;
     if ( m_surface == nullptr ) return;
     double offsetX;
@@ -380,12 +383,12 @@ void OFDCairoRender::ImplCls::DrawPage(OFDPagePtr page, Render::DrawParams drawP
     //TestDrawPage(page, m_surface);
     //return;
 
-    const OFDLayerPtr bodyLayer = page->GetBodyLayer(); 
+    const LayerPtr bodyLayer = page->GetBodyLayer(); 
     if ( bodyLayer == nullptr ) {
         LOG(WARNING) << "page->GetBodyLayer() return nullptr. Maybe NULL content.";
         return;
     }
-    size_t numObjects = bodyLayer->GetObjectsCount();
+    size_t numObjects = bodyLayer->GetNumObjects();
     if ( numObjects == 0 ){
         return;
     }
@@ -399,10 +402,10 @@ void OFDCairoRender::ImplCls::DrawPage(OFDPagePtr page, Render::DrawParams drawP
     //cairo_stroke(cr);
 
     // -------- default font --------
-    assert(page->GetOFDDocument() != nullptr);
-    assert(page->GetOFDDocument()->GetDocumentRes() != nullptr);
+    assert(page->GetDocument() != nullptr);
+    assert(page->GetDocument()->GetDocumentRes() != nullptr);
     // FIXME
-    //OFDFontPtr defaultFont = page->GetOFDDocument()->GetDocumentRes()->GetFont(0);
+    //FontPtr defaultFont = page->GetOFDDocument()->GetDocumentRes()->GetFont(0);
     //assert(defaultFont != nullptr);
 
     //double mm_per_inch = 25.4;
@@ -415,7 +418,7 @@ void OFDCairoRender::ImplCls::DrawPage(OFDPagePtr page, Render::DrawParams drawP
     //cairo_scale(cr, pixels_per_mm, pixels_per_mm);
 
     for ( size_t i = 0 ; i < numObjects ; i++ ){
-        const OFDObjectPtr object = bodyLayer->GetObject(i);
+        const ObjectPtr object = bodyLayer->GetObject(i);
         assert(object != nullptr);
 
         DrawObject(object);
@@ -425,8 +428,8 @@ void OFDCairoRender::ImplCls::DrawPage(OFDPagePtr page, Render::DrawParams drawP
             ////cairo_select_font_face(cr, "Simsun", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
 
             ////// FIXME
-            ////OFDFontPtr font = defaultFont;
-            //OFDFontPtr font = textObject->GetFont();
+            ////FontPtr font = defaultFont;
+            //FontPtr font = textObject->GetFont();
 
             //assert(font != nullptr);
             //assert(font->IsLoaded());
@@ -461,7 +464,7 @@ void OFDCairoRender::ImplCls::DrawPage(OFDPagePtr page, Render::DrawParams drawP
                 //const Text::TextCode &textCode = textObject->GetTextCode(n);
                 //double X = textCode.X;
                 //double Y = textCode.Y;
-                //std::string text = textCode.Text;
+                //string text = textCode.Text;
 
                 //double X1 = X * dpi / 72;
                 //double Y1 = Y * dpi / 72;
@@ -492,7 +495,7 @@ void OFDCairoRender::ImplCls::DrawPage(OFDPagePtr page, Render::DrawParams drawP
 
 }
 
-void OFDCairoRender::ImplCls::DrawObject(OFDObjectPtr object){
+void OFDCairoRender::ImplCls::DrawObject(ObjectPtr object){
     cairo_t *cr = m_cr;
 
     // FIXME
@@ -500,25 +503,25 @@ void OFDCairoRender::ImplCls::DrawObject(OFDObjectPtr object){
     //cairo_rectangle(cr, 0, 0 + 0.5, 18.1944, 18.1944 + 0.5);
     //cairo_stroke(cr);
 
-    if ( object->Type == ofd::Object::Type::TEXT ) {
-        OFDTextObject *textObject = (OFDTextObject*)object.get();
+    if ( object->Type == ofd::ObjectType::TEXT ) {
+        TextObject *textObject = (TextObject*)object.get();
         DrawTextObject(cr, textObject);
-    } else if ( object->Type == ofd::Object::Type::PATH ){
-        OFDPathObject *pathObject = (OFDPathObject*)object.get();
+    } else if ( object->Type == ofd::ObjectType::PATH ){
+        PathObject *pathObject = (PathObject*)object.get();
         DrawPathObject(cr, pathObject);
-    } else if ( object->Type == ofd::Object::Type::IMAGE ){
-        OFDImageObject *imageObject = (OFDImageObject*)object.get();
+    } else if ( object->Type == ofd::ObjectType::IMAGE ){
+        ImageObject *imageObject = (ImageObject*)object.get();
         DrawImageObject(cr, imageObject);
-    } else if ( object->Type == ofd::Object::Type::VIDEO ){
-        OFDVideoObject *videoObject = (OFDVideoObject*)object.get();
+    } else if ( object->Type == ofd::ObjectType::VIDEO ){
+        VideoObject *videoObject = (VideoObject*)object.get();
         DrawVideoObject(cr, videoObject);
-    } else if ( object->Type == ofd::Object::Type::COMPOSITE ){
-        OFDCompositeObject *compositeObject = (OFDCompositeObject*)object.get();
+    } else if ( object->Type == ofd::ObjectType::COMPOSITE ){
+        CompositeObject *compositeObject = (CompositeObject*)object.get();
         DrawCompositeObject(cr, compositeObject);
     }
 }
 
-void OFDCairoRender::ImplCls::DrawTextObject(cairo_t *cr, OFDTextObject *textObject){
+void OFDCairoRender::ImplCls::DrawTextObject(cairo_t *cr, TextObject *textObject){
     if ( textObject == nullptr ) return;
 
     //double dpi = 150;
@@ -527,7 +530,7 @@ void OFDCairoRender::ImplCls::DrawTextObject(cairo_t *cr, OFDTextObject *textObj
     // FIXME
     //cairo_select_font_face(cr, "Simsun", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
 
-    OFDFontPtr font = textObject->GetFont();
+    FontPtr font = textObject->GetFont();
 
     // FIXME
     // fondID:
@@ -537,7 +540,7 @@ void OFDCairoRender::ImplCls::DrawTextObject(cairo_t *cr, OFDTextObject *textObj
     //     5 - 数字（显示位置右下偏移）
     //     10 - 13 - 字体未载入
     //     16 - 19 18- 黑体小标题 19 - 黑体顿号、小括号
-    //OFDFontPtr defaultFont = textObject->GetPage()->GetOFDDocument()->GetDocumentRes()->GetFont(4);
+    //FontPtr defaultFont = textObject->GetPage()->GetOFDDocument()->GetDocumentRes()->GetFont(4);
     //assert(defaultFont != nullptr);
     //font = defaultFont;
 
@@ -550,7 +553,7 @@ void OFDCairoRender::ImplCls::DrawTextObject(cairo_t *cr, OFDTextObject *textObj
         //return;
     //}
 
-    cairo_font_face_t *font_face = font->GetFontFace();
+    cairo_font_face_t *font_face = font->GetCairoFontFace();
     assert(font_face != nullptr);
 
     cairo_set_font_face(cr, font_face);
@@ -561,8 +564,8 @@ void OFDCairoRender::ImplCls::DrawTextObject(cairo_t *cr, OFDTextObject *textObj
     __attribute__((unused)) double xy = ctm[1];
 
     // FIXME
-    __attribute__((unused)) double yx = -ctm[2];
-    __attribute__((unused)) double yy = -ctm[3];
+    __attribute__((unused)) double yx = ctm[2];
+    __attribute__((unused)) double yy = ctm[3];
 
     __attribute__((unused)) double x0 = ctm[4];
     __attribute__((unused)) double y0 = ctm[5];
@@ -583,9 +586,9 @@ void OFDCairoRender::ImplCls::DrawTextObject(cairo_t *cr, OFDTextObject *textObj
     // -------- Draw Text --------
     const Text::TextCode &textCode = textObject->GetTextCode(0);
     double X = textCode.X;
-    double Y = 841.89 - textCode.Y;
-    //double Y = textCode.Y;
-    std::string text = textCode.Text;
+    double Y = textCode.Y;
+    //double Y = 841.89 - textCode.Y;
+    string text = textCode.Text;
 
     // FIXME
     //double X1 = X * dpi / 72;
@@ -617,14 +620,16 @@ void OFDCairoRender::ImplCls::DrawTextObject(cairo_t *cr, OFDTextObject *textObj
     return;
 }
 
-void DoCairoPath(cairo_t *cr, OfdPathPtr path){
+void DoCairoPath(cairo_t *cr, PathPtr path){
+    if ( path == nullptr ) return;
+
     size_t numSubpaths = path->GetNumSubpaths();
     if ( numSubpaths == 0 ) return;
 
     cairo_new_path(cr);
 
     for ( size_t idx = 0 ; idx < numSubpaths ; idx++){
-        OfdSubpathPtr subpath = path->GetSubpath(idx);
+        SubpathPtr subpath = path->GetSubpath(idx);
         if ( subpath == nullptr ) continue;
         size_t numPoints = subpath->GetNumPoints();
         if ( numPoints < 2 ) continue;
@@ -643,25 +648,25 @@ void DoCairoPath(cairo_t *cr, OfdPathPtr path){
     }
 }
 
-void OFDCairoRender::ImplCls::DrawPathObject(cairo_t *cr, OFDPathObject *pathObject){
+void OFDCairoRender::ImplCls::DrawPathObject(cairo_t *cr, PathObject *pathObject){
     if ( pathObject == nullptr ) return;
 
-    OfdPathPtr path = pathObject->GetPath();
+    PathPtr path = pathObject->GetPath();
     DoCairoPath(cr, path);
 
     cairo_set_source(cr, m_strokePattern);
     cairo_stroke(cr);
 }
 
-void OFDCairoRender::ImplCls::DrawImageObject(cairo_t *cr, OFDImageObject *imageObject){
+void OFDCairoRender::ImplCls::DrawImageObject(cairo_t *cr, ImageObject *imageObject){
     if ( imageObject == nullptr ) return;
 }
 
-void OFDCairoRender::ImplCls::DrawVideoObject(cairo_t *cr, OFDVideoObject *videoObject){
+void OFDCairoRender::ImplCls::DrawVideoObject(cairo_t *cr, VideoObject *videoObject){
     if ( videoObject == nullptr ) return;
 }
 
-void OFDCairoRender::ImplCls::DrawCompositeObject(cairo_t *cr, OFDCompositeObject *compositeObject){
+void OFDCairoRender::ImplCls::DrawCompositeObject(cairo_t *cr, CompositeObject *compositeObject){
     if ( compositeObject == nullptr ) return;
 }
 
@@ -698,7 +703,7 @@ void OFDCairoRender::ImplCls::RestoreState(){
     cairo_restore(m_cr);
 }
 
-void OFDCairoRender::ImplCls::Clip(OfdPathPtr clipPath){
+void OFDCairoRender::ImplCls::Clip(PathPtr clipPath){
     DoCairoPath(m_cr, clipPath);
     cairo_set_fill_rule(m_cr, CAIRO_FILL_RULE_WINDING);
     cairo_clip(m_cr);
@@ -728,7 +733,7 @@ void OFDCairoRender::Paint(cairo_surface_t *surface){
     m_impl->Paint(surface);
 }
 
-bool OFDCairoRender::WriteToPNG(const std::string &filename){
+bool OFDCairoRender::WriteToPNG(const string &filename){
     return m_impl->WriteToPNG(filename);
 }
 
@@ -745,12 +750,12 @@ cairo_t *OFDCairoRender::GetCairoContext() const{
 }
 
 // ======== OFDCairoRender::DrawPage() ========
-void OFDCairoRender::DrawPage(OFDPagePtr page, Render::DrawParams drawParams){
+void OFDCairoRender::DrawPage(PagePtr page, Render::DrawParams drawParams){
     OFDRender::DrawPage(page, drawParams);
     m_impl->DrawPage(page, drawParams);
 }
 
-void OFDCairoRender::DrawObject(OFDObjectPtr object){
+void OFDCairoRender::DrawObject(ObjectPtr object){
     m_impl->DrawObject(object);
 }
 
@@ -778,7 +783,7 @@ void OFDCairoRender::RestoreState(){
     m_impl->RestoreState();
 }
 
-void OFDCairoRender::Clip(OfdPathPtr clipPath){
+void OFDCairoRender::Clip(PathPtr clipPath){
     m_impl->Clip(clipPath);
 }
 

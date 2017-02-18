@@ -2,24 +2,26 @@
 #define __OFD_PATHOBJECT_H__
 
 #include <memory>
-#include "OFDObject.h"
-#include "ofd/OfdPath.h"
+#include "ofd/Object.h"
+#include "ofd/Path.h"
+#include "ofd/Common.h"
 
 namespace ofd{
 
-    class OFDPathObject;
-    typedef std::shared_ptr<OFDPathObject> OFDPathObjectPtr;
+    class PathObject;
+    typedef std::shared_ptr<PathObject> PathObjectPtr;
 
-    // ======== class OFDPathObject ========
+    // ======== class PathObject ========
     // OFD P52，Page.xsd.
-    class OFDPathObject : public OFDObject{
+    class PathObject : public Object{
     public:
 
-        OFDPathObject(OFDPagePtr page);
-        virtual ~OFDPathObject();
+        PathObject(LayerPtr layer);
+        virtual ~PathObject();
 
-        OfdPathPtr GetPath() const;
-        void SetPath(OfdPathPtr path);
+        const PathPtr GetPath() const {return m_path;};
+        PathPtr GetPath() {return m_path;};
+        void SetPath(PathPtr path){m_path = path;};
 
     protected:
         virtual void GenerateAttributesXML(utils::XMLWriter &writer) const override;
@@ -29,8 +31,7 @@ namespace ofd{
         virtual bool IterateElementsXML(utils::XMLElementPtr childElement) override;
 
     private:
-        class ImplCls;
-        std::unique_ptr<ImplCls> m_impl;
+        PathPtr m_path;
 
     }; // class OFDPathObject
 

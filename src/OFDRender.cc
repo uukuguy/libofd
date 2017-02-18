@@ -1,4 +1,5 @@
 #include "OFDRender.h"
+#include "ofd/Page.h"
 #include "OFDCairoRender.h"
 
 using namespace ofd;
@@ -9,7 +10,7 @@ OFDRender::OFDRender() : m_drawParams(std::make_tuple(0.0, 0.0, 1.0)){
 OFDRender::~OFDRender(){
 }
 
-void OFDRender::DrawPage(OFDPagePtr page, Render::DrawParams drawParams){
+void OFDRender::DrawPage(PagePtr page, Render::DrawParams drawParams){
     m_drawParams = drawParams;
 }
 

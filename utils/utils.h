@@ -8,8 +8,11 @@
 #include <sstream>
 // for PRIu64
 #include <inttypes.h>
+#include <math.h>
 
 namespace utils{
+
+    static const double EPS = 1e-6;
 
     std::vector<std::string> SplitString(const std::string& content);
 
@@ -23,6 +26,8 @@ namespace utils{
 
     std::tuple<char*, size_t, bool> ReadFileData(const std::string &filename);
     bool WriteFileData(const std::string &filename, const char *data, size_t dataSize); 
+
+    static inline bool equal(double x, double y) { return fabs(x-y) <= EPS; }
 }
 
 

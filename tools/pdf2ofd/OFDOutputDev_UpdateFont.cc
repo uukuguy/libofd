@@ -1,7 +1,8 @@
 #include <fofi/FoFiTrueType.h>
 #include <fstream>
 #include "OFDOutputDev.h"
-#include "OFDFont.h"
+#include "ofd/Font.h"
+#include "OFDRes.h"
 #include "utils/logger.h"
 #include "Gfx2Ofd.h"
 
@@ -128,7 +129,7 @@ std::tuple<int*, size_t> getCodeToGID(GfxFont *gfxFont, char *fontData, size_t f
 }
 
 // -------- getSubstitutionCorrection() --------
-double getSubstitutionCorrection(OFDFontPtr ofdFont, GfxFont *gfxFont){
+double getSubstitutionCorrection(FontPtr ofdFont, GfxFont *gfxFont){
     double w1, w2, w3;
     CharCode code;
     char *name;
@@ -150,7 +151,7 @@ double getSubstitutionCorrection(OFDFontPtr ofdFont, GfxFont *gfxFont){
                 cairo_font_options_t *options = cairo_font_options_create();
                 cairo_font_options_set_hint_style(options, CAIRO_HINT_STYLE_NONE);
                 cairo_font_options_set_hint_metrics(options, CAIRO_HINT_METRICS_OFF);
-                cairo_scaled_font_t *scaled_font = cairo_scaled_font_create(ofdFont->GetFontFace(), &m, &m, options);
+                cairo_scaled_font_t *scaled_font = cairo_scaled_font_create(ofdFont->GetCairoFontFace(), &m, &m, options);
 
                 cairo_text_extents_t extents;
                 cairo_scaled_font_text_extents(scaled_font, "m", &extents);
@@ -194,8 +195,8 @@ void OFDOutputDev::updateFont(GfxState *state){
 
         //// FIXME
         //// LoadFont!!!
-        OFDFontPtr ofdFont = nullptr;
-        OFDDocument::CommonData &commonData = m_ofdDocument->GetCommonData();
+        FontPtr ofdFont = nullptr;
+        Document::CommonData &commonData = m_document->GetCommonData();
         assert(commonData.DocumentRes != nullptr );
         ofdFont = commonData.DocumentRes->GetFont(fontID);
 
@@ -301,7 +302,7 @@ void OFDOutputDev::updateFont(GfxState *state){
         cairo_matrix_t matrix, invert_matrix;
 
         // FIXME
-        font_face = m_currentFont->GetFontFace();
+        font_face = m_currentFont->GetCairoFontFace();
         cairo_set_font_face(m_cairo, font_face);
 
         m_useShowTextGlyphs = state->getFont()->hasToUnicodeCMap() &&

@@ -2,14 +2,14 @@
 #include <SDL2/SDL_image.h>
 #include <cairo/cairo.h>
 #include <assert.h>
-#include "OFDPackage.h"
-#include "OFDDocument.h"
-#include "OFDPage.h"
+#include "ofd/Package.h"
+#include "ofd/Document.h"
+#include "ofd/Page.h"
 #include "utils/logger.h"
 
 using namespace ofd;
-double g_resolutionX = 150;
-double g_resolutionY = 150;
+double g_resolutionX = 150.0;
+double g_resolutionY = 150.0;
 
 // -------- create_image_surface() --------
 SDL_Surface *create_image_surface(int width, int height, int bpp){
@@ -293,20 +293,20 @@ void SDLApp::Loop(){
 // **************** class MySDLApp ****************
 class MySDLApp : public SDLApp {
 public:
-    MySDLApp(const std::string &title, double screenWidth, double screenHeight, int screenBPP, OFDDocumentPtr document);
+    MySDLApp(const std::string &title, double screenWidth, double screenHeight, int screenBPP, DocumentPtr document);
     virtual ~MySDLApp();
 
     virtual void OnEvent(SDL_Event event, bool &done) override;
     virtual void OnRender(cairo_surface_t *surface) override;
 
-    OFDDocumentPtr m_document;
+    DocumentPtr m_document;
     size_t m_pageIndex;
 
 }; // class MySDLApp
 
 
 // ======== MySDLApp::MySDLApp() ========
-MySDLApp::MySDLApp(const std::string &title, double screenWidth, double screenHeight, int screenBPP, OFDDocumentPtr document)
+MySDLApp::MySDLApp(const std::string &title, double screenWidth, double screenHeight, int screenBPP, DocumentPtr document)
     : SDLApp(title, screenWidth, screenHeight, screenBPP),
         m_document(document), m_pageIndex(0){
 }
@@ -321,7 +321,7 @@ void MySDLApp::OnEvent(SDL_Event event, bool &done){
     case SDL_KEYDOWN:
         if (event.key.keysym.sym == SDLK_UP) {
             if ( m_document != nullptr ){
-                size_t totalPages = m_document->GetPagesCount();
+                size_t totalPages = m_document->GetNumPages();
                 if ( totalPages > 0 ){
                     if ( m_pageIndex == 0 ){
                         m_pageIndex = totalPages - 1;
@@ -334,7 +334,7 @@ void MySDLApp::OnEvent(SDL_Event event, bool &done){
             break;
         } else if (event.key.keysym.sym == SDLK_DOWN) {
             if ( m_document != nullptr ){
-                size_t totalPages = m_document->GetPagesCount();
+                size_t totalPages = m_document->GetNumPages();
                 if ( totalPages > 0 ){
                     if ( m_pageIndex < totalPages - 1 ){
                         m_pageIndex++;
@@ -357,9 +357,9 @@ void MySDLApp::OnEvent(SDL_Event event, bool &done){
 // ======== MySDLApp::OnRender() ========
 void MySDLApp::OnRender(cairo_surface_t *surface){
     if ( m_document != nullptr ){
-        size_t totalPages = m_document->GetPagesCount();
+        size_t totalPages = m_document->GetNumPages();
         if ( totalPages > 0 ){
-            OFDPagePtr currentPage = m_document->GetPage(m_pageIndex);
+            PagePtr currentPage = m_document->GetPage(m_pageIndex);
             if ( currentPage->Open() ){
                 std::unique_ptr<OFDCairoRender> cairoRender(new OFDCairoRender(m_screenWidth, m_screenHeight, g_resolutionX, g_resolutionY));
 
@@ -408,12 +408,12 @@ int main(int argc, char *argv[]){
 
     std::string filename = argv[1];
 
-    ofd::OFDPackagePtr ofdFile = std::make_shared<ofd::OFDPackage>();
-    if ( !ofdFile->Open(filename) ){
+    ofd::PackagePtr package = std::make_shared<ofd::Package>();
+    if ( !package->Open(filename) ){
         LOG(ERROR) << "OFDPackage::Open() failed. filename:" << filename;
         return -1;
     }
-    OFDDocumentPtr document = ofdFile->GetDefaultDocument(); 
+    DocumentPtr document = package->GetDefaultDocument(); 
     assert(document != nullptr);
     LOG(DEBUG) << document->to_string();
 
@@ -423,7 +423,7 @@ int main(int argc, char *argv[]){
         exit(-1);
     }
 
-    size_t total_pages = document->GetPagesCount();
+    size_t total_pages = document->GetNumPages();
     LOG(INFO) << total_pages << " pages in " << filename;
     if ( total_pages > 0 ){
         int screenWidth = 794;
@@ -435,7 +435,7 @@ int main(int argc, char *argv[]){
         app.Execute();
     }
 
-    ofdFile->Close();
+    package->Close();
 
 
 

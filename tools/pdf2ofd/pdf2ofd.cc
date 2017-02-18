@@ -93,7 +93,7 @@ int main(int argc, char *argv[]){
     std::shared_ptr<PDFDoc> pdfDoc = OpenPDFFile(pdfFilename, ownerPassword, userPassword);
     if ( pdfDoc != nullptr ){
 
-        ofd::OFDPackagePtr package = std::make_shared<ofd::OFDPackage>();
+        ofd::PackagePtr package = std::make_shared<ofd::Package>();
 
         std::shared_ptr<OFDOutputDev> ofdOut = std::make_shared<OFDOutputDev>(package);
         ofdOut->ProcessDoc(pdfDoc);

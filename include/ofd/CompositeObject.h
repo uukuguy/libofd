@@ -2,18 +2,18 @@
 #define __OFD_COMPOSITEOBJECT_H__
 
 #include <memory>
-#include "OFDObject.h"
+#include "ofd/Object.h"
 
 namespace ofd{
 
 
-    // ======== class OFDCompositeObject ========
+    // ======== class CompositeObject ========
     // OFD P52，Page.xsd.
-    class OFDCompositeObject : public OFDObject{
+    class CompositeObject : public Object{
     public:
 
-        OFDCompositeObject(OFDPagePtr page);
-        virtual ~OFDCompositeObject();
+        CompositeObject(LayerPtr layer);
+        virtual ~CompositeObject();
 
     protected:
         virtual void GenerateAttributesXML(utils::XMLWriter &writer) const override;
@@ -22,12 +22,8 @@ namespace ofd{
         virtual bool FromAttributesXML(utils::XMLElementPtr objectElement) override;
         virtual bool IterateElementsXML(utils::XMLElementPtr childElement) override;
 
-    private:
-        class ImplCls;
-        std::unique_ptr<ImplCls> m_impl;
-
     }; // class OFDCompositeObject
-    typedef std::shared_ptr<OFDCompositeObject> OFDCompositeObjectPtr;
+    typedef std::shared_ptr<CompositeObject> CompositeObjectPtr;
 
 }; // namespace ofd
 

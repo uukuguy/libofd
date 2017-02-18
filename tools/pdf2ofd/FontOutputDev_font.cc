@@ -32,7 +32,7 @@
 
 #include "FontOutputDev.h"
 #include "utils/logger.h"
-
+#include "utils/utils.h"
 #include "utils/ffw.h"
 
 using namespace ofd;
@@ -43,7 +43,6 @@ long long hash_ref(const Ref * id);
 bool is_truetype_suffix(const std::string & suffix);
 Unicode check_unicode(Unicode * u, int len, CharCode code, GfxFont * font);
 Unicode unicode_from_font (CharCode code, GfxFont * font);
-bool equal(double x, double y);
 
 //using std::min;
 //using std::unordered_set;
@@ -645,7 +644,7 @@ void FontOutputDev::embedFont(const std::string & filepath, GfxFont * font, Font
                      * space_width==0 often means no spaces are used in the PDF
                      * so setting it to be 0.001 should be safe
                      */
-                    if(equal(cur_width, 0))
+                    if(utils::equal(cur_width, 0))
                         cur_width = 0.001;
 
                     info.space_width = cur_width;
@@ -678,7 +677,7 @@ void FontOutputDev::embedFont(const std::string & filepath, GfxFont * font, Font
             info.space_width /= info.font_size_scale;
 
             /* See comments above */
-            if(equal(info.space_width,0))
+            if(utils::equal(info.space_width,0))
                 info.space_width = 0.001;
 
             ffw_add_empty_char((int32_t)' ', (int)floor(info.space_width * info.em_size + 0.5));
