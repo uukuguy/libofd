@@ -6,7 +6,6 @@
 #include <string>
 #include <unordered_map>
 #include "ofd/Common.h"
-#include "OFDCommon.h"
 #include "utils/xml.h"
 
 using namespace utils;

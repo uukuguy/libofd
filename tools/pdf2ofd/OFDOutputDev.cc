@@ -4,10 +4,9 @@
 
 #include <GlobalParams.h>
 
-#include "OFDCommon.h"
 #include "OFDOutputDev.h"
 #include "FontOutputDev.h"
-#include "OFDPage.h"
+#include "ofd/Page.h"
 #include "utils/logger.h"
 
 
