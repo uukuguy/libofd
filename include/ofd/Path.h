@@ -89,6 +89,7 @@ namespace ofd{
             SubpathPtr GetSubpath(size_t idx) const {return m_subpaths[idx];};
             SubpathPtr GetLastSubpath() const;
 
+            const Point& GetStartPoint() const {return m_startPoint;};
         private:
             bool m_bJustMoved;
             Point m_startPoint;
