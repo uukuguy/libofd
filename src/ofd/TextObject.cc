@@ -9,11 +9,15 @@
 using namespace ofd;
 using namespace utils;
 
+ColorPtr TextObject::DefaultStrokeColor = Color::Instance(0,0,0,0);
+ColorPtr TextObject::DefaultFillColor = Color::Instance(0,0,0,255);
+
 TextObject::TextObject(LayerPtr layer) :
     Object(layer, ObjectType::TEXT, "TextObject"),
     Font(nullptr), FontSize(12.0), Stroke(false), Fill(true), HScale(1.0), 
     RD(Text::ReadDirection::ANGLE0), CD(Text::CharDirection::ANGLE0),
-    Italic(false) {
+    Italic(false),
+    FillColor(nullptr), StrokeColor(nullptr){
 }
 
 TextObject::~TextObject(){
@@ -22,6 +26,7 @@ TextObject::~TextObject(){
 // -------- <TextObject>
 // OFD (section 11.2) P63. Page.xsd.
 void TextObject::GenerateAttributesXML(XMLWriter &writer) const{
+    Object::GenerateAttributesXML(writer);
 
     // FIXME
     // -------- <TextObject Font="">
@@ -58,6 +63,25 @@ void TextObject::GenerateAttributesXML(XMLWriter &writer) const{
 // -------- <TextObject>
 // OFD (section 11.2) P63. Page.xsd.
 void TextObject::GenerateElementsXML(XMLWriter &writer) const{
+    Object::GenerateElementsXML(writer);
+
+    // -------- <FillColor>
+    // OFD (section 11.3) P65. Page.xsd
+    // Optional.
+    if ( FillColor != nullptr ){
+        writer.StartElement("FillColor");{
+            FillColor->WriteXML(writer);
+        } writer.EndElement();
+    }
+
+    // -------- <StrokeColor>
+    // OFD (section 11.3) P65. Page.xsd
+    // Optional.
+    if ( StrokeColor != nullptr ){
+        writer.StartElement("StrokeColor");{
+            StrokeColor->WriteXML(writer);
+        } writer.EndElement();
+    }
 
     // -------- <TextCode>
     // OFD (section 11.3) P65. Page.xsd
@@ -98,6 +122,10 @@ void TextObject::GenerateElementsXML(XMLWriter &writer) const{
 // -------- TextObject --------
 // OFD (section 11.2) P63
 bool TextObject::FromAttributesXML(XMLElementPtr objectElement){
+    if ( !Object::FromAttributesXML(objectElement) ){
+        return false;
+    }
+
     bool ok = true;
 
     // -------- <TextObject Font="">
@@ -139,6 +167,10 @@ bool TextObject::FromAttributesXML(XMLElementPtr objectElement){
 // -------- TextObject --------
 // OFD (section 11.2) P63
 bool TextObject::IterateElementsXML(XMLElementPtr childElement){
+    if ( !Object::IterateElementsXML(childElement) ){
+        return false;
+    }
+
     bool ok = false;
 
     std::string childName = childElement->GetName();

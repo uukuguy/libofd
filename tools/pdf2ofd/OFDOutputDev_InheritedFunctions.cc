@@ -104,7 +104,7 @@ void OFDOutputDev::startPage(int pageNum, GfxState *state, XRef *xrefA) {
     }
 }
 
-void OFDOutputDev::ExportWord(TextWord *word, GfxRGB wordColor){
+void OFDOutputDev::ExportWord(TextWord *word){
     double xMin, yMin, xMax, yMax;
     double lineXMin = 0, lineYMin = 0, lineXMax = 0, lineYMax = 0;
 
@@ -203,7 +203,16 @@ void OFDOutputDev::ExportWord(TextWord *word, GfxRGB wordColor){
             textObject->SetFont(textFont);
             textObject->SetFontSize(fontSize);
 
-            //textObject->SetFillColor(wordColor);
+            double r, g, b; 
+            word->getColor(&r, &g, &b);
+
+            ColorPtr wordColor = Color::Instance(r, g, b, 255);
+            if ( !wordColor->Equal(TextObject::DefaultFillColor) ){
+                textObject->SetFillColor(wordColor);
+            }
+            if ( r != 0 || g != 0 || b != 0 ){
+                LOG(DEBUG) << "ExportWord wordColor=(" << r << "," << g << "," << b << ")";
+            }
 
             ObjectPtr object = std::shared_ptr<ofd::Object>(textObject);
             m_currentOFDPage->AddObject(object);
@@ -315,9 +324,8 @@ void OFDOutputDev::processTextLine(TextLine *line, LayerPtr bodyLayer){
     //std::stringstream wordXML;
     //wordXML << std::fixed << std::setprecision(6);
 
-    GfxRGB wordColor;
     for (word = line->getWords(); word; word = word->getNext()) {
-        ExportWord(word, wordColor);
+        ExportWord(word);
     }
 
     //LOG(DEBUG) << wordXML.str();

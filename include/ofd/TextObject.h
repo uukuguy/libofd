@@ -57,6 +57,10 @@ namespace ofd{
 
     class TextObject : public Object {
         public:
+            static ColorPtr DefaultStrokeColor;
+            static ColorPtr DefaultFillColor;
+
+        public:
             TextObject(LayerPtr layer);
             virtual ~TextObject();
 
@@ -75,8 +79,10 @@ namespace ofd{
             // 600, 700, 800, 900。 默认值为400。
             bool                Italic;   // 是否是斜体样式，默认值为false。
 
+        private:
             ColorPtr         FillColor;   // 填充色，默认值为黑色。
             ColorPtr         StrokeColor; // 勾边色，默认值为透明色。
+
 
             // =============== Public Methods ================
         public:
@@ -121,11 +127,20 @@ namespace ofd{
 
             // 填充色，默认值为黑色。
             ColorPtr GetFillColor() const{return FillColor;};
-            void SetFillColor(ColorPtr fillColor){FillColor = fillColor;};
+            void SetFillColor(ColorPtr fillColor){
+                if ( !fillColor->Equal(DefaultFillColor) ){
+                    FillColor = fillColor;
+                }
+            };
 
             // 勾边色，默认值为透明色。
             ColorPtr GetStrokeColor() const{return StrokeColor;};
-            void SteStrokeColor(ColorPtr strokeColor){StrokeColor = strokeColor;};
+            void SteStrokeColor(ColorPtr strokeColor){
+                if ( !strokeColor->Equal(DefaultStrokeColor) ){
+                    StrokeColor = strokeColor;
+                }
+            };
+
 
             // TODO
             //CT_CGTransform CGTransform; // 指定字符编码到字符索引之间的变换关系。

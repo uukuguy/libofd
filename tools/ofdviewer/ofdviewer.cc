@@ -8,8 +8,12 @@
 #include "utils/logger.h"
 
 using namespace ofd;
-double g_resolutionX = 150.0;
-double g_resolutionY = 150.0;
+double g_resolutionX = 144.0;
+double g_resolutionY = 144.0;
+double ZOOM_STEP = 0.1;
+double ZOOM_BASE = exp(1.0);
+double X_STEP = 10;
+double Y_STEP = 10;
 
 // -------- create_image_surface() --------
 SDL_Surface *create_image_surface(int width, int height, int bpp){
@@ -86,6 +90,10 @@ private:
 
 protected:
     SDL_Surface *m_imageSurface;
+    double m_pixelX;
+    double m_pixelY;
+    double m_zoomFactor;
+    bool   m_bHelp;
 
 }; // class SDLApp
 
@@ -93,7 +101,8 @@ protected:
 SDLApp::SDLApp(const std::string &title, double screenWidth, double screenHeight, int screenBPP)
     : m_title(title), m_fullscreen(false), 
     m_screenWidth(screenWidth), m_screenHeight(screenHeight), m_screenBPP(screenBPP),
-    m_mainWindow(nullptr), m_screenRenderer(nullptr), m_imageSurface(nullptr){
+    m_mainWindow(nullptr), m_screenRenderer(nullptr), m_imageSurface(nullptr),
+    m_pixelX(0.0), m_pixelY(0.0), m_zoomFactor(ZOOM_BASE), m_bHelp(false){
     init();
 }
 
@@ -171,12 +180,38 @@ void SDLApp::Execute(){
             }
             switch (event.type) {
             case SDL_KEYDOWN:
-                if (event.key.keysym.sym == SDLK_ESCAPE){
+                if ( event.key.keysym.sym == SDLK_ESCAPE){
                     done = true;
-                } else if (event.key.keysym.sym == SDLK_q){
+                } else if ( event.key.keysym.sym == SDLK_q){
                     //SDL_GetModState() & KMOD_CTRL
                     //inputText = SDL_GetClipboardText();
                     done = true;
+                } else if ( event.key.keysym.sym == SDLK_h ){
+                    // Move window left
+                    m_pixelX += X_STEP;
+                } else if ( event.key.keysym.sym == SDLK_l ){
+                    // Move window right
+                    m_pixelX -= X_STEP;
+                } else if ( event.key.keysym.sym == SDLK_k ){
+                    // Move window up
+                    m_pixelY += Y_STEP;
+                } else if ( event.key.keysym.sym == SDLK_j ){
+                    // Move window down 
+                    m_pixelY -= Y_STEP;
+                } else if ( event.key.keysym.sym == SDLK_i ){
+                    // Zoom In
+                    m_zoomFactor += ZOOM_STEP;
+                } else if ( event.key.keysym.sym == SDLK_o ){
+                    // Zoom Out
+                    m_zoomFactor -= ZOOM_STEP;
+                } else if ( event.key.keysym.sym == SDLK_f ){
+                    // Zoom to Fit 
+                    m_zoomFactor = ZOOM_BASE;
+                    m_pixelX = 0;
+                    m_pixelY = 0;
+                } else if ( event.key.keysym.sym == SDLK_h ){
+                    // Help 
+                    m_bHelp = !m_bHelp;
                 }
                 break;
             case SDL_MOUSEMOTION:
@@ -359,15 +394,36 @@ void MySDLApp::OnRender(cairo_surface_t *surface){
     if ( m_document != nullptr ){
         size_t totalPages = m_document->GetNumPages();
         if ( totalPages > 0 ){
-            PagePtr currentPage = m_document->GetPage(m_pageIndex);
-            if ( currentPage->Open() ){
+            PagePtr page = m_document->GetPage(m_pageIndex);
+            if ( page->Open() ){
                 std::unique_ptr<OFDCairoRender> cairoRender(new OFDCairoRender(m_screenWidth, m_screenHeight, g_resolutionX, g_resolutionY));
 
-                ofd::Render::DrawParams drawParams = std::make_tuple(0.0, 0.0, 1.0);
-                cairoRender->DrawPage(currentPage, drawParams);
+                /***
+                 * drawParams {pixelX, pixelY, scaling}
+                 * (pixelX, pixelY) 显示窗口左上角坐标与页面原点（左上角）的像素偏移。
+                 * scaling - 缩放比例
+                 *
+                 ***/
+                double pixelX = m_pixelX;
+                double pixelY = m_pixelY;
+                double scaling = 1.0;
+
+                double delta = m_zoomFactor - ZOOM_BASE;
+                double fitScaling = page->GetFitScaling(m_screenWidth, m_screenHeight, g_resolutionX, g_resolutionY);
+                double factor = 1.0;
+                if ( delta >= 0.0 ){
+                    factor = log(m_zoomFactor);
+                } else {
+                    factor = 1.0 - (1.0 / ( 1.0 + exp(delta)) - 0.5) * 2;
+                }
+                scaling = fitScaling * factor;
+
+                //LOG(DEBUG) << "delta: " << delta << " factor: " << factor << " scaling=" << scaling << " offset=(" << pixelX << "," << pixelY << ")";
+                ofd::Render::DrawParams drawParams = std::make_tuple(pixelX, pixelY, scaling);
+                cairoRender->DrawPage(page, drawParams);
                 cairoRender->Paint(surface);
             } else {
-                LOG(ERROR) << "currentPage->Open() failed. pageIndex=" << m_pageIndex;
+                LOG(ERROR) << "page->Open() failed. pageIndex=" << m_pageIndex;
             }
         }
     }

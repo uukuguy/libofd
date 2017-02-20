@@ -7,21 +7,23 @@
 #include <vector>
 #include <iostream>
 
-using namespace std;
+namespace utils{
+    class XMLWriter;
+}
 
 namespace ofd{
 
-    struct ColorSpace;
-    typedef shared_ptr<ColorSpace> ColorSpacePtr;
-    typedef vector<ColorSpacePtr> ColorSpaceArray;
+    class ColorSpace;
+    typedef std::shared_ptr<ColorSpace> ColorSpacePtr;
+    typedef std::vector<ColorSpacePtr> ColorSpaceArray;
 
     // 颜色空间的类型。
     enum class ColorSpaceType{
-        GRAY,
+        GRAY = 0,
         RGB,
         CMYK,
     };
-    __attribute__((unused)) static string GetColorSpaceTypeLabel(ColorSpaceType type){
+    __attribute__((unused)) static std::string GetColorSpaceTypeLabel(ColorSpaceType type){
         if ( type == ColorSpaceType::GRAY ){
             return "GRAY";
         } else if ( type == ColorSpaceType::RGB ){
@@ -29,32 +31,48 @@ namespace ofd{
         } else if ( type == ColorSpaceType::CMYK ){
             return "CMYK";
         }
-        throw "Unknown ofd::ColorSpace::Type: " + to_string((int)type);
+        throw "Unknown ofd::ColorSpace::Type: " + std::to_string((int)type);
     }
 
     // ======== struct ColorSpace ========
     // OFD (section 8.3.1) P31，Res.xsd。
 
-    struct Color;
-    typedef shared_ptr<Color> ColorPtr;
-    typedef vector<ColorPtr> ColorArray;
+    class Color;
+    typedef std::shared_ptr<Color> ColorPtr;
+    typedef std::vector<ColorPtr> ColorArray;
 
-    typedef struct ColorSpace{
+    class ColorSpace{
+        public:
+            static ColorSpacePtr DefaultInstance;
+        public:
+            ColorSpace();
 
-        ColorSpaceType        Type;    // 颜色空间的类型，必选。
-        uint32_t              BPC;     // 每个颜色通道使用的位数，有效取值为1,2,4,8,16，默认值为8。
-        string                Profile; // 指向包内颜色配置文件
-        ColorArray            Palette; // 调色板。调色板中颜色的索引编号从0开始。
+            // =============== Public Attributes ================
+        public:
+            ColorSpaceType        Type;    // 颜色空间的类型，必选。
+            uint32_t              BPC;     // 每个颜色通道使用的位数，有效取值为1,2,4,8,16，默认值为8。
+            std::string           Profile; // 指向包内颜色配置文件
+            ColorArray            Palette; // 调色板。调色板中颜色的索引编号从0开始。
 
-        ColorSpace() : BPC(8) {};
+            // ---------------- Private Attributes ----------------
+        public:
+            uint64_t GetRefID() const {return m_refID;};
+            void SetRefID(uint64_t refID){m_refID = refID;};
+        private:
+            uint64_t              m_refID; // 资源引用ID。缺省值0，指向文档设定的颜色空间。 
 
-    } ColorSpace_t;
+    }; // class ColorSpace
 
 
     typedef struct ColorRGB{
         uint32_t Red;   // 红色
         uint32_t Green; // 绿色
         uint32_t Blue;  // 蓝色
+        ColorRGB() : Red(0), Green(0), Blue(0){
+        }
+        ColorRGB(uint32_t r, uint32_t g, uint32_t b):
+            Red(r), Green(g), Blue(b){
+        }
     } ColorRGB_t;
 
     typedef struct ColorCMYK{
@@ -62,18 +80,48 @@ namespace ofd{
         uint32_t Magenta; // 品红色
         uint32_t Yellow;  // 黄色
         uint32_t blacK;   // 黑色
+        ColorCMYK() : Cyan(0), Magenta(0), Yellow(0), blacK(0){
+        }
+        ColorCMYK(uint32_t c, uint32_t m, uint32_t y, uint32_t k):
+            Cyan(c), Magenta(m), Yellow(y), blacK(k){
+        }
     } ColorCMYK_t;
 
     typedef struct ColorValue{
 
         union{
-            uint32_t  Gray; // 灰度，只包含一个通道来表明灰度值。
-            ColorRGB  RGB;  // 包含三个通道，依次是红、绿、蓝。
-            ColorCMYK CMYK; // 包含四个通道，依次是青、黄、品红、黑。
+            uint32_t  Gray;     // 灰度，只包含一个通道来表明灰度值。
+            ColorRGB  RGB;      // 包含三个通道，依次是红、绿、蓝。
+            ColorCMYK CMYK;     // 包含四个通道，依次是青、黄、品红、黑。
+            uint32_t  Values[4]; // 用于按序号访问颜色通道数值。
         };
 
         ColorValue(){
             memset(this, 0, sizeof(ColorValue));
+        }
+
+        ColorValue(uint32_t gray) : ColorValue(){
+            Gray = gray;
+        }
+
+        ColorValue(uint32_t r, uint32_t g, uint32_t b) : ColorValue() {
+            RGB.Red = r;
+            RGB.Green = g;
+            RGB.Blue = b;
+        }
+
+        ColorValue(uint32_t c, uint32_t m, uint32_t y, uint32_t k) : ColorValue() {
+            CMYK.Cyan = c;
+            CMYK.Magenta = m;
+            CMYK.Yellow = y;
+            CMYK.blacK = k;
+        }
+
+        bool operator ==(const ColorValue& colorValue) const {
+            return Values[0] == colorValue.Values[0] &&
+                    Values[1] == colorValue.Values[1] &&
+                    Values[2] == colorValue.Values[2] &&
+                    Values[3] == colorValue.Values[3];
         }
 
     } ColorValue_t;
@@ -81,29 +129,67 @@ namespace ofd{
 
     // ======== struct Color ========
     // OFD (section 8.3.2) P32, Page.xsd。
-    typedef struct Color{
+    class Color{
+        public:
+            static ColorPtr Instance(uint32_t gray, uint32_t alpha){
+                return std::make_shared<Color>(gray, alpha);
+            }
+            static ColorPtr Instance(uint32_t r, uint32_t g, uint32_t b, uint32_t alpha){
+                return std::make_shared<Color>(r, g, b, alpha);
+            }
+            static ColorPtr Instance(uint32_t c, uint32_t m, uint32_t y, uint32_t k, uint32_t alpha){
+                return std::make_shared<Color>(c, m, y, k, alpha);
+            }
+            static ColorPtr Instance(const ColorValue &colorValue, uint32_t alpha){
+                return std::make_shared<Color>(colorValue, alpha);
+            }
+            static ColorPtr Instance(ColorSpacePtr colorSpace, uint32_t index, uint32_t alpha){
+                return std::make_shared<Color>(colorSpace, index, alpha);
+            }
 
-        weak_ptr<ColorSpace> 
-                         ColorSpace; // 引用资源文件中颜色空间的标识。默认值为文档设定的颜色空间。
-        ColorValue       Value;      // 颜色值，指定了当前颜色空间下各通道的取值。
-                                     // Value的取值应符合“通道1 通道2 通道3 ...”格式。
-                                     // 此属性不出现时，应采用Index属性从颜色空间的调色板中取值。
-                                     // 当二者都不出现时，该颜色各通道的值全部为0。
-        uint32_t         Alpha;      // 颜色透明度，在0-255之间取值。默认值为255，表示完全不透明。
-        uint32_t         Index;      // 调色板中颜色的编号，非负整数，将从当前颜色空间的调色板中
-                                     // 取出相应索引的预定义颜色用来绘制。索引从0开始。
+        public:
+            Color(uint32_t gray, uint32_t alpha);
+            Color(uint32_t r, uint32_t g, uint32_t b, uint32_t alpha);
+            Color(uint32_t c, uint32_t m, uint32_t y, uint32_t k, uint32_t alpha);
+            Color(const ColorValue &colorValue, uint32_t alpha);
+            Color(ColorSpacePtr colorSpace, uint32_t index, uint32_t alpha);
 
-        // TODO 
-        // Pattern;      // 底纹 标准 P34 页，Page.xsd。
-        // AxialShd;     // 轴向渐变 标准 P36 页，Page.xsd。
-        // RadialShd;    // 径向渐变 标准 P40 页，Page.xsd。
-        // GouraudShd;   // 高洛德渐变 标准 P47 页，Page.xsd。
-        // LaGouraudShd; // 格构高洛德渐变 标准 P48 页，Page.xsd。
+            // =============== Public Attributes ================
+        public:
+            typedef std::weak_ptr<ColorSpace> Parent_t;
+            Parent_t         weakColorSpace; // 引用资源文件中颜色空间的标识。默认值为文档设定的颜色空间。
+            ColorValue       Value;          // 颜色值，指定了当前颜色空间下各通道的取值。
+                                             // Value的取值应符合“通道1 通道2 通道3 ...”格式。
+                                             // 此属性不出现时，应采用Index属性从颜色空间的调色板中取值。
+                                             // 当二者都不出现时，该颜色各通道的值全部为0。
+            uint32_t         Index;          // 调色板中颜色的编号，非负整数，将从当前颜色空间的调色板中
+                                             // 取出相应索引的预定义颜色用来绘制。索引从0开始。
+            uint32_t         Alpha;          // 颜色透明度，在0-255之间取值。默认值为255，表示完全不透明。
 
-        Color(ColorSpacePtr colorSpace) : ColorSpace(colorSpace), Alpha(0), Index(0){
-        }
+            // TODO 
+            // Pattern;      // 底纹 标准 P34 页，Page.xsd。
+            // AxialShd;     // 轴向渐变 标准 P36 页，Page.xsd。
+            // RadialShd;    // 径向渐变 标准 P40 页，Page.xsd。
+            // GouraudShd;   // 高洛德渐变 标准 P47 页，Page.xsd。
+            // LaGouraudShd; // 格构高洛德渐变 标准 P48 页，Page.xsd。
 
-    } Color_t; 
+
+            // =============== Public Methods ================
+        public:
+            void WriteXML(utils::XMLWriter &writer) const;
+            bool FromXML(const std::string &strXML);
+            bool Equal(ColorPtr color) const;
+
+            // ---------------- Private Attributes ----------------
+        public:
+            bool IsUsePalette() const {return m_bUsePalette;};
+            void SetUsePalette(bool bEnable = true){m_bUsePalette = bEnable;};
+            ColorSpacePtr GetColorSpace() const;
+
+        private:
+            bool                  m_bUsePalette; // 使用颜色空间调色板标志
+
+    }; // class Color
 
 }; // namespace ofd
 

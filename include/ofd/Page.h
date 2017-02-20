@@ -29,6 +29,9 @@ namespace ofd{
             bool Open();
             void Close();
             
+            // 获得完整显示在窗口中需要的缩放比例
+            double GetFitScaling(double screenWidth, double screenHeight, double resolutionX, double resolutionY);
+
             LayerPtr AddNewLayer(LayerType layerType);
             const LayerPtr GetBodyLayer() const;
             LayerPtr GetBodyLayer();

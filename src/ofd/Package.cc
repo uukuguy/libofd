@@ -317,7 +317,7 @@ DocumentPtr Package::GetDocument(size_t idx) {
 
 // ======== Package::ReadZipFileString() ========
 std::tuple<std::string, bool> Package::ReadZipFileString(const std::string &fileinzip) const{
-    string content;
+    std::string content;
     bool ok = false;
 
     if ( m_zip != nullptr ){
