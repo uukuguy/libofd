@@ -5,7 +5,9 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <map>
 #include <iostream>
+#include "utils/xml.h"
 
 namespace utils{
     class XMLWriter;
@@ -41,9 +43,18 @@ namespace ofd{
     typedef std::shared_ptr<Color> ColorPtr;
     typedef std::vector<ColorPtr> ColorArray;
 
+    class ColorSpace;
+    typedef std::map<uint64_t, ColorSpacePtr> ColorSpaceMap;
+
     class ColorSpace{
         public:
             static ColorSpacePtr DefaultInstance;
+            static ColorSpaceMap GlobalColorSpaces;
+
+            static void GlobalClearColorSpaces();
+            static uint64_t GlobalAddColorSpace(ColorSpacePtr colorSpace);
+            static ColorSpacePtr GlobalGetColorSpace(uint64_t refID);
+
         public:
             ColorSpace();
 
@@ -131,28 +142,28 @@ namespace ofd{
     // OFD (section 8.3.2) P32, Page.xsd。
     class Color{
         public:
-            static ColorPtr Instance(uint32_t gray, uint32_t alpha){
-                return std::make_shared<Color>(gray, alpha);
+            static ColorPtr Instance(uint32_t gray, ColorSpacePtr colorSpace = ColorSpace::DefaultInstance, uint32_t alpha = 255){
+                return std::make_shared<Color>(gray, colorSpace, alpha);
             }
-            static ColorPtr Instance(uint32_t r, uint32_t g, uint32_t b, uint32_t alpha){
-                return std::make_shared<Color>(r, g, b, alpha);
+            static ColorPtr Instance(uint32_t r, uint32_t g, uint32_t b, ColorSpacePtr colorSpace = ColorSpace::DefaultInstance, uint32_t alpha = 255){
+                return std::make_shared<Color>(r, g, b, colorSpace, alpha);
             }
-            static ColorPtr Instance(uint32_t c, uint32_t m, uint32_t y, uint32_t k, uint32_t alpha){
-                return std::make_shared<Color>(c, m, y, k, alpha);
+            static ColorPtr Instance(uint32_t c, uint32_t m, uint32_t y, uint32_t k, ColorSpacePtr colorSpace = ColorSpace::DefaultInstance, uint32_t alpha = 255){
+                return std::make_shared<Color>(c, m, y, k, colorSpace, alpha);
             }
-            static ColorPtr Instance(const ColorValue &colorValue, uint32_t alpha){
-                return std::make_shared<Color>(colorValue, alpha);
+            static ColorPtr Instance(const ColorValue &colorValue, ColorSpacePtr colorSpace = ColorSpace::DefaultInstance, uint32_t alpha = 255){
+                return std::make_shared<Color>(colorValue, colorSpace, alpha);
             }
-            static ColorPtr Instance(ColorSpacePtr colorSpace, uint32_t index, uint32_t alpha){
+            static ColorPtr Instance(ColorSpacePtr colorSpace, uint32_t index, uint32_t alpha = 255){
                 return std::make_shared<Color>(colorSpace, index, alpha);
             }
 
         public:
-            Color(uint32_t gray, uint32_t alpha);
-            Color(uint32_t r, uint32_t g, uint32_t b, uint32_t alpha);
-            Color(uint32_t c, uint32_t m, uint32_t y, uint32_t k, uint32_t alpha);
-            Color(const ColorValue &colorValue, uint32_t alpha);
-            Color(ColorSpacePtr colorSpace, uint32_t index, uint32_t alpha);
+            Color(uint32_t gray, ColorSpacePtr colorSpace = ColorSpace::DefaultInstance, uint32_t alpha = 255);
+            Color(uint32_t r, uint32_t g, uint32_t b, ColorSpacePtr colorSpace = ColorSpace::DefaultInstance, uint32_t alpha = 255);
+            Color(uint32_t c, uint32_t m, uint32_t y, uint32_t k, ColorSpacePtr colorSpace = ColorSpace::DefaultInstance, uint32_t alpha = 255);
+            Color(const ColorValue &colorValue, ColorSpacePtr colorSpace = ColorSpace::DefaultInstance, uint32_t alpha = 255);
+            Color(ColorSpacePtr colorSpace, uint32_t index, uint32_t alpha = 255);
 
             // =============== Public Attributes ================
         public:
@@ -176,8 +187,8 @@ namespace ofd{
 
             // =============== Public Methods ================
         public:
-            void WriteXML(utils::XMLWriter &writer) const;
-            bool FromXML(const std::string &strXML);
+            void WriteColorXML(utils::XMLWriter &writer) const;
+            static std::tuple<ColorPtr, bool> ReadColorXML(utils::XMLElementPtr colorElement);
             bool Equal(ColorPtr color) const;
 
             // ---------------- Private Attributes ----------------
@@ -190,6 +201,7 @@ namespace ofd{
             bool                  m_bUsePalette; // 使用颜色空间调色板标志
 
     }; // class Color
+
 
 }; // namespace ofd
 

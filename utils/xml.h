@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <string>
+#include <tuple>
 
 #define OFDXML_HEAD_ATTRIBUTES \
     writer.WriteAttribute("xmlns:ofd", std::string("http://www.ofdspec.org/2016")); 

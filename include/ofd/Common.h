@@ -39,6 +39,9 @@ namespace ofd{
     class Color;
     typedef std::shared_ptr<Color> ColorPtr;
 
+    class ColorSpace;
+    typedef std::shared_ptr<ColorSpace> ColorSpacePtr;
+
     // 以下类型定义在OFD标准的Definitions.xsd文件中
 
     // ST_ID: 标识，无符号整数，应在文档内唯一。0表示无标识。

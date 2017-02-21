@@ -70,7 +70,7 @@ void TextObject::GenerateElementsXML(XMLWriter &writer) const{
     // Optional.
     if ( FillColor != nullptr ){
         writer.StartElement("FillColor");{
-            FillColor->WriteXML(writer);
+            FillColor->WriteColorXML(writer);
         } writer.EndElement();
     }
 
@@ -79,7 +79,7 @@ void TextObject::GenerateElementsXML(XMLWriter &writer) const{
     // Optional.
     if ( StrokeColor != nullptr ){
         writer.StartElement("StrokeColor");{
-            StrokeColor->WriteXML(writer);
+            StrokeColor->WriteColorXML(writer);
         } writer.EndElement();
     }
 

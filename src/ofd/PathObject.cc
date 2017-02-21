@@ -54,7 +54,7 @@ void PathObject::GenerateElementsXML(XMLWriter &writer) const{
     // Optional.
     if ( FillColor != nullptr ){
         writer.StartElement("FillColor");{
-            FillColor->WriteXML(writer);
+            FillColor->WriteColorXML(writer);
         } writer.EndElement();
     }
     
@@ -63,7 +63,7 @@ void PathObject::GenerateElementsXML(XMLWriter &writer) const{
     // Optional.
     if ( StrokeColor != nullptr ){
         writer.StartElement("StrokeColor");{
-            StrokeColor->WriteXML(writer);
+            StrokeColor->WriteColorXML(writer);
         } writer.EndElement();
     }
 
@@ -102,14 +102,52 @@ void PathObject::GenerateElementsXML(XMLWriter &writer) const{
 }
 
 bool PathObject::FromAttributesXML(XMLElementPtr objectElement){
+    bool ok = false;
     if ( Object::FromAttributesXML(objectElement) ){
-        return true;
+
+        bool exist = false;
+
+        // -------- <PathObject Stroke="">
+        // Optional, default value: true.
+        Stroke = true;
+        std::tie(Stroke, std::ignore) = objectElement->GetBooleanAttribute("Stroke");
+
+        // -------- <PathObject Fill="">
+        // Optional, default value: false.
+        Fill = false;
+        std::tie(Fill, std::ignore) = objectElement->GetBooleanAttribute("Fill");
+
+        // -------- <PathObject Rule="Even-Odd">
+        // Optional, default value: "NonZero".
+        std::string strRule;
+        std::tie(strRule, exist) = objectElement->GetStringAttribute("Rule");
+        Rule = PathRule::NonZero;
+        if ( exist ){
+            if ( strRule == std::string("Even-Odd") ){
+                Rule = PathRule::EvenOdd;
+            }
+        }
+
+        ok = true;
     }
-    return false;
+
+    return ok;
 }
 
 bool PathObject::IterateElementsXML(XMLElementPtr childElement){
     if ( Object::IterateElementsXML(childElement) ){
+
+        std::string childName = childElement->GetName();
+
+        if ( childName == "FillColor" ){
+        } else if ( childName == "StrokeColor" ){
+        } else if ( childName == "AbbreviatedData" ){
+            std::string pathData;
+            std::tie(pathData, std::ignore) = childElement->GetStringValue();
+            if ( !pathData.empty() ){
+            }
+        }
+
         return true;
     }
     return false;
