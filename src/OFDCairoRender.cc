@@ -33,7 +33,7 @@ public:
     void DrawObject(ObjectPtr object);
 
     void Paint(cairo_surface_t *surface);
-    bool WriteToPNG(const string &filename);
+    bool WriteToPNG(const std::string &filename);
 
     void SetLineWidth(double lineWidth);
     void UpdateStrokePattern(double R, double G, double B, double opacity);
@@ -110,7 +110,7 @@ void OFDCairoRender::ImplCls::Rebuild(double pixelWidth, double pixelHeight, dou
     cairo_paint(m_cr);
 }
 
-bool OFDCairoRender::ImplCls::WriteToPNG(const string &filename){
+bool OFDCairoRender::ImplCls::WriteToPNG(const std::string &filename){
     return cairo_surface_write_to_png(m_surface, filename.c_str());
 }
 
@@ -160,12 +160,12 @@ OFDCairoRender::ImplCls::~ImplCls(){
     //cairo_scale(m_cr, m_resolutionX/ 72.0, m_resolutionY / 72.0);
 //}
 
-void DrawFreeTypeString(double X, double Y, const string &text, cairo_t *cr, cairo_font_face_t *font_face,
+void DrawFreeTypeString(double X, double Y, const std::string &text, cairo_t *cr, cairo_font_face_t *font_face,
         const cairo_matrix_t *font_matrix, const cairo_matrix_t *ctm, const cairo_font_options_t *font_options, cairo_pattern_t *strokePattern){
 
     cairo_scaled_font_t *scaled_font = cairo_scaled_font_create(font_face, font_matrix, ctm, font_options);
 
-//void DrawFreeTypeString(double X, double Y, const string &text, cairo_t *cr, 
+//void DrawFreeTypeString(double X, double Y, const std::string &text, cairo_t *cr, 
         //const cairo_matrix_t *font_matrix, const cairo_matrix_t *ctm, const cairo_font_options_t *font_options){
 
     //cairo_scaled_font_t *scaled_font = cairo_get_scaled_font(cr);
@@ -421,7 +421,7 @@ void OFDCairoRender::ImplCls::DrawTextObject(cairo_t *cr, TextObject *textObject
     double X = textCode.X;
     double Y = textCode.Y;
     //double Y = 841.89 - textCode.Y;
-    string text = textCode.Text;
+    std::string text = textCode.Text;
 
     // FIXME
     //double X1 = X * dpi / 72;
@@ -573,7 +573,7 @@ void OFDCairoRender::Paint(cairo_surface_t *surface){
     m_impl->Paint(surface);
 }
 
-bool OFDCairoRender::WriteToPNG(const string &filename){
+bool OFDCairoRender::WriteToPNG(const std::string &filename){
     return m_impl->WriteToPNG(filename);
 }
 

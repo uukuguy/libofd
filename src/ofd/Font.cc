@@ -109,7 +109,7 @@ std::tuple<FT_Face, cairo_font_face_t*, bool> CreateCairoFontFace(char *fontData
 Font::Font() :
     ID(0), Charset("unicode"), 
     Serif(false), Bold(false), Italic(false), FixedWidth(false),
-    FontType(FontType::TrueType), FontLoc(FontLocation::Embedded),
+    FontType(ofd::FontType::TrueType), FontLoc(ofd::FontLocation::Embedded),
     m_bLoaded(false), m_fontData(nullptr), m_fontDataSize(0), m_fontFace(nullptr), m_substitute(false),
     m_codeToGID(nullptr), m_codeToGIDLen(0)
 {

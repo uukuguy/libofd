@@ -4,8 +4,6 @@
 #include <memory>
 #include <vector>
 
-using namespace std;
-
 namespace ofd{
 
     // **************** struct Point ****************
@@ -35,10 +33,15 @@ namespace ofd{
     } *Point_t;
 
     class Subpath;
-    typedef shared_ptr<Subpath> SubpathPtr;
+    typedef std::shared_ptr<Subpath> SubpathPtr;
 
     // **************** class Subpath ****************
     class Subpath{
+        public:
+            static SubpathPtr Instance(const Point &startPoint){
+                return std::make_shared<Subpath>(startPoint);
+            };
+
         public:
             Subpath(const Point &startPoint);
             Subpath(const Subpath* other);
@@ -61,17 +64,22 @@ namespace ofd{
             void CurveTo(const Point& p0, const Point& p1, const Point& p2);
 
         private:
-            vector<Point> m_points;
-            vector<bool> m_curves;
+            std::vector<Point> m_points;
+            std::vector<bool> m_curves;
             bool m_bClosed;
 
     }; // class Subpath
 
     class Path;
-    typedef shared_ptr<Path> PathPtr;
+    typedef std::shared_ptr<Path> PathPtr;
 
     // **************** class Path ****************
     class Path{
+        public:
+            static PathPtr Instance(){
+                return std::make_shared<Path>();
+            };
+
         public:
             Path();
             ~Path();
@@ -85,6 +93,10 @@ namespace ofd{
             void Offset(double dx, double dy);
             void Append(const Path& otherPath);
 
+
+            static PathPtr FromPathData(const std::string &pathData);
+            std::string ToPathData() const;
+
             size_t GetNumSubpaths() const {return m_subpaths.size();};
             SubpathPtr GetSubpath(size_t idx) const {return m_subpaths[idx];};
             SubpathPtr GetLastSubpath() const;
@@ -93,7 +105,7 @@ namespace ofd{
         private:
             bool m_bJustMoved;
             Point m_startPoint;
-            vector<SubpathPtr> m_subpaths;
+            std::vector<SubpathPtr> m_subpaths;
 
     }; // class Path
 

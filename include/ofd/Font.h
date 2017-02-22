@@ -47,8 +47,8 @@ namespace ofd{
             bool              Italic;
             bool              FixedWidth;
             std::string       FontFile;
-            FontType          FontType;
-            FontLocation      FontLoc;
+            ofd::FontType          FontType;
+            ofd::FontLocation      FontLoc;
 
             // =============== Public Methods ================
         public:

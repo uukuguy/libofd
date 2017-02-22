@@ -1,6 +1,8 @@
 #include <assert.h>
+#include <sstream>
 #include "ofd/Path.h"
 #include "utils/logger.h"
+#include "utils/utils.h"
 
 using namespace ofd;
 
@@ -173,3 +175,149 @@ void Path::Append(const Path& otherPath){
     m_bJustMoved = false;
     m_startPoint.Clear();
 }
+
+// ======== Path::ToPathData() ========
+std::string Path::ToPathData() const{
+    std::stringstream ss;
+    size_t numSubpaths = GetNumSubpaths();
+    //LOG(DEBUG) << "AbbreviateData: numSubpaths:" << numSubpaths;
+    if ( numSubpaths > 0 ){
+        for ( size_t idx = 0 ; idx < numSubpaths ; idx++){
+            SubpathPtr subpath = GetSubpath(idx);
+            if ( subpath == nullptr ) continue;
+            size_t numPoints = subpath->GetNumPoints();
+            //LOG(DEBUG) << "AbbreviateData: numPoints:" << numPoints;
+            if ( numPoints < 2 ) continue;
+
+            const Point &startPoint = subpath->GetFirstPoint();
+            if ( idx == 0 ){
+                ss << "S " << startPoint.x << " " << startPoint.y << " ";
+            } else {
+                ss << "M " << startPoint.x << " " << startPoint.y << " ";
+            }
+            for ( size_t n = 1 ; n < numPoints ; n++ ){
+                const Point &p = subpath->GetPoint(n);
+                ss << "L " << p.x << " " << p.y << " ";
+            }
+            if ( subpath->IsClosed() ){
+                ss << "C ";
+            }
+        }
+    }
+
+    return ss.str();
+}
+
+Point toPoint(const std::string& xString, const std::string& yString){
+    double x = std::atof(xString.c_str());
+    double y = std::atof(yString.c_str());
+    return Point(x, y);
+}
+
+// ======== Path::FromPathData() ========
+PathPtr Path::FromPathData(const std::string &pathData){
+    bool ok = true;
+    PathPtr path = Path::Instance();
+
+    std::vector<std::string> tokens = utils::SplitString(pathData);
+    size_t idx = 0;
+    size_t numTokens = tokens.size();
+    while ( numTokens > 0 ){
+        std::string op = tokens[idx]; 
+        numTokens--;
+        idx++;
+        if ( op == "L" ){
+            // 线段连接
+            if ( numTokens >= 2 ){
+                Point point = toPoint(tokens[idx], tokens[idx+1]);
+                path->LineTo(point);
+                idx += 2;
+                numTokens -= 2;
+            } else {
+                LOG(WARNING) << "Not enough parameters in pathData tokens[" << idx << "]" << " pathData:" << pathData;
+                ok = false;
+                break;
+            }
+        } else if ( op == "M" ){
+            // 移动到指定点
+            if ( numTokens >= 2 ){
+                Point point = toPoint(tokens[idx], tokens[idx+1]);
+                path->MoveTo(point);
+                idx += 2;
+                numTokens -= 2;
+            } else {
+                LOG(WARNING) << "Not enough parameters in pathData tokens[" << idx << "]" << " pathData:" << pathData;
+                ok = false;
+                break;
+            }
+        } else if ( op == "Q" ){
+            // 二次贝塞尔曲线
+            if ( numTokens >= 4 ){
+                __attribute__((unused)) double x1 = std::atof(tokens[idx].c_str());
+                __attribute__((unused)) double y1 = std::atof(tokens[idx+1].c_str());
+                __attribute__((unused)) double x2 = std::atof(tokens[idx+2].c_str());
+                __attribute__((unused)) double y2 = std::atof(tokens[idx+3].c_str());
+                idx += 4;
+                numTokens -= 4;
+            } else {
+                LOG(WARNING) << "Not enough parameters in pathData tokens[" << idx << "]" << " pathData:" << pathData;
+                ok = false;
+                break;
+            }
+        } else if ( op == "B" ){
+            // 三次贝塞尔曲线
+            if ( numTokens >= 6 ){
+                __attribute__((unused)) double x1 = std::atof(tokens[idx].c_str());
+                __attribute__((unused)) double y1 = std::atof(tokens[idx+1].c_str());
+                __attribute__((unused)) double x2 = std::atof(tokens[idx+2].c_str());
+                __attribute__((unused)) double y2 = std::atof(tokens[idx+3].c_str());
+                __attribute__((unused)) double x3 = std::atof(tokens[idx+4].c_str());
+                __attribute__((unused)) double y3 = std::atof(tokens[idx+5].c_str());
+                idx += 6;
+                numTokens -= 6;
+            } else {
+                LOG(WARNING) << "Not enough parameters in pathData tokens[" << idx << "]" << " pathData:" << pathData;
+                ok = false;
+                break;
+            }
+        } else if ( op == "A" ){
+            // 圆弧
+            if ( numTokens >= 7 ){
+                __attribute__((unused)) double rx = std::atof(tokens[idx].c_str());
+                __attribute__((unused)) double ry = std::atof(tokens[idx+1].c_str());
+                __attribute__((unused)) double angle = std::atof(tokens[idx+2].c_str());
+                __attribute__((unused)) bool large = tokens[idx+3] == "0" ? false : true;
+                __attribute__((unused)) bool sweep = tokens[idx+4] == "0" ? false : true;
+                __attribute__((unused)) double x = std::atof(tokens[idx+5].c_str());
+                __attribute__((unused)) double y = std::atof(tokens[idx+6].c_str());
+                idx += 7;
+                numTokens -= 7;
+            } else {
+                LOG(WARNING) << "Not enough parameters in pathData tokens[" << idx << "]" << " pathData:" << pathData;
+                ok = false;
+                break;
+            }
+        } else if ( op == "S" ){
+            if ( numTokens >= 2 ){
+                Point point = toPoint(tokens[idx], tokens[idx+1]);
+                path->MoveTo(point);
+                idx += 2;
+                numTokens -= 2;
+            } else {
+                LOG(WARNING) << "Not enough parameters in pathData tokens[" << idx << "]" << " pathData:" << pathData;
+                ok = false;
+                break;
+            }
+        } else if ( op == "C" ){
+            // 自动闭合
+            path->ClosePath();
+        }
+    }
+
+    if ( !ok ) {
+        path = nullptr;
+    }
+
+    return path;
+}
+

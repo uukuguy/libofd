@@ -36,11 +36,13 @@ public:
       TextPage(rawOrderA), m_outputDev(outputDev){
   }
 
+  OFDOutputDev *GetOutputDev() const {return m_outputDev;};
+
   virtual void beginWord(GfxState *state);
   virtual void endWord();
 
 private:
-  __attribute__((unused)) OFDOutputDev *m_outputDev;
+  OFDOutputDev *m_outputDev;
   GfxState *m_state;
 }; // class MyTextPage
 
