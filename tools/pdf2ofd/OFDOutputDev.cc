@@ -140,6 +140,7 @@ OFDOutputDev::OFDOutputDev(ofd::PackagePtr package) :
 
     m_strokePattern = nullptr;
     m_fillPattern = nullptr;
+    m_lineWidth = 1.0;
     m_strokeOpacity = 1.0;
     m_fillOpacity = 1.0;
     m_uncoloredPattern = false;
@@ -316,7 +317,8 @@ void OFDOutputDev::ProcessDoc(PDFDocPtr pdfDoc){
     LOG(INFO) << "Total " << numPages << " pages in pdf file"; 
 
     int firstPage = 1;
-    for ( auto pg = firstPage ; pg <= numPages ; pg++ ){
+    // FIXME
+    for ( auto pg = firstPage ; pg <= numPages; pg++ ){
         // -------- Page widht and height.
         double pg_w, pg_h;
         std::tie(pg_w, pg_h) = getPageSize(pdfDoc, pg, firstPage);

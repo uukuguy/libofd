@@ -1,7 +1,12 @@
 #include <iomanip>
 #include <GlobalParams.h>
 #include <UnicodeMap.h>
+#include <GfxState.h>
 #include "OFDOutputDev.h"
+#include "Gfx2Ofd.h"
+#include "ofd/Color.h"
+#include "OFDRes.h"
+#include "ofd/TextObject.h"
 #include "utils/unicode.h"
 #include "utils/logger.h"
 #include "utils/utils.h"
@@ -52,6 +57,8 @@ void OFDOutputDev::endString(GfxState *state){
     if (!m_cairoGlyphs)
         return;
 
+    //ofd::ColorPtr ofdFillColor;
+
     // ignore empty strings and invisible text -- this is used by
     // Acrobat Capture
     render = state->getRender();
@@ -59,9 +66,22 @@ void OFDOutputDev::endString(GfxState *state){
         goto finish;
     }
 
+    LOG(INFO) << "[imageSurface] DrawTextObject m_matrix=(" << m_matrix.xx << "," << m_matrix.yx << "," << m_matrix.xy << "," << m_matrix.yy << "," << m_matrix.x0 << "," << m_matrix.y0 << ")";
+
+    //// Color
+    //GfxRGB fillRGB;
+    //state->getFillRGB(&fillRGB);
+    //ofdFillColor = GfxColor_to_OfdColor(&fillRGB);
+    //LOG(DEBUG) << "[imageSurface] DrawTextObject ofdFillColor=(" << ofdFillColor->Value.RGB.Red << "," << ofdFillColor->Value.RGB.Green << "," << ofdFillColor->Value.RGB.Blue << ")";
+
+
+    cairo_matrix_t matrix;
+    cairo_get_matrix(m_cairo, &matrix);
+    LOG(INFO) << "[imageSurface] DrawTextObject cairo_get_matrix() matrix=(" << matrix.xx << "," << matrix.yx << "," << matrix.xy << "," << matrix.yy << "," << matrix.x0 << "," << matrix.y0 << ")";
+
     // fill
     if (!(render & 1)) {
-        LOG(DEBUG) << "fill string";
+        LOG(INFO) << "[imageSurface] DrawTextObject fill string";
         //LOG (printf ("fill string\n"));
         cairo_set_source (m_cairo, m_fillPattern);
         if (m_useShowTextGlyphs)
@@ -74,7 +94,7 @@ void OFDOutputDev::endString(GfxState *state){
 
     // stroke
     if ((render & 3) == 1 || (render & 3) == 2) {
-        LOG(DEBUG) << "stroke string";
+        LOG(INFO) << "[imageSurface] DrawTextObject stroke string";
         cairo_set_source (m_cairo, m_strokePattern);
         cairo_glyph_path (m_cairo, m_cairoGlyphs, m_glyphsCount);
         cairo_stroke (m_cairo);
@@ -86,7 +106,7 @@ void OFDOutputDev::endString(GfxState *state){
 
     // clip
     if ((render & 4)) {
-        LOG(DEBUG) << "clip string";
+        LOG(INFO) << "[imageSurface] DrawTextObject clip string";
         // append the glyph path to m_textClipPath.
 
         // set textClipPath as the currentPath
@@ -169,7 +189,48 @@ void OFDOutputDev::drawChar(GfxState *state, double x, double y,
     //LOG(DEBUG) << "code:" << std::hex << std::setw(4) << std::setfill('0') << code << std::dec << " nBytes:" << nBytes << " uLen:" << uLen;
     if ( m_textPage != nullptr ){
         //LOG(INFO) << "code:" << std::hex << std::setw(4) << std::setfill('0') << code << std::dec << " nBytes:" << nBytes << " uLen:" << uLen;
-        m_actualText->addChar(state, x, y, dx, dy, code, nBytes, u, uLen);
+
+        // Color
+
+        ofd::ColorPtr ofdFillColor;
+        GfxRGB fillRGB;
+        state->getFillRGB(&fillRGB);
+        ofdFillColor = GfxColor_to_OfdColor(&fillRGB);
+        LOG(DEBUG) << "[imageSurface] DrawTextObject ofdFillColor=(" << ofdFillColor->Value.RGB.Red << "," << ofdFillColor->Value.RGB.Green << "," << ofdFillColor->Value.RGB.Blue << ")";
+
+        double x1, y1;
+        state->transform(x, y, &x1, &y1);
+        LOG(DEBUG) << "addChar() " << buf << " (" << x1 << "," << y1 << ")";
+
+        // ------ New TextObject
+        ofd::TextObject *textObject = new ofd::TextObject(m_currentOFDPage->GetBodyLayer());
+        ofd::Text::TextCode textCode;
+        textCode.X = x1;
+        textCode.Y = y1;
+        textCode.Text = (char*)buf;
+        textObject->AddTextCode(textCode);
+
+        GfxFont *gfxFont = state->getFont();
+        uint64_t fontSize = state->getTransformedFontSize();
+        //FontPtr font = GfxFont_to_OfdFont(gfxFont);
+
+        Ref *ref = gfxFont->getID();
+        // FIXME
+        uint64_t fontID = ref->num;
+        ofd::Document::CommonData &commonData = m_document->GetCommonData();
+        assert(commonData.DocumentRes != nullptr );
+        ofd::FontPtr ofdFont = commonData.DocumentRes->GetFont(fontID);
+
+        textObject->SetFont(ofdFont);
+        textObject->SetFontSize(fontSize);
+
+        if ( !ofdFillColor->Equal(ofd::TextObject::DefaultFillColor) ){
+            textObject->SetFillColor(ofdFillColor);
+        }
+        ofd::ObjectPtr object = std::shared_ptr<ofd::Object>(textObject);
+        m_currentOFDPage->AddObject(object);
+
+        //m_actualText->addChar(state, x, y, dx, dy, code, nBytes, u, uLen);
     }
 
 

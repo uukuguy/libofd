@@ -255,7 +255,7 @@ void OFDOutputDev::updateFont(GfxState *state){
             LOG(INFO) << "num_mkfonts=" << num_mkfonts;
             num_mkfonts++;
             
-            ofdFont = GfxFont_to_OFDFont(gfxFont, m_xref);
+            ofdFont = GfxFont_to_OfdFont(gfxFont, m_xref);
 
 
             std::string dumpedFontFile = m_fontOutputDev->GetEmbeddedFontFile(hash_ref(ref));

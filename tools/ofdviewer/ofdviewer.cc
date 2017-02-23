@@ -6,6 +6,8 @@
 #include "ofd/Document.h"
 #include "ofd/Page.h"
 #include "utils/logger.h"
+#include "utils/utils.h"
+#include "OFDCairoRender.h"
 
 using namespace ofd;
 double g_resolutionX = 144.0;
@@ -92,6 +94,10 @@ protected:
     SDL_Surface *m_imageSurface;
     double m_pixelX;
     double m_pixelY;
+    double m_scaling;
+    double m_origPixelX;
+    double m_origPixelY;
+    double m_origScaling;
     double m_zoomFactor;
     bool   m_bHelp;
 
@@ -102,7 +108,9 @@ SDLApp::SDLApp(const std::string &title, double screenWidth, double screenHeight
     : m_title(title), m_fullscreen(false), 
     m_screenWidth(screenWidth), m_screenHeight(screenHeight), m_screenBPP(screenBPP),
     m_mainWindow(nullptr), m_screenRenderer(nullptr), m_imageSurface(nullptr),
-    m_pixelX(0.0), m_pixelY(0.0), m_zoomFactor(ZOOM_BASE), m_bHelp(false){
+    m_pixelX(0.0), m_pixelY(0.0), m_scaling(1.0), 
+    m_origPixelX(-1), m_origPixelY(-1), m_origScaling(-1), 
+    m_zoomFactor(ZOOM_BASE), m_bHelp(false){
     init();
 }
 
@@ -337,13 +345,17 @@ public:
     DocumentPtr m_document;
     size_t m_pageIndex;
 
+    std::unique_ptr<OFDCairoRender> m_cairoRender;
+
 }; // class MySDLApp
 
 
 // ======== MySDLApp::MySDLApp() ========
-MySDLApp::MySDLApp(const std::string &title, double screenWidth, double screenHeight, int screenBPP, DocumentPtr document)
-    : SDLApp(title, screenWidth, screenHeight, screenBPP),
-        m_document(document), m_pageIndex(0){
+MySDLApp::MySDLApp(const std::string &title, double screenWidth, double screenHeight, int screenBPP, DocumentPtr document) : 
+    SDLApp(title, screenWidth, screenHeight, screenBPP),
+    m_document(document), m_pageIndex(0){
+
+    m_cairoRender = utils::make_unique<OFDCairoRender>(m_screenWidth, m_screenHeight, g_resolutionX, g_resolutionY);
 }
 
 // ======== MySDLApp::~MySDLApp() ========
@@ -388,15 +400,15 @@ void MySDLApp::OnEvent(SDL_Event event, bool &done){
     };
 }
 
-#include "OFDCairoRender.h"
 // ======== MySDLApp::OnRender() ========
 void MySDLApp::OnRender(cairo_surface_t *surface){
-    if ( m_document != nullptr ){
+    //if ( m_document != nullptr ){
+    if ( m_document != nullptr && m_cairoRender != nullptr ){
         size_t totalPages = m_document->GetNumPages();
         if ( totalPages > 0 ){
             PagePtr page = m_document->GetPage(m_pageIndex);
             if ( page->Open() ){
-                std::unique_ptr<OFDCairoRender> cairoRender(new OFDCairoRender(m_screenWidth, m_screenHeight, g_resolutionX, g_resolutionY));
+                //std::unique_ptr<OFDCairoRender> m_cairoRender(new OFDCairoRender(m_screenWidth, m_screenHeight, g_resolutionX, g_resolutionY));
 
                 /***
                  * drawParams {pixelX, pixelY, scaling}
@@ -406,7 +418,7 @@ void MySDLApp::OnRender(cairo_surface_t *surface){
                  ***/
                 double pixelX = m_pixelX;
                 double pixelY = m_pixelY;
-                double scaling = 1.0;
+                double scaling = m_scaling;
 
                 double delta = m_zoomFactor - ZOOM_BASE;
                 double fitScaling = page->GetFitScaling(m_screenWidth, m_screenHeight, g_resolutionX, g_resolutionY);
@@ -419,9 +431,17 @@ void MySDLApp::OnRender(cairo_surface_t *surface){
                 scaling = fitScaling * factor;
 
                 //LOG(DEBUG) << "delta: " << delta << " factor: " << factor << " scaling=" << scaling << " offset=(" << pixelX << "," << pixelY << ")";
-                ofd::Render::DrawParams drawParams = std::make_tuple(pixelX, pixelY, scaling);
-                cairoRender->DrawPage(page, drawParams);
-                cairoRender->Paint(surface);
+
+                m_cairoRender->SaveState();
+                //if ( pixelX != m_origPixelX || pixelY != m_origPixelY || scaling != m_origScaling ){
+                    ofd::Render::DrawParams drawParams = std::make_tuple(pixelX, pixelY, scaling);
+                    m_cairoRender->DrawPage(page, drawParams);
+                    m_origPixelX = pixelY;
+                    m_origPixelY = pixelY;
+                    m_origScaling = scaling;
+                //}
+                m_cairoRender->Paint(surface);
+                m_cairoRender->RestoreState();
             } else {
                 LOG(ERROR) << "page->Open() failed. pageIndex=" << m_pageIndex;
             }

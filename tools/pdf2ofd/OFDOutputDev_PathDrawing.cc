@@ -6,6 +6,8 @@
 
 using namespace ofd;
 
+void showCairoMatrix(cairo_t *cr, const std::string &title, const std::string &msg);
+
 /* Tolerance in pixels for checking if strokes are horizontal or vertical
  * lines in device space */
 #define STROKE_COORD_TOLERANCE 0.5
@@ -108,11 +110,49 @@ void OFDOutputDev::stroke(GfxState *state) {
 	  //return;
   //}
 
+    LOG(INFO) << "[imageSurface] DrawPathObject Stroke Path";
+
     // Add PathObject
     PathPtr ofdPath = GfxPath_to_OfdPath(state->getPath());
     if ( ofdPath != nullptr ){
         PathObjectPtr pathObject = std::make_shared<PathObject>(m_currentOFDPage->GetBodyLayer());
         pathObject->SetPath(ofdPath);
+        LOG(DEBUG) <<  "stroke color in stroke(): " << m_strokeColor.r << ", " << m_strokeColor.g << ", " <<  m_strokeColor.b;
+        ColorPtr strokeColor = GfxColor_to_OfdColor(&m_strokeColor);
+        strokeColor->Alpha = m_strokeOpacity * 255.0;
+        pathObject->SetStrokeColor(strokeColor);
+        pathObject->LineWidth = m_lineWidth;
+
+        LOG(INFO) << "[imageSurface] DrawPathObject m_matrix=(" << m_matrix.xx << "," << m_matrix.yx << "," << m_matrix.xy << "," << m_matrix.yy << "," << m_matrix.x0 << "," << m_matrix.y0 << ")";
+        showCairoMatrix(m_cairo, "imageSurface", "DrawPathObject cairo_matrix");
+
+        cairo_matrix_t matrix;
+        cairo_get_matrix(m_cairo, &matrix);
+        //LOG(INFO) << "[imageSurface] DrawPathObject cairo_get_matrix() matrix=(" << matrix.xx << "," << matrix.yx << "," << matrix.xy << "," << matrix.yy << "," << matrix.x0 << "," << matrix.y0 << ")";
+
+        double *gfxCTM = state->getCTM();
+        cairo_matrix_t matrix1;
+        matrix1.xx = gfxCTM[0];
+        matrix1.yx = gfxCTM[1];
+        matrix1.xy = gfxCTM[2];
+        matrix1.yy = gfxCTM[3];
+        matrix1.x0 = gfxCTM[4];
+        matrix1.y0 = gfxCTM[5];
+
+        // FIXME
+        cairo_matrix_t objMatrix = matrix1;
+        //cairo_matrix_t objMatrix = m_matrix;
+        //cairo_matrix_t objMatrix = matrix;
+
+        LOG(INFO) << "[imageSurface] DrawPathObject objMatrix=(" << objMatrix.xx << "," << objMatrix.yx << "," << objMatrix.xy << "," << objMatrix.yy << "," << objMatrix.x0 << "," << objMatrix.y0 << ")";
+
+        pathObject->CTM[0] = objMatrix.xx;
+        pathObject->CTM[1] = objMatrix.yx;
+        pathObject->CTM[2] = objMatrix.xy;
+        pathObject->CTM[3] = objMatrix.yy;
+        pathObject->CTM[4] = objMatrix.x0;
+        pathObject->CTM[5] = objMatrix.y0;
+
         m_currentOFDPage->AddObject(pathObject);
 
         if ( m_cairoRender != nullptr ){
@@ -120,7 +160,6 @@ void OFDOutputDev::stroke(GfxState *state) {
             m_cairoRender->DrawObject(object);
         }
     }
-
 
     if ( m_adjustedStrokeWidth ){
         m_alignStrokeCoords = true;
@@ -149,6 +188,12 @@ void OFDOutputDev::fill(GfxState *state) {
       //if (colToDbl(gray) > 0.5)
 	  //return;
   //}
+
+    LOG(INFO) << "[imageSurface] DrawPathObject Fill Path";
+
+    LOG(INFO) << "[imageSurface] DrawPathObject m_matrix=(" << m_matrix.xx << "," << m_matrix.yx << "," << m_matrix.xy << "," << m_matrix.yy << "," << m_matrix.x0 << "," << m_matrix.y0 << ")";
+
+    showCairoMatrix(m_cairo, "imageSurface", "DrawPathObject cairo_matrix");
 
   doPath(m_cairo, state, state->getPath());
   cairo_set_fill_rule(m_cairo, CAIRO_FILL_RULE_WINDING);

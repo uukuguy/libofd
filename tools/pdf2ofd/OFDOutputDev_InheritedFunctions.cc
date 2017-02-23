@@ -205,13 +205,16 @@ void OFDOutputDev::ExportWord(TextWord *word){
 
             double r, g, b; 
             word->getColor(&r, &g, &b);
+            uint32_t R = colToDbl(r) * 255.0;
+            uint32_t G = colToDbl(g) * 255.0;
+            uint32_t B = colToDbl(b) * 255.0;
 
-            ColorPtr wordColor = Color::Instance(r, g, b, 255);
+            ColorPtr wordColor = Color::Instance(B, G, R, 255);
             if ( !wordColor->Equal(TextObject::DefaultFillColor) ){
                 textObject->SetFillColor(wordColor);
             }
-            if ( r != 0 || g != 0 || b != 0 ){
-                LOG(DEBUG) << "ExportWord wordColor=(" << r << "," << g << "," << b << ")";
+            if ( R != 0 || G != 0 || B != 0 ){
+                LOG(DEBUG) << "ExportWord wordColor=(" << R << "," << G << "," << B << ")";
             }
 
             ObjectPtr object = std::shared_ptr<ofd::Object>(textObject);
@@ -325,7 +328,7 @@ void OFDOutputDev::processTextLine(TextLine *line, LayerPtr bodyLayer){
     //wordXML << std::fixed << std::setprecision(6);
 
     for (word = line->getWords(); word; word = word->getNext()) {
-        ExportWord(word);
+        //ExportWord(word);
     }
 
     //LOG(DEBUG) << wordXML.str();
@@ -386,6 +389,8 @@ void OFDOutputDev::saveState(GfxState *state){
         //m_textPage->updateFont(state);
     //}
 
+    LOG(INFO) << "[imageSurface] SaveState";
+
     cairo_save(m_cairo);
     if ( m_cairoShape != nullptr ){
         cairo_save(m_cairoShape);
@@ -411,6 +416,8 @@ void OFDOutputDev::restoreState(GfxState *state){
     //if ( m_textPage != nullptr ){
         //m_textPage->updateFont(state);
     //}
+
+    LOG(INFO) << "[imageSurface] RestoreState";
 
     cairo_restore(m_cairo);
     if ( m_cairoShape != nullptr ){

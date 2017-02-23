@@ -2,6 +2,7 @@
 #include "ofd/Color.h"
 #include "utils/xml.h"
 #include "utils/logger.h"
+#include "utils/utils.h"
 
 using namespace ofd;
 using namespace utils;
@@ -127,6 +128,8 @@ void Color::WriteColorXML(XMLWriter &writer) const{
             ss << Value.Values[k] << " ";
         }
 
+        //LOG(DEBUG) << "Color::WriteColorXML() " << ss.str();
+
         writer.WriteAttribute("Value", ss.str());
 
     } else {
@@ -175,8 +178,15 @@ std::tuple<ColorPtr, bool> Color::ReadColorXML(XMLElementPtr colorElement){
 
     std::string valueData;
     std::tie(valueData, exist) = colorElement->GetStringAttribute("Value");
+    //LOG(DEBUG) << "ReadColorXML() valueData=" << valueData;
     if ( exist ){
-        color = Color::Instance(colorValue, colorSpace, alpha);
+        std::vector<std::string> tokens = utils::SplitString(valueData);
+        if ( tokens.size() == 3 ){
+            uint32_t r = atoi(tokens[0].c_str());
+            uint32_t g = atoi(tokens[1].c_str());
+            uint32_t b = atoi(tokens[2].c_str());
+            color = Color::Instance(r, g, b, colorSpace, alpha);
+        }
     } else {
         std::tie(index, exist) = colorElement->GetIntAttribute("Index");
         if ( !exist ){

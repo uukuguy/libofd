@@ -1,6 +1,7 @@
 #include "ofd/Object.h"
 #include "utils/xml.h"
 #include "utils/logger.h"
+#include "utils/utils.h"
 
 using namespace ofd;
 using namespace utils;
@@ -10,6 +11,12 @@ Object::Object(LayerPtr layer, ObjectType objectType, const std::string& objectL
     ObjectLabel(objectLabel),
     Visible(true), LineWidth(0.353), Alpha(255),
     m_layer(layer){
+        CTM[0] = 1.0;
+        CTM[1] = 0.0;
+        CTM[2] = 0.0;
+        CTM[3] = 1.0;
+        CTM[4] = 0.0;
+        CTM[5] = 0.0;
 }
 
 Object::~Object(){
@@ -50,7 +57,15 @@ void Object::GenerateAttributesXML(XMLWriter &writer) const{
 
     // TODO
     // -------- <Object CTM="">
-
+    if ( CTM[0] != 1.0 || CTM[1] != 0.0 ||
+            CTM[2] != 0.0 || CTM[3] != 1.0 ||
+            CTM[4] != 0.0 || CTM[5] != 0.0 ){
+        std::stringstream ss;
+        ss << CTM[0] << " " << CTM[1] << " "
+            << CTM[2] << " " << CTM[3] << " "
+            << CTM[4] << " " << CTM[5];
+        writer.WriteAttribute("CTM", ss.str());
+    }
 
     // TODO
     // -------- <Object LineWidth="">
@@ -145,6 +160,19 @@ bool Object::FromAttributesXML(utils::XMLElementPtr objectElement){
 
     // -------- <CTM Name="">
     // Optional
+    std::string ctm;
+    std::tie(ctm, std::ignore) = objectElement->GetStringAttribute("CTM");
+    if ( !ctm.empty() ){
+        std::vector<std::string> tokens = utils::SplitString(ctm);
+        if ( tokens.size() == 6 ){
+            CTM[0] = atof(tokens[0].c_str());
+            CTM[1] = atof(tokens[1].c_str());
+            CTM[2] = atof(tokens[2].c_str());
+            CTM[3] = atof(tokens[3].c_str());
+            CTM[4] = atof(tokens[4].c_str());
+            CTM[5] = atof(tokens[5].c_str());
+        }
+    }
 
     // -------- <DrawParam Name="">
     // Optional

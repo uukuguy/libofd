@@ -47,8 +47,10 @@ PathPtr GfxPath_to_OfdPath(GfxPath *gfxPath){
     return ofdPath;
 }
 
-// -------- GfxFont_to_OFDFont() --------
-FontPtr GfxFont_to_OFDFont(GfxFont *gfxFont, XRef *xref){
+// -------- GfxFont_to_OfdFont() --------
+FontPtr GfxFont_to_OfdFont(GfxFont *gfxFont, XRef *xref){
+    if ( gfxFont == nullptr ) return nullptr;
+
     FontPtr ofdFont = std::make_shared<Font>();
 
     // -------- FontID --------
@@ -121,4 +123,12 @@ FontPtr GfxFont_to_OFDFont(GfxFont *gfxFont, XRef *xref){
     //std::tie(codeToGID, codeToGIDLen) = getCodeToGID(gfxFont, fontData, fontDataSize);
 
     return ofdFont;
+}
+
+ofd::ColorPtr GfxColor_to_OfdColor(GfxRGB *gfxColor){
+    uint32_t r = colToDbl(gfxColor->r) * 255.0;
+    uint32_t g = colToDbl(gfxColor->g) * 255.0;
+    uint32_t b = colToDbl(gfxColor->b) * 255.0;
+    LOG(DEBUG) << "GfxColor_to_OfdColor() (" << gfxColor->r << "," << gfxColor->g << "," << gfxColor->b << ")" << " to (" << r << "," << g << "," << b << ")";
+    return Color::Instance(r, g, b);
 }

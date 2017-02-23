@@ -44,7 +44,7 @@ namespace ofd{
 
             // 勾边色，默认值为黑色。
             ColorPtr GetStrokeColor() const{return StrokeColor;};
-            void SteStrokeColor(ColorPtr strokeColor){
+            void SetStrokeColor(ColorPtr strokeColor){
                 if ( !strokeColor->Equal(DefaultStrokeColor) ){
                     StrokeColor = strokeColor;
                 }

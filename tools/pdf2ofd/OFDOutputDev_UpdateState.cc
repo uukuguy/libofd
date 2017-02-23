@@ -29,16 +29,17 @@ void OFDOutputDev::setDefaultCTM(double *ctm) {
   matrix.x0 = ctm[4];
   matrix.y0 = ctm[5];
 
-  LOG(INFO) << "setDefaultCTM (" << ctm[0] << ", " << ctm[1] << ", " << ctm[2]
+  LOG(INFO) << "[imageSurface] setDefaultCTM (" << ctm[0] << ", " << ctm[1] << ", " << ctm[2]
       << ", " << ctm[3] << ", " << ctm[4] << ", " << ctm[5] << ")";
 
   cairo_transform(m_cairo, &matrix);
   if (m_cairoShape){
       cairo_transform(m_cairoShape, &matrix);
   }
-  if ( m_cairoRender != nullptr ){
-      m_cairoRender->Transform(&matrix);
-  }
+  //if ( m_cairoRender != nullptr ){
+      //m_cairoRender->Transform(&matrix);
+  //}
+  m_matrix = matrix;
 
   OutputDev::setDefaultCTM(ctm);
 }
@@ -52,7 +53,7 @@ void OFDOutputDev::updateCTM(GfxState *state, double m11, double m12, double m21
   matrix.x0 = m31;
   matrix.y0 = m32;
 
-  LOG(INFO) << "updateCTM (" << m11 << ", " << m12 << ", " << m21 
+  LOG(INFO) << "[imageSurface] updateCTM (" << m11 << ", " << m12 << ", " << m21 
       << ", " << m22 << ", " << m31 << ", " << m32 << ")";
 
   /* Make sure the matrix is invertible before setting it.
@@ -77,6 +78,7 @@ void OFDOutputDev::updateCTM(GfxState *state, double m11, double m12, double m21
   if ( m_cairoRender != nullptr ){
       m_cairoRender->Transform(&matrix);
   }
+  m_matrix = matrix;
   updateLineDash(state);
   updateLineJoin(state);
   updateLineCap(state);
@@ -138,7 +140,7 @@ void OFDOutputDev::updateMiterLimit(GfxState *state){
 
 
 void OFDOutputDev::updateLineWidth(GfxState *state){
-    //LOG(DEBUG) <<  "line width: " << state->getLineWidth();
+    LOG(INFO) <<  "[imageSurface] updateLineWidth() line width: " << state->getLineWidth();
     m_adjustedStrokeWidth = false;
     double width = state->getLineWidth();
     if ( m_strokeAdjust && !m_printing ) {
@@ -172,6 +174,7 @@ void OFDOutputDev::updateLineWidth(GfxState *state){
     if ( m_cairoRender != nullptr ){
         m_cairoRender->SetLineWidth(width);
     }
+    m_lineWidth = width;
     if (m_cairoShape){
         cairo_set_line_width(m_cairoShape, cairo_get_line_width (m_cairo));
     }
@@ -199,7 +202,7 @@ void OFDOutputDev::updateFillColor(GfxState *state){
             m_cairoRender->UpdateFillPattern(colToDbl(m_fillColor.r), colToDbl(m_fillColor.g),
                 colToDbl(m_fillColor.b), m_fillOpacity);
         }
-        LOG(DEBUG) <<  "fill color: " << m_fillColor.r << ", " <<  m_fillColor.g << ", " << m_fillColor.b;
+        LOG(INFO) <<  "[imageSurface] fill color: " << m_fillColor.r << ", " <<  m_fillColor.g << ", " << m_fillColor.b;
     }
 }
 
@@ -225,7 +228,7 @@ void OFDOutputDev::updateStrokeColor(GfxState *state){
                 colToDbl(m_strokeColor.b), m_strokeOpacity);
         }
 
-        LOG(DEBUG) <<  "stroke color: " << m_strokeColor.r << ", " << m_strokeColor.g << ", " <<  m_strokeColor.b;
+        LOG(INFO) <<  "[imageSurface] stroke color: " << m_strokeColor.r << ", " << m_strokeColor.g << ", " <<  m_strokeColor.b;
     }
 }
 
@@ -246,7 +249,7 @@ void OFDOutputDev::updateFillOpacity(GfxState *state){
             m_cairoRender->UpdateFillPattern(colToDbl(m_fillColor.r), colToDbl(m_fillColor.g),
                 colToDbl(m_fillColor.b), m_fillOpacity);
         }
-        LOG(DEBUG) << "fill opacity: " << m_fillOpacity;
+        LOG(INFO) << "[imageSurface] updateFillOpacity() fill opacity: " << m_fillOpacity;
     }
 }
 
@@ -268,7 +271,7 @@ void OFDOutputDev::updateStrokeOpacity(GfxState *state){
                 colToDbl(m_strokeColor.b), m_strokeOpacity);
         }
 
-        LOG(DEBUG) <<  "stroke opacity: " << m_strokeOpacity;
+        LOG(INFO) <<  "[imageSurface] updateStrokeOpacity() stroke opacity: " << m_strokeOpacity;
     }
 }
 

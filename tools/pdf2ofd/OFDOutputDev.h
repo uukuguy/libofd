@@ -276,10 +276,13 @@ public:
     cairo_matrix_t m_mask_matrix;
     cairo_surface_t *m_cairoShapeSurface;
 
+    cairo_matrix_t m_matrix;
+
     cairo_t *m_cairoShape;
     cairo_path_t *m_textClipPath;
     GfxRGB m_strokeColor;
     GfxRGB m_fillColor;
+    double m_lineWidth;
     double m_strokeOpacity;
     double m_fillOpacity;
     bool m_uncoloredPattern;
