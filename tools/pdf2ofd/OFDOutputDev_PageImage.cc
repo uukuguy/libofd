@@ -2,7 +2,7 @@
 #include "OFDOutputDev.h"
 #include "utils/logger.h"
 
-void OFDOutputDev::writePageImage(const std::string &filename){
+void OFDOutputDev::writeCairoSurfaceImage(cairo_surface_t *surface, const std::string &filename){
     ImgWriter *writer = nullptr;
     FILE *file;
 
@@ -28,11 +28,11 @@ void OFDOutputDev::writePageImage(const std::string &filename){
         exit(2);
     }
 
-    int height = cairo_image_surface_get_height(m_outputSurface);
-    int width = cairo_image_surface_get_width(m_outputSurface);
-    int stride = cairo_image_surface_get_stride(m_outputSurface);
-    cairo_surface_flush(m_outputSurface);
-    unsigned char *data = cairo_image_surface_get_data(m_outputSurface);
+    int height = cairo_image_surface_get_height(surface);
+    int width = cairo_image_surface_get_width(surface);
+    int stride = cairo_image_surface_get_stride(surface);
+    cairo_surface_flush(surface);
+    unsigned char *data = cairo_image_surface_get_data(surface);
 
     if (!writer->init(file, width, height, m_resolutionX, m_resolutionY)) {
         LOG(ERROR) << "Error writing " << filename;

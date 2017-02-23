@@ -473,7 +473,7 @@ void OFDOutputDev::afterPage(const std::string &imageFileName){
         cairo_surface_show_page(m_outputSurface);
     } else {
         // TODO
-        writePageImage(imageFileName);
+        writeCairoSurfaceImage(m_outputSurface, imageFileName);
         cairo_surface_finish(m_outputSurface);
         cairo_status_t status = cairo_surface_status(m_outputSurface);
         if (status){

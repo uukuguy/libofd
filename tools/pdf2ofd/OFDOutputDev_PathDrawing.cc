@@ -195,6 +195,59 @@ void OFDOutputDev::fill(GfxState *state) {
 
     showCairoMatrix(m_cairo, "imageSurface", "DrawPathObject cairo_matrix");
 
+    // Add PathObject
+    PathPtr ofdPath = GfxPath_to_OfdPath(state->getPath());
+    if ( ofdPath != nullptr ){
+        PathObjectPtr pathObject = std::make_shared<PathObject>(m_currentOFDPage->GetBodyLayer());
+        pathObject->SetPath(ofdPath);
+        LOG(DEBUG) <<  "fill color in fill(): " << m_fillColor.r << ", " << m_fillColor.g << ", " <<  m_fillColor.b;
+        ColorPtr fillColor = GfxColor_to_OfdColor(&m_fillColor);
+        fillColor->Alpha = m_fillOpacity * 255.0;
+        pathObject->SetFillColor(fillColor);
+        pathObject->LineWidth = m_lineWidth;
+
+        LOG(INFO) << "[imageSurface] DrawPathObject m_matrix=(" << m_matrix.xx << "," << m_matrix.yx << "," << m_matrix.xy << "," << m_matrix.yy << "," << m_matrix.x0 << "," << m_matrix.y0 << ")";
+        showCairoMatrix(m_cairo, "imageSurface", "DrawPathObject cairo_matrix");
+
+        cairo_matrix_t matrix;
+        cairo_get_matrix(m_cairo, &matrix);
+        //LOG(INFO) << "[imageSurface] DrawPathObject cairo_get_matrix() matrix=(" << matrix.xx << "," << matrix.yx << "," << matrix.xy << "," << matrix.yy << "," << matrix.x0 << "," << matrix.y0 << ")";
+
+        double *gfxCTM = state->getCTM();
+        cairo_matrix_t matrix1;
+        matrix1.xx = gfxCTM[0];
+        matrix1.yx = gfxCTM[1];
+        matrix1.xy = gfxCTM[2];
+        matrix1.yy = gfxCTM[3];
+        matrix1.x0 = gfxCTM[4];
+        matrix1.y0 = gfxCTM[5];
+
+        // FIXME
+        cairo_matrix_t objMatrix = matrix1;
+        //cairo_matrix_t objMatrix = m_matrix;
+        //cairo_matrix_t objMatrix = matrix;
+
+        LOG(INFO) << "[imageSurface] DrawPathObject objMatrix=(" << objMatrix.xx << "," << objMatrix.yx << "," << objMatrix.xy << "," << objMatrix.yy << "," << objMatrix.x0 << "," << objMatrix.y0 << ")";
+
+        pathObject->CTM[0] = objMatrix.xx;
+        pathObject->CTM[1] = objMatrix.yx;
+        pathObject->CTM[2] = objMatrix.xy;
+        pathObject->CTM[3] = objMatrix.yy;
+        pathObject->CTM[4] = objMatrix.x0;
+        pathObject->CTM[5] = objMatrix.y0;
+
+        m_currentOFDPage->AddObject(pathObject);
+
+        if ( m_cairoRender != nullptr ){
+            ObjectPtr object = std::shared_ptr<ofd::Object>(pathObject);
+            m_cairoRender->DrawObject(object);
+        }
+    }
+
+
+
+
+
   doPath(m_cairo, state, state->getPath());
   cairo_set_fill_rule(m_cairo, CAIRO_FILL_RULE_WINDING);
   cairo_set_source(m_cairo, m_fillPattern);

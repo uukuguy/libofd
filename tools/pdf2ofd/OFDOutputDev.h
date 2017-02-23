@@ -361,7 +361,7 @@ private:
     void getFitToPageTransform(double page_w, double page_h, double paper_w, double paper_h, cairo_matrix_t *m); 
     std::tuple<double, double> getPageSize(PDFDocPtr pdfDoc, int pg, int firstPage);
 
-    void writePageImage(const std::string &filename);
+    void writeCairoSurfaceImage(cairo_surface_t *surface, const std::string &filename);
 
     std::tuple<cairo_surface_t*, FILE*> beforeDocument(const std::string &outputFileName, double w, double h); 
     void afterDocument();

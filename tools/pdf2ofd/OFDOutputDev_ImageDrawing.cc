@@ -441,11 +441,33 @@ void OFDOutputDev::setMimeData(GfxState *state, Stream *str, Object *ref, GfxIma
     }
 }
 
+size_t numImages = 0;
+#include <fstream>
 void OFDOutputDev::drawImage(GfxState *state, Object *ref, Stream *str,
 			       int widthA, int heightA,
 			       GfxImageColorMap *colorMap,
 			       GBool interpolate,
 			       int *maskColors, GBool inlineImg) {
+
+
+    //// -------- Write image stream to zip file. --------
+    //ImageStream *imgStream = new ImageStream(str, widthA,
+                             //colorMap->getNumPixelComps(),
+                             //colorMap->getBits());
+    //imgStream->reset();
+
+    std::string strImageFileName = "output/Image_" + std::to_string(numImages++) + ".jpg";
+    //std::ofstream imgFile(strImageFileName, std::ios::binary | std::ios::out);
+    //int row = 0;
+    //while ( row++ < heightA ){
+        //char *line = (char*)imgStream->getLine();
+        //if ( line == nullptr ) break;
+        //imgFile.write(line, widthA);
+    //}
+    //imgFile.close();
+    //delete imgStream;
+
+    // ----------------
     cairo_surface_t *image;
     cairo_pattern_t *pattern, *maskPattern;
     cairo_matrix_t matrix;
@@ -461,6 +483,7 @@ void OFDOutputDev::drawImage(GfxState *state, Object *ref, Stream *str,
     image = rescale.getSourceImage(str, widthA, heightA, scaledWidth, scaledHeight, m_printing, colorMap, maskColors);
     if (!image)
         return;
+    writeCairoSurfaceImage(image, strImageFileName);
 
     width = cairo_image_surface_get_width (image);
     height = cairo_image_surface_get_height (image);

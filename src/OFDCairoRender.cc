@@ -575,18 +575,39 @@ void OFDCairoRender::ImplCls::DrawPathObject(cairo_t *cr, PathObject *pathObject
     PathPtr path = pathObject->GetPath();
     DoCairoPath(cr, path);
 
-    const ColorRGB &rgb = pathObject->GetStrokeColor()->Value.RGB;
-    double r = (double)rgb.Red / 255.0;
-    double g = (double)rgb.Green / 255.0;
-    double b = (double)rgb.Blue / 255.0;
-    double alpha = (double)pathObject->Alpha / 255.0;
-    //LOG(DEBUG) << "DrawPathObject() rgb = (" << r << "," << g << "," << b << ")";
-    //UpdateStrokePattern(r, g, b, opacity);
-
     cairo_set_line_width(cr, pathObject->LineWidth);
-    //cairo_set_source(cr, m_strokePattern);
-    cairo_set_source_rgba(cr, b, g, r, alpha);
-    cairo_stroke(cr);
+
+    ColorPtr strokeColor = pathObject->GetStrokeColor();
+    if ( strokeColor != nullptr ){
+        const ColorRGB &rgb = pathObject->GetStrokeColor()->Value.RGB;
+
+        double r = (double)rgb.Red / 255.0;
+        double g = (double)rgb.Green / 255.0;
+        double b = (double)rgb.Blue / 255.0;
+        double alpha = (double)pathObject->Alpha / 255.0;
+        //LOG(DEBUG) << "DrawPathObject() rgb = (" << r << "," << g << "," << b << ")";
+        //UpdateStrokePattern(r, g, b, opacity);
+
+        //cairo_set_source(cr, m_strokePattern);
+        cairo_set_source_rgba(cr, b, g, r, alpha);
+        cairo_stroke(cr);
+    } else {
+        ColorPtr fillColor = pathObject->GetFillColor();
+        if ( fillColor != nullptr ){
+            const ColorRGB &rgb = fillColor->Value.RGB;
+
+            double r = (double)rgb.Red / 255.0;
+            double g = (double)rgb.Green / 255.0;
+            double b = (double)rgb.Blue / 255.0;
+            double alpha = (double)pathObject->Alpha / 255.0;
+            //LOG(DEBUG) << "DrawPathObject() rgb = (" << r << "," << g << "," << b << ")";
+            //UpdateStrokePattern(r, g, b, opacity);
+
+            //cairo_set_source(cr, m_strokePattern);
+            cairo_set_source_rgba(cr, b, g, r, alpha);
+            cairo_fill(cr);
+        }
+    }
 
 }
 
