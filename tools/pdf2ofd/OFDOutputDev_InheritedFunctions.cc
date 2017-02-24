@@ -4,9 +4,10 @@
 #include <GlobalParams.h>
 #include <UnicodeMap.h>
 #include "OFDOutputDev.h"
+#include "ofd/Resource.h"
 #include "ofd/Page.h"
 #include "ofd/TextObject.h"
-#include "OFDRes.h"
+#include "ofd/Color.h"
 #include "utils/logger.h"
 
 /***

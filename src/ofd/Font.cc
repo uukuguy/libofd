@@ -14,6 +14,7 @@
 #include "ofd/Font.h"
 #include "ofd/Package.h"
 #include "utils/logger.h"
+#include "utils/xml.h"
 
 using namespace ofd;
 using namespace utils;

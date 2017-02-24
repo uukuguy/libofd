@@ -3,8 +3,6 @@
 
 #include <memory>
 #include "ofd/Common.h"
-#include "ofd/Layer.h"
-#include "utils/xml.h"
 
 namespace ofd{
 
@@ -52,10 +50,10 @@ namespace ofd{
 
             // ---------------- Private Attributes ----------------
         public:
-            const LayerPtr GetLayer() const {return m_layer.lock();};
-            LayerPtr GetLayer() {return m_layer.lock();};
-            const PagePtr GetPage() const {return GetLayer()->GetPage();};
-            PagePtr GetPage() {return GetLayer()->GetPage();};
+            const LayerPtr GetLayer() const;
+            LayerPtr GetLayer();
+            const PagePtr GetPage() const;
+            PagePtr GetPage();
 
         protected:
             std::weak_ptr<Layer> m_layer;

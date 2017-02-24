@@ -5,7 +5,7 @@
 #include "OFDOutputDev.h"
 #include "Gfx2Ofd.h"
 #include "ofd/Color.h"
-#include "OFDRes.h"
+#include "ofd/Resource.h"
 #include "ofd/TextObject.h"
 #include "utils/unicode.h"
 #include "utils/logger.h"

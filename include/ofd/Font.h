@@ -2,12 +2,8 @@
 #define __OFD_FONT_H__
 
 #include <string>
-#include <vector>
-#include <map>
 #include <memory>
-
 #include "ofd/Common.h"
-#include "utils/xml.h"
 
 struct _cairo_font_face;
 
@@ -81,10 +77,6 @@ namespace ofd{
             size_t            m_codeToGIDLen;
 
     }; // class Font;
-    typedef std::shared_ptr<Font> FontPtr;
-
-    typedef std::vector<FontPtr> FontArray;
-    typedef std::map<uint64_t, FontPtr> FontMap;
 
 }; // namespace ofd
 

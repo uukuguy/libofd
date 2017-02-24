@@ -13,6 +13,7 @@
 #include "utils/logger.h"
 
 using namespace ofd;
+using namespace utils;
 
 Page::Page(DocumentPtr document) :
     ID(0),

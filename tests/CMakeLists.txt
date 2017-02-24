@@ -1,4 +1,4 @@
 PROJECT(libofd)
 
 ADD_SUBDIRECTORY(ofdtest)
-ADD_SUBDIRECTORY(firsttest)
+#ADD_SUBDIRECTORY(firsttest)

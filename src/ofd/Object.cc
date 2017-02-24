@@ -1,4 +1,5 @@
 #include "ofd/Object.h"
+#include "ofd/Layer.h"
 #include "utils/xml.h"
 #include "utils/logger.h"
 #include "utils/utils.h"
@@ -20,6 +21,22 @@ Object::Object(LayerPtr layer, ObjectType objectType, const std::string& objectL
 }
 
 Object::~Object(){
+}
+
+const LayerPtr Object::GetLayer() const {
+    return m_layer.lock();
+}
+
+LayerPtr Object::GetLayer(){
+    return m_layer.lock();
+}
+
+const PagePtr Object::GetPage() const{
+    return GetLayer()->GetPage();
+}
+
+PagePtr Object::GetPage(){
+    return GetLayer()->GetPage();
 }
 
 // Called by OFDPage::ImplCls::generateContentXML()

@@ -6,7 +6,6 @@
 #include <tuple>
 #include <memory>
 #include "ofd/Common.h"
-#include "utils/zip.h"
 
 namespace ofd{
 

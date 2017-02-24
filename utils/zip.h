@@ -5,12 +5,10 @@
 #include <string>
 #include <vector>
 #include <tuple>
+#include "utils/utils.h"
 
 namespace utils {
 
-    class Zip;
-    typedef std::shared_ptr<Zip> ZipPtr;
-    
     class Zip : public std::enable_shared_from_this<Zip> {
     public:
         Zip();

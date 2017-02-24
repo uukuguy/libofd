@@ -6,9 +6,6 @@
 #include <string>
 #include <unordered_map>
 #include "ofd/Common.h"
-#include "utils/xml.h"
-
-using namespace utils;
 
 namespace ofd{
 
@@ -41,11 +38,11 @@ namespace ofd{
 
                     // 公共资源序列，每一个节点指向OFD包内的一个资源描述文档。
                     //std::vector<ST_Loc> PublicRes;
-                    OFDResPtr PublicRes;
+                    ResourcePtr PublicRes;
 
                     // 文档资源序列，每一个节点指向OFD包内的一个资源描述文档。
                     //std::vector<ST_Loc> DocumentRes;
-                    OFDResPtr DocumentRes;
+                    ResourcePtr DocumentRes;
 
                     // 模板页序列，为一系列模板页的集合，模板页内容结构和普通页相同。
                     //CT_TemplatePage TemplatePage;
@@ -140,8 +137,8 @@ namespace ofd{
             std::string GetDocRoot() const {return m_docBody.DocRoot;};
             const CommonData& GetCommonData() const {return m_commonData;};
             CommonData& GetCommonData() {return m_commonData;};
-            const OFDResPtr GetDocumentRes() const{return GetCommonData().DocumentRes;};
-            OFDResPtr GetDocumentRes() {return GetCommonData().DocumentRes;};
+            const ResourcePtr GetDocumentRes() const{return GetCommonData().DocumentRes;};
+            ResourcePtr GetDocumentRes() {return GetCommonData().DocumentRes;};
             const DocBody& GetDocBody() const {return m_docBody;};
             DocBody& GetDocBody() {return m_docBody;};
 
@@ -152,11 +149,11 @@ namespace ofd{
             CommonData        m_commonData;
             DocBody           m_docBody;
 
-            void generateCommonDataXML(XMLWriter &writer) const;
-            void generatePagesXML(XMLWriter &writer) const;
-            bool fromDocInfoXML(XMLElementPtr docInfoElement);
-            bool fromCommonDataXML(XMLElementPtr commonDataElement);
-            bool fromPagesXML(XMLElementPtr pagesElement);
+            void generateCommonDataXML(utils::XMLWriter &writer) const;
+            void generatePagesXML(utils::XMLWriter &writer) const;
+            bool fromDocInfoXML(utils::XMLElementPtr docInfoElement);
+            bool fromCommonDataXML(utils::XMLElementPtr commonDataElement);
+            bool fromPagesXML(utils::XMLElementPtr pagesElement);
 
     }; // class Document
 

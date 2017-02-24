@@ -1,37 +1,35 @@
-#ifndef __OFD_RES_H__
-#define __OFD_RES_H__
+#ifndef __OFD_RESOURCE_H__
+#define __OFD_RESOURCE_H__
 
 #include <memory>
 #include <string>
 #include "ofd/Common.h"
-#include "ofd/Color.h"
-#include "ofd/Font.h"
 
 namespace ofd{
 
-    enum class ResLevel{
+    enum class ResourceLevel{
         PACKAGE = 0,
         DOCUMENT,
         PAGE,
     };
 
     // OFD (section 7.9) P23. Res.xsd
-    class OFDRes : public std::enable_shared_from_this<OFDRes> {
+    class Resource : public std::enable_shared_from_this<Resource> {
     private:
-        OFDRes(PackagePtr package, const std::string &resDescFile);
-        OFDRes(DocumentPtr document, const std::string &resDescFile);
-        OFDRes(PagePtr page, const std::string &resDescFile);
+        Resource(PackagePtr package, const std::string &resDescFile);
+        Resource(DocumentPtr document, const std::string &resDescFile);
+        Resource(PagePtr page, const std::string &resDescFile);
 
     public:
-        ~OFDRes();
+        ~Resource();
 
-        OFDResPtr GetSelf();
+        ResourcePtr GetSelf();
 
-        static OFDResPtr CreateNewRes(PackagePtr package, const std::string &resDescFile = "PublicRes.xml");
-        static OFDResPtr CreateNewRes(DocumentPtr document, const std::string &resDescFile = "DocumentRes.xml");
-        static OFDResPtr CreateNewRes(PagePtr page, const std::string &resDescFile = "PageRes.xml");
+        static ResourcePtr CreateNewResource(PackagePtr package, const std::string &resDescFile = "PublicRes.xml");
+        static ResourcePtr CreateNewResource(DocumentPtr document, const std::string &resDescFile = "DocumentRes.xml");
+        static ResourcePtr CreateNewResource(PagePtr page, const std::string &resDescFile = "PageRes.xml");
 
-        ResLevel GetResLevel() const;
+        ResourceLevel GetResourceLevel() const;
 
         const PackagePtr GetPackage() const;
         const DocumentPtr GetDocument() const;
@@ -59,9 +57,9 @@ namespace ofd{
         class ImplCls;
         std::unique_ptr<ImplCls> m_impl;
 
-    }; // class OFDRes
+    }; // class Resource
 
 
 }; // namespace ofd
 
-#endif // __OFD_RES_H__
+#endif // __OFD_RESOURCE_H__

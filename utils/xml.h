@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <tuple>
+#include "utils/utils.h"
 
 #define OFDXML_HEAD_ATTRIBUTES \
     writer.WriteAttribute("xmlns:ofd", std::string("http://www.ofdspec.org/2016")); 
@@ -40,9 +41,6 @@ private:
     std::unique_ptr<ImplCls> m_impl;
 
 }; // class XMLWriter
-
-class XMLElement;
-typedef std::shared_ptr<XMLElement> XMLElementPtr;
 
 //class XMLReader{
 //public:

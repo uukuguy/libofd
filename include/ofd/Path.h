@@ -3,47 +3,19 @@
 
 #include <memory>
 #include <vector>
+#include "ofd/Common.h"
 
 namespace ofd{
-
-    // **************** struct Point ****************
-    typedef struct Point{
-        double x;
-        double y;
-
-        Point() : x(0.0), y(0.0){};
-        Point(double _x, double _y): x(_x), y(_y){};
-
-        void Clear(){
-            x = y = 0.0;
-        }
-
-        void Offset(double dx, double dy){
-            x += dx; y += dy;
-        }
-
-        bool operator ==(const Point& other) const {
-            return x == other.x && y == other.y;
-        }
-
-        bool operator !=(const Point& other) const {
-            return !(*this == other);
-        }
-
-    } *Point_t;
-
-    class Subpath;
-    typedef std::shared_ptr<Subpath> SubpathPtr;
 
     // **************** class Subpath ****************
     class Subpath{
         public:
-            static SubpathPtr Instance(const Point &startPoint){
+            static SubpathPtr Instance(const Point_t &startPoint){
                 return std::make_shared<Subpath>(startPoint);
             };
 
         public:
-            Subpath(const Point &startPoint);
+            Subpath(const Point_t &startPoint);
             Subpath(const Subpath* other);
 
             // ================ Public Methods ================
@@ -54,24 +26,21 @@ namespace ofd{
             bool IsClosed() const{return m_bClosed;};
 
             size_t GetNumPoints() const{return m_points.size();};
-            const Point& GetFirstPoint() const;
-            const Point& GetLastPoint() const; 
-            const Point& GetPoint(size_t idx) const;
-            void SetPoint(size_t idx, const Point& point);
+            const Point_t& GetFirstPoint() const;
+            const Point_t& GetLastPoint() const; 
+            const Point_t& GetPoint(size_t idx) const;
+            void SetPoint(size_t idx, const Point_t& point);
 
             void Offset(double dx, double dy);
-            void LineTo(const Point& point);
-            void CurveTo(const Point& p0, const Point& p1, const Point& p2);
+            void LineTo(const Point_t& point);
+            void CurveTo(const Point_t& p0, const Point_t& p1, const Point_t& p2);
 
         private:
-            std::vector<Point> m_points;
+            std::vector<Point_t> m_points;
             std::vector<bool> m_curves;
             bool m_bClosed;
 
     }; // class Subpath
-
-    class Path;
-    typedef std::shared_ptr<Path> PathPtr;
 
     // **************** class Path ****************
     class Path{
@@ -86,9 +55,9 @@ namespace ofd{
 
             // ================ Public Methods ================
         public:
-            void MoveTo(const Point& startPoint);
-            void LineTo(const Point& point);
-            void CurveTo(const Point& p0, const Point& p1, const Point& p2);
+            void MoveTo(const Point_t& startPoint);
+            void LineTo(const Point_t& point);
+            void CurveTo(const Point_t& p0, const Point_t& p1, const Point_t& p2);
             void ClosePath();
             void Offset(double dx, double dy);
             void Append(const Path& otherPath);
@@ -101,10 +70,10 @@ namespace ofd{
             SubpathPtr GetSubpath(size_t idx) const {return m_subpaths[idx];};
             SubpathPtr GetLastSubpath() const;
 
-            const Point& GetStartPoint() const {return m_startPoint;};
+            const Point_t& GetStartPoint() const {return m_startPoint;};
         private:
             bool m_bJustMoved;
-            Point m_startPoint;
+            Point_t m_startPoint;
             std::vector<SubpathPtr> m_subpaths;
 
     }; // class Path

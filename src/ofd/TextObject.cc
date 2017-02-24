@@ -3,11 +3,13 @@
 #include "ofd/Document.h"
 #include "ofd/Page.h"
 #include "ofd/Layer.h"
-#include "OFDRes.h"
+#include "ofd/Color.h"
+#include "ofd/Font.h"
+#include "ofd/Resource.h"
+#include "utils/xml.h"
 #include "utils/logger.h"
 
 using namespace ofd;
-using namespace utils;
 
 ColorPtr TextObject::DefaultStrokeColor = Color::Instance(0,0,0,0);
 ColorPtr TextObject::DefaultFillColor = Color::Instance(0,0,0,255);
@@ -23,9 +25,21 @@ TextObject::TextObject(LayerPtr layer) :
 TextObject::~TextObject(){
 }
 
+void TextObject::SetFillColor(ColorPtr fillColor){
+    if ( !fillColor->Equal(DefaultFillColor) ){
+        FillColor = fillColor;
+    }
+}
+
+void TextObject::SetStrokeColor(ColorPtr strokeColor){
+    if ( !strokeColor->Equal(DefaultStrokeColor) ){
+        StrokeColor = strokeColor;
+    }
+}
+
 // -------- <TextObject>
 // OFD (section 11.2) P63. Page.xsd.
-void TextObject::GenerateAttributesXML(XMLWriter &writer) const{
+void TextObject::GenerateAttributesXML(utils::XMLWriter &writer) const{
     Object::GenerateAttributesXML(writer);
 
     // FIXME
@@ -62,7 +76,7 @@ void TextObject::GenerateAttributesXML(XMLWriter &writer) const{
 
 // -------- <TextObject>
 // OFD (section 11.2) P63. Page.xsd.
-void TextObject::GenerateElementsXML(XMLWriter &writer) const{
+void TextObject::GenerateElementsXML(utils::XMLWriter &writer) const{
     Object::GenerateElementsXML(writer);
 
     // -------- <FillColor>
@@ -121,7 +135,7 @@ void TextObject::GenerateElementsXML(XMLWriter &writer) const{
 
 // -------- TextObject --------
 // OFD (section 11.2) P63
-bool TextObject::FromAttributesXML(XMLElementPtr objectElement){
+bool TextObject::FromAttributesXML(utils::XMLElementPtr objectElement){
     if ( !Object::FromAttributesXML(objectElement) ){
         return false;
     }
@@ -142,7 +156,7 @@ bool TextObject::FromAttributesXML(XMLElementPtr objectElement){
         const DocumentPtr document = page->GetDocument();
         assert(document != nullptr);
         const Document::CommonData &commonData = document->GetCommonData();
-        const OFDResPtr documentRes = commonData.DocumentRes;
+        const ResourcePtr documentRes = commonData.DocumentRes;
         assert(documentRes != nullptr);
         const FontPtr font = documentRes->GetFont(fontID);
         if ( font == nullptr ){
@@ -166,7 +180,7 @@ bool TextObject::FromAttributesXML(XMLElementPtr objectElement){
 
 // -------- TextObject --------
 // OFD (section 11.2) P63
-bool TextObject::IterateElementsXML(XMLElementPtr childElement){
+bool TextObject::IterateElementsXML(utils::XMLElementPtr childElement){
     if ( !Object::IterateElementsXML(childElement) ){
         return false;
     }

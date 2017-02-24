@@ -1,8 +1,10 @@
-#include "ofd/Color.h"
 #include "ofd/PathObject.h"
 #include "ofd/Page.h"
 #include "ofd/Document.h"
-
+#include "ofd/Path.h"
+#include "ofd/Color.h"
+#include "ofd/Shading.h"
+#include "ofd/Pattern.h"
 #include "utils/logger.h"
 #include "utils/xml.h"
 
@@ -17,11 +19,24 @@ ColorPtr PathObject::DefaultFillColor = Color::Instance(0,0,0,0);
 PathObject::PathObject(LayerPtr layer) :
     Object(layer, ObjectType::PATH, "PathObject"),
     Stroke(true), Fill(false), Rule(PathRule::NonZero),
+    FillPattern(nullptr), FillShading(nullptr),
     FillColor(nullptr), StrokeColor(nullptr),
     m_path(nullptr){
 }
 
 PathObject::~PathObject(){
+}
+
+void PathObject::SetFillColor(ColorPtr fillColor){
+    if ( !fillColor->Equal(DefaultFillColor) ){
+        FillColor = fillColor;
+    }
+}
+
+void PathObject::SetStrokeColor(ColorPtr strokeColor){
+    if ( !strokeColor->Equal(DefaultStrokeColor) ){
+        StrokeColor = strokeColor;
+    }
 }
 
 void PathObject::GenerateAttributesXML(XMLWriter &writer) const{
@@ -52,12 +67,21 @@ void PathObject::GenerateElementsXML(XMLWriter &writer) const{
     // -------- <FillColor>
     // OFD (section 9.1) P52. Page.xsd
     // Optional.
-    if ( FillColor != nullptr ){
+    if ( FillShading != nullptr || FillPattern != nullptr || FillColor != nullptr ){
+
         writer.StartElement("FillColor");{
-            FillColor->WriteColorXML(writer);
+
+            if ( FillShading != nullptr ){
+                FillShading->WriteShadingXML(writer);
+            } else if ( FillPattern != nullptr ){
+                FillPattern->WritePatternXML(writer);
+            } else {
+                FillColor->WriteColorXML(writer);
+            }
+    
         } writer.EndElement();
     }
-    
+
     // -------- <StrokeColor>
     // OFD (section 9.1) P52. Page.xsd
     // Optional.

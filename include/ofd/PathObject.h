@@ -2,10 +2,7 @@
 #define __OFD_PATHOBJECT_H__
 
 #include <memory>
-#include "ofd/Color.h"
 #include "ofd/Object.h"
-#include "ofd/Path.h"
-#include "ofd/Common.h"
 
 namespace ofd{
 
@@ -36,19 +33,14 @@ namespace ofd{
                                              // 默认值为NonZero。
             // 填充色，默认值为透明色。
             ColorPtr GetFillColor() const{return FillColor;};
-            void SetFillColor(ColorPtr fillColor){
-                if ( !fillColor->Equal(DefaultFillColor) ){
-                    FillColor = fillColor;
-                }
-            };
+            void SetFillColor(ColorPtr fillColor);
 
             // 勾边色，默认值为黑色。
             ColorPtr GetStrokeColor() const{return StrokeColor;};
-            void SetStrokeColor(ColorPtr strokeColor){
-                if ( !strokeColor->Equal(DefaultStrokeColor) ){
-                    StrokeColor = strokeColor;
-                }
-            };
+            void SetStrokeColor(ColorPtr strokeColor);
+
+            PatternPtr          FillPattern; // 填充底纹
+            ShadingPtr          FillShading; // 填充渐变色
 
         private:
             ColorPtr            FillColor;   // 填充色，默认值为透明色。

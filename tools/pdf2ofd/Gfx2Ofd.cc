@@ -1,4 +1,7 @@
 #include "Gfx2Ofd.h"
+#include "ofd/Font.h"
+#include "ofd/Path.h"
+#include "ofd/Color.h"
 #include "utils/logger.h"
 
 using namespace ofd;
@@ -18,7 +21,7 @@ PathPtr GfxPath_to_OfdPath(GfxPath *gfxPath){
         if ( subpath->getNumPoints() > 0 ){
             x = subpath->getX(0);
             y = subpath->getY(0);
-            ofdPath->MoveTo(Point(x,y));
+            ofdPath->MoveTo(Point_t(x,y));
             j = 1;
             while ( j < subpath->getNumPoints()) {
                 if ( subpath->getCurve(j) ){
@@ -28,13 +31,13 @@ PathPtr GfxPath_to_OfdPath(GfxPath *gfxPath){
                     double y0 = subpath->getY(j);
                     double x1 = subpath->getX(j+1);
                     double y1 = subpath->getY(j+1);
-                    ofdPath->CurveTo(Point(x0, y0), Point(x1, y1), Point(x, y));
+                    ofdPath->CurveTo(Point_t(x0, y0), Point_t(x1, y1), Point_t(x, y));
 
                     j += 3;
                 } else {
                     x = subpath->getX(j);
                     y = subpath->getY(j);
-                    ofdPath->LineTo(Point(x, y));
+                    ofdPath->LineTo(Point_t(x, y));
                     ++j;
                 }
             }

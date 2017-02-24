@@ -1,10 +1,7 @@
 #ifndef __OFD_TEXTOBJECT_H__
 #define __OFD_TEXTOBJECT_H__
 
-#include "ofd/Common.h"
 #include "ofd/Object.h"
-#include "ofd/Color.h"
-#include "ofd/Font.h"
 
 namespace ofd{
 
@@ -127,19 +124,11 @@ namespace ofd{
 
             // 填充色，默认值为黑色。
             ColorPtr GetFillColor() const{return FillColor;};
-            void SetFillColor(ColorPtr fillColor){
-                if ( !fillColor->Equal(DefaultFillColor) ){
-                    FillColor = fillColor;
-                }
-            };
+            void SetFillColor(ColorPtr fillColor);
 
             // 勾边色，默认值为透明色。
             ColorPtr GetStrokeColor() const{return StrokeColor;};
-            void SteStrokeColor(ColorPtr strokeColor){
-                if ( !strokeColor->Equal(DefaultStrokeColor) ){
-                    StrokeColor = strokeColor;
-                }
-            };
+            void SetStrokeColor(ColorPtr strokeColor);
 
 
             // TODO

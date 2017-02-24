@@ -3,9 +3,7 @@
 
 #include "GfxFont.h"
 #include "GfxState.h"
-#include "ofd/Font.h"
-#include "ofd/Path.h"
-#include "ofd/Color.h"
+#include "ofd/Common.h"
 
 ofd::PathPtr GfxPath_to_OfdPath(GfxPath *gfxPath);
 ofd::FontPtr GfxFont_to_OfdFont(GfxFont *gfxFont, XRef *xref);

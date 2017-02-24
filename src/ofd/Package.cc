@@ -2,7 +2,8 @@
 #include "ofd/Package.h"
 #include "ofd/Document.h"
 #include "ofd/Page.h"
-#include "OFDRes.h"
+#include "ofd/Font.h"
+#include "ofd/Resource.h"
 #include "utils/xml.h"
 #include "utils/zip.h"
 #include "utils/logger.h"
@@ -226,7 +227,7 @@ bool Package::Save(const std::string &filename){
             zip->AddFile(imageFileName, strImage);
         }
 
-        OFDResPtr documentRes = document->GetDocumentRes();
+        ResourcePtr documentRes = document->GetDocumentRes();
         assert(documentRes != nullptr);
 
         const FontMap &fonts = documentRes->GetFonts();

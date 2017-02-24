@@ -84,7 +84,7 @@ OFDOutputDev::OFDOutputDev(ofd::PackagePtr package) :
     m_package(package), m_document(nullptr), m_currentOFDPage(nullptr),
     m_currentFont(nullptr), m_currentFontSize(14.0), m_currentCTM(nullptr) {
 
-    ffw_init(false);
+    utils::ffw_init(false);
     cur_mapping.resize(0x10000);
     cur_mapping2.resize(0x100);
     width_list.resize(0x10000);
@@ -168,7 +168,7 @@ OFDOutputDev::OFDOutputDev(ofd::PackagePtr package) :
 // ======== OFDOutputDev::~OFDOutputDev() ========
 OFDOutputDev::~OFDOutputDev(){
 
-    ffw_finalize();
+    utils::ffw_finalize();
 
     if ( m_cairo != nullptr ){
         cairo_destroy(m_cairo);
@@ -463,7 +463,7 @@ void OFDOutputDev::beforePage(double w, double h) {
             //return;
         //}
         //m_cairoRender = std::make_shared<OFDCairoRender>(m_imageSurface);
-        m_cairoRender = std::make_shared<OFDCairoRender>(w, h, m_resolutionX, m_resolutionY);
+        m_cairoRender = std::make_shared<ofd::CairoRender>(w, h, m_resolutionX, m_resolutionY);
     }
 }
 

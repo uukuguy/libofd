@@ -12,7 +12,7 @@
 #include "ofd/Document.h"
 #include "ofd/Page.h"
 #include "ofd/Font.h"
-#include "OFDCairoRender.h"
+#include "ofd/CairoRender.h"
 #include "FontOutputDev.h"
 #include "utils/StringFormatter.h"
 
@@ -226,7 +226,7 @@ private:
     ActualText *m_actualText;
 
     //cairo_surface_t *m_imageSurface;
-    ofd::OFDCairoRenderPtr m_cairoRender;
+    ofd::CairoRenderPtr m_cairoRender;
 
     ofd::PackagePtr m_package;
     ofd::DocumentPtr m_document;

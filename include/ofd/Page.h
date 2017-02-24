@@ -5,7 +5,6 @@
 #include <string>
 #include "ofd/Common.h"
 #include "ofd/Layer.h"
-#include "utils/xml.h"
 
 namespace ofd{
 

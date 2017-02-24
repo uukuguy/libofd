@@ -9,6 +9,7 @@
 #include "OFDOutputDev.h"
 #include "utils/logger.h"
 #include "utils/utils.h"
+#include "utils/ffw.h"
 
 using namespace std;
 
@@ -268,9 +269,6 @@ std::string OFDOutputDev::dump_embedded_font(GfxFont * font, XRef * xref) {
 }
 
 
-extern "C"{
-#include "utils/ffw.h"
-}
 
 bool is_truetype_suffix(const std::string & suffix) {
     return (suffix == ".ttf") || (suffix == ".ttc") || (suffix == ".otf");
@@ -322,8 +320,8 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
         //cerr << "Embed font: " << filepath << " " << info.id << endl;
     //}
 
-    ffw_load_font(filepath.c_str());
-    ffw_prepare_font();
+    utils::ffw_load_font(filepath.c_str());
+    utils::ffw_prepare_font();
 
     //if(param.debug)
     //{
@@ -352,7 +350,7 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
 
     const char * used_map = nullptr;
 
-    info.em_size = ffw_get_em_size();
+    info.em_size = utils::ffw_get_em_size();
 
     //if(param.debug)
     //{
@@ -368,9 +366,9 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
     }
 
     if(get_metric_only) {
-        ffw_fix_metric();
-        ffw_get_metric(&info.ascent, &info.descent);
-        ffw_close();
+        utils::ffw_fix_metric();
+        utils::ffw_get_metric(&info.ascent, &info.descent);
+        utils::ffw_close();
         return;
     }
 
@@ -407,7 +405,7 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
             //}
             //else
             {
-                ffw_reencode_glyph_order();
+                utils::ffw_reencode_glyph_order();
                 if(FoFiTrueType * fftt = FoFiTrueType::load((char*)filepath.c_str())) {
                     code2GID = font_8bit->getCodeToGIDMap(fftt);
                     code2GID_len = 256;
@@ -440,13 +438,13 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
                 }
             }
 
-            ffw_reencode_raw2(cur_mapping2.data(), 256, 0);
+            utils::ffw_reencode_raw2(cur_mapping2.data(), 256, 0);
         }
     } else {
         maxcode = 0xffff;
 
         if(is_truetype_suffix(suffix)) {
-            ffw_reencode_glyph_order();
+            utils::ffw_reencode_glyph_order();
 
             GfxCIDFont * _font = dynamic_cast<GfxCIDFont*>(font);
 
@@ -464,7 +462,7 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
             }
         } else {
             // TODO: add an option to load the table?
-            ffw_cidflatten();
+            utils::ffw_cidflatten();
         }
     }
 
@@ -605,9 +603,9 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
         }
 
         // FIXME
-        ffw_set_widths(width_list.data(), max_key + 1, stretch_narrow_glyph, squeeze_wide_glyph);
+        utils::ffw_set_widths(width_list.data(), max_key + 1, stretch_narrow_glyph, squeeze_wide_glyph);
         
-        ffw_reencode_raw(cur_mapping.data(), max_key + 1, 1);
+        utils::ffw_reencode_raw(cur_mapping.data(), max_key + 1, 1);
 
         // In some space offsets in HTML, we insert a ' ' there in order to improve text copy&paste
         // We need to make sure that ' ' is in the font, otherwise it would be very ugly if you select the text
@@ -626,7 +624,7 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
                 info.space_width = 0.001;
             }
 
-            ffw_add_empty_char((int32_t)' ', (int)floor(info.space_width * info.em_size + 0.5));
+            utils::ffw_add_empty_char((int32_t)' ', (int)floor(info.space_width * info.em_size + 0.5));
             //if(param.debug)
             //{
                 //cerr << "Missing space width in font " << hex << info.id << ": set to " << dec << info.space_width << endl;
@@ -649,7 +647,7 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
      */
 
     // Reencode to Unicode Full such that FontForge won't ditch unicode values larger than 0xFFFF
-    ffw_reencode_unicode_full();
+    utils::ffw_reencode_unicode_full();
 
     // Due to a bug of Fontforge about pfa -> woff conversion
     // we always generate TTF first, instead of the format specified by user
@@ -660,9 +658,9 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
     std::string other_tmp_fn = (char*)str_fmt("%s/__tmp_font2.%s", tmp_dir.c_str(), "ttf");
     //tmp_files.add(other_tmp_fn);
 
-    ffw_save(cur_tmp_fn.c_str());
+    utils::ffw_save(cur_tmp_fn.c_str());
 
-    ffw_close();
+    utils::ffw_close();
 
     /*
      * Step 4
@@ -679,10 +677,10 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
     // Call internal hinting procedure if specified 
     if((!hinted) && (auto_hint))
     {
-        ffw_load_font(cur_tmp_fn.c_str());
-        ffw_auto_hint();
-        ffw_save(other_tmp_fn.c_str());
-        ffw_close();
+        utils::ffw_load_font(cur_tmp_fn.c_str());
+        utils::ffw_auto_hint();
+        utils::ffw_save(other_tmp_fn.c_str());
+        utils::ffw_close();
         hinted = true;
     }
 
@@ -707,18 +705,18 @@ void OFDOutputDev::embed_font(const string & filepath, GfxFont * font, FontInfo 
         //tmp_files.add(fn);
     //}
 
-    ffw_load_font(cur_tmp_fn.c_str());
-    ffw_fix_metric();
-    ffw_get_metric(&info.ascent, &info.descent);
+    utils::ffw_load_font(cur_tmp_fn.c_str());
+    utils::ffw_fix_metric();
+    utils::ffw_get_metric(&info.ascent, &info.descent);
 
     // FIXME
     if ( override_fstype ){
-        ffw_override_fstype();
+        utils::ffw_override_fstype();
     }
 
-    ffw_save(fn.c_str());
+    utils::ffw_save(fn.c_str());
 
-    ffw_close();
+    utils::ffw_close();
 }
 
 void OFDOutputDev::install_embedded_font(GfxFont * font, FontInfo & info) {

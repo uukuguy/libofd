@@ -1,13 +1,18 @@
 #ifndef __OFD_COMMON_H__
 #define __OFD_COMMON_H__
 
-#include <vector>
-#include <string>
 #include <memory>
+#include <string>
+#include <vector>
+#include <map>
 #include <sstream>
 #include "utils/utils.h"
 
 namespace ofd{
+
+    // C++14
+    //template<class T> std::shared_ptr<T> TPtr;
+    //template<class T> std::vector<T> TArray;
 
     class Package;
     typedef std::shared_ptr<Package> PackagePtr;
@@ -25,22 +30,73 @@ namespace ofd{
     typedef std::shared_ptr<Layer> LayerPtr;
     typedef std::vector<LayerPtr> LayerArray;
 
+    class PageBlock;
+    typedef std::shared_ptr<PageBlock> PageBlockPtr;
+    typedef std::vector<PageBlockPtr> PageBlockArray;
+
     class Object;
     typedef std::shared_ptr<Object> ObjectPtr;
     typedef std::vector<ObjectPtr> ObjectArray;
 
-    class Res;
-    typedef std::shared_ptr<Res> ResPtr;
-    typedef std::vector<ResPtr> ResArray;
+    class Resource;
+    typedef std::shared_ptr<Resource> ResourcePtr;
+    typedef std::vector<ResourcePtr> ResourceArray;
 
-    class OFDRes;
-    typedef std::shared_ptr<OFDRes> OFDResPtr;
+    class Font;
+    typedef std::shared_ptr<Font> FontPtr;
+    typedef std::vector<FontPtr> FontArray;
+    typedef std::map<uint64_t, FontPtr> FontMap;
 
     class Color;
     typedef std::shared_ptr<Color> ColorPtr;
+    typedef std::vector<ColorPtr> ColorArray;
 
     class ColorSpace;
     typedef std::shared_ptr<ColorSpace> ColorSpacePtr;
+    typedef std::vector<ColorSpacePtr> ColorSpaceArray;
+
+    class Pattern;
+    typedef std::shared_ptr<Pattern> PatternPtr;
+    typedef std::vector<PatternPtr> PatternArray;
+
+    class Shading;
+    typedef std::shared_ptr<Shading> ShadingPtr;
+    typedef std::vector<ShadingPtr> ShadingArray;
+
+    class Subpath;
+    typedef std::shared_ptr<Subpath> SubpathPtr;
+    typedef std::vector<SubpathPtr> SubpathArray;
+
+    class Path;
+    typedef std::shared_ptr<Path> PathPtr;
+    typedef std::vector<PathPtr> PathArray;
+
+    // **************** struct Point ****************
+    typedef struct _Point{
+        double x;
+        double y;
+
+        _Point() : x(0.0), y(0.0){};
+        _Point(double _x, double _y): x(_x), y(_y){};
+
+        void Clear(){
+            x = y = 0.0;
+        }
+
+        void Offset(double dx, double dy){
+            x += dx; y += dy;
+        }
+
+        bool operator ==(const _Point& other) const {
+            return x == other.x && y == other.y;
+        }
+
+        bool operator !=(const _Point& other) const {
+            return !(*this == other);
+        }
+
+    } Point_t;
+
 
     // 以下类型定义在OFD标准的Definitions.xsd文件中
 

@@ -8,7 +8,7 @@ using namespace ofd;
 
 // **************** class Subpath ****************
 
-Subpath::Subpath(const Point &startPoint) :
+Subpath::Subpath(const Point_t &startPoint) :
     m_bClosed(false){
     m_points.push_back(startPoint);
 }
@@ -22,22 +22,22 @@ SubpathPtr Subpath::Clone() const{
     return std::make_shared<Subpath>(this);
 }
 
-const Point& Subpath::GetFirstPoint() const{
+const Point_t& Subpath::GetFirstPoint() const{
     assert(m_points.size() > 0);
     return m_points[0];
 }
 
-const Point& Subpath::GetLastPoint() const{
+const Point_t& Subpath::GetLastPoint() const{
     assert(m_points.size() > 0);
     return m_points[m_points.size() - 1];
 }
 
-const Point& Subpath::GetPoint(size_t idx) const{
+const Point_t& Subpath::GetPoint(size_t idx) const{
     assert(idx < m_points.size());
     return m_points[idx];
 }
 
-void Subpath::SetPoint(size_t idx, const Point& point){
+void Subpath::SetPoint(size_t idx, const Point_t& point){
     assert(idx < m_points.size());
     m_points[idx] = point;
 }
@@ -45,8 +45,8 @@ void Subpath::SetPoint(size_t idx, const Point& point){
 void Subpath::ClosePath(){
     size_t numPoints = GetNumPoints();
     if ( numPoints < 1 ) return;
-    Point p0 = m_points[0];
-    Point p1 = m_points[numPoints - 1];
+    Point_t p0 = m_points[0];
+    Point_t p1 = m_points[numPoints - 1];
     if ( p0 != p1 ){
     //if ( m_points[0] != m_points[numPoints - 1]){
         LineTo(m_points[0]);
@@ -56,17 +56,17 @@ void Subpath::ClosePath(){
 
 void Subpath::Offset(double dx, double dy){
     std::for_each(m_points.begin(), m_points.end(), 
-            [=](Point& point){
+            [=](Point_t& point){
                 point.Offset(dx, dy);
             });
 }
 
-void Subpath::LineTo(const Point& point){
+void Subpath::LineTo(const Point_t& point){
     m_points.push_back(point);
     m_curves.push_back(false);
 }
 
-void Subpath::CurveTo(const Point& p0, const Point& p1, const Point& p2){
+void Subpath::CurveTo(const Point_t& p0, const Point_t& p1, const Point_t& p2){
     m_points.push_back(p0);
     m_points.push_back(p1);
     m_points.push_back(p2);
@@ -95,13 +95,13 @@ SubpathPtr Path::GetLastSubpath() const{
 }
 
 // ======== Path::MoveTo() ========
-void Path::MoveTo(const Point& startPoint){
+void Path::MoveTo(const Point_t& startPoint){
     m_bJustMoved = true;
     m_startPoint = startPoint;
 }
 
 // ======== Path::LineTo() ========
-void Path::LineTo(const Point& point){
+void Path::LineTo(const Point_t& point){
 
     if ( m_bJustMoved ){
         SubpathPtr subPath = std::make_shared<Subpath>(m_startPoint);
@@ -111,7 +111,7 @@ void Path::LineTo(const Point& point){
         assert(lastSubpath != nullptr );
 
         if (lastSubpath->IsClosed()){
-            const Point& lastPoint = lastSubpath->GetLastPoint();
+            const Point_t& lastPoint = lastSubpath->GetLastPoint();
             SubpathPtr subPath = std::make_shared<Subpath>(lastPoint);
             m_subpaths.push_back(subPath);
         }
@@ -123,7 +123,7 @@ void Path::LineTo(const Point& point){
 }
 
 // ======== Path::CurveTo() ========
-void Path::CurveTo(const Point& p0, const Point& p1, const Point& p2){
+void Path::CurveTo(const Point_t& p0, const Point_t& p1, const Point_t& p2){
     if ( m_bJustMoved ){
         SubpathPtr subPath = std::make_shared<Subpath>(m_startPoint);
         m_subpaths.push_back(subPath);
@@ -132,7 +132,7 @@ void Path::CurveTo(const Point& p0, const Point& p1, const Point& p2){
         assert(lastSubpath != nullptr );
 
         if (lastSubpath->IsClosed()){
-            const Point& lastPoint = lastSubpath->GetLastPoint();
+            const Point_t& lastPoint = lastSubpath->GetLastPoint();
             SubpathPtr subPath = std::make_shared<Subpath>(lastPoint);
             m_subpaths.push_back(subPath);
         }
@@ -189,14 +189,14 @@ std::string Path::ToPathData() const{
             //LOG(DEBUG) << "AbbreviateData: numPoints:" << numPoints;
             if ( numPoints < 2 ) continue;
 
-            const Point &startPoint = subpath->GetFirstPoint();
+            const Point_t &startPoint = subpath->GetFirstPoint();
             if ( idx == 0 ){
                 ss << "S " << startPoint.x << " " << startPoint.y << " ";
             } else {
                 ss << "M " << startPoint.x << " " << startPoint.y << " ";
             }
             for ( size_t n = 1 ; n < numPoints ; n++ ){
-                const Point &p = subpath->GetPoint(n);
+                const Point_t &p = subpath->GetPoint(n);
                 ss << "L " << p.x << " " << p.y << " ";
             }
             if ( subpath->IsClosed() ){
@@ -208,10 +208,10 @@ std::string Path::ToPathData() const{
     return ss.str();
 }
 
-Point toPoint(const std::string& xString, const std::string& yString){
+Point_t toPoint(const std::string& xString, const std::string& yString){
     double x = std::atof(xString.c_str());
     double y = std::atof(yString.c_str());
-    return Point(x, y);
+    return Point_t(x, y);
 }
 
 // ======== Path::FromPathData() ========
@@ -229,7 +229,7 @@ PathPtr Path::FromPathData(const std::string &pathData){
         if ( op == "L" ){
             // 线段连接
             if ( numTokens >= 2 ){
-                Point point = toPoint(tokens[idx], tokens[idx+1]);
+                Point_t point = toPoint(tokens[idx], tokens[idx+1]);
                 path->LineTo(point);
                 idx += 2;
                 numTokens -= 2;
@@ -241,7 +241,7 @@ PathPtr Path::FromPathData(const std::string &pathData){
         } else if ( op == "M" ){
             // 移动到指定点
             if ( numTokens >= 2 ){
-                Point point = toPoint(tokens[idx], tokens[idx+1]);
+                Point_t point = toPoint(tokens[idx], tokens[idx+1]);
                 path->MoveTo(point);
                 idx += 2;
                 numTokens -= 2;
@@ -299,7 +299,7 @@ PathPtr Path::FromPathData(const std::string &pathData){
             }
         } else if ( op == "S" ){
             if ( numTokens >= 2 ){
-                Point point = toPoint(tokens[idx], tokens[idx+1]);
+                Point_t point = toPoint(tokens[idx], tokens[idx+1]);
                 path->MoveTo(point);
                 idx += 2;
                 numTokens -= 2;

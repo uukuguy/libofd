@@ -7,11 +7,7 @@
 #include <vector>
 #include <map>
 #include <iostream>
-#include "utils/xml.h"
-
-namespace utils{
-    class XMLWriter;
-}
+#include "ofd/Common.h"
 
 namespace ofd{
 
@@ -101,27 +97,26 @@ namespace ofd{
     typedef struct ColorValue{
 
         union{
-            uint32_t  Gray;     // 灰度，只包含一个通道来表明灰度值。
-            ColorRGB  RGB;      // 包含三个通道，依次是红、绿、蓝。
-            ColorCMYK CMYK;     // 包含四个通道，依次是青、黄、品红、黑。
+            uint32_t  Gray;      // 灰度，只包含一个通道来表明灰度值。
+            ColorRGB  RGB;       // 包含三个通道，依次是红、绿、蓝。
+            ColorCMYK CMYK;      // 包含四个通道，依次是青、黄、品红、黑。
             uint32_t  Values[4]; // 用于按序号访问颜色通道数值。
         };
 
         ColorValue(){
-            memset(this, 0, sizeof(ColorValue));
         }
 
-        ColorValue(uint32_t gray) : ColorValue(){
+        ColorValue(uint32_t gray) {
             Gray = gray;
         }
 
-        ColorValue(uint32_t r, uint32_t g, uint32_t b) : ColorValue() {
+        ColorValue(uint32_t r, uint32_t g, uint32_t b){
             RGB.Red = r;
             RGB.Green = g;
             RGB.Blue = b;
         }
 
-        ColorValue(uint32_t c, uint32_t m, uint32_t y, uint32_t k) : ColorValue() {
+        ColorValue(uint32_t c, uint32_t m, uint32_t y, uint32_t k){
             CMYK.Cyan = c;
             CMYK.Magenta = m;
             CMYK.Yellow = y;
@@ -202,6 +197,19 @@ namespace ofd{
 
     }; // class Color
 
+    // ======== struct ColorStop_t ========
+    typedef struct _ColorStop {
+
+        ColorPtr Color;
+        double Position;
+
+        _ColorStop(ColorPtr color, double pos) : 
+            Color(color), Position(pos){
+            }
+
+    } ColorStop_t;
+
+    typedef std::vector<ColorStop_t> ColorStopArray;
 
 }; // namespace ofd
 

@@ -1,7 +1,8 @@
 #include <sstream>
 #include <vector>
 #include "OFDPathObject.h"
-#include "utils/tinyxml2.h"
+//#include "utils/tinyxml2.h"
+#include "utils/xml.h"
 #include "utils/utils.h"
 
 using namespace utils;
@@ -25,7 +26,7 @@ std::string OFDPathObject::ToString() const {
     return baseString + "\n" + ss.str();
 }
 
-bool OFDPathObject::ParseFromXML(const XMLElement* xmlElement){
+bool OFDPathObject::ParseFromXML(const utils::XMLElement* xmlElement){
     bool ok = false;
 
     if ( !OFDObject::ParseFromXML(xmlElement) ) return false;

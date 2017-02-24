@@ -3,18 +3,17 @@
 
 #include <memory>
 #include <cairo/cairo.h>
-#include "OFDRender.h"
-#include "ofd/Path.h"
+#include "ofd/Render.h"
 
 namespace ofd{
 
-    // ======== class OFDCairoRender ========
-    class OFDCairoRender : public OFDRender {
+    // ======== class CairoRender ========
+    class CairoRender : public Render {
     public:
-        //OFDCairoRender();
-        OFDCairoRender(double pixelWidth, double pixelHeight, double resolutionX, double resolutionY);
-        //OFDCairoRender(cairo_surface_t *surface);
-        virtual ~OFDCairoRender();
+        //CairoRender();
+        CairoRender(double pixelWidth, double pixelHeight, double resolutionX, double resolutionY);
+        //CairoRender(cairo_surface_t *surface);
+        virtual ~CairoRender();
 
         void Paint(cairo_surface_t *surface);
         bool WriteToPNG(const std::string &filename);
@@ -24,7 +23,7 @@ namespace ofd{
         cairo_surface_t *GetCairoSurface() const;
         cairo_t *GetCairoContext() const;
 
-        virtual void DrawPage(PagePtr page, Render::DrawParams drawParams) override;
+        virtual void DrawPage(PagePtr page, VisibleParams visibleParams) override;
         void DrawObject(ObjectPtr object);
 
         void SetLineWidth(double lineWidth);
@@ -40,8 +39,8 @@ namespace ofd{
         class ImplCls;
         std::unique_ptr<ImplCls> m_impl;
 
-    }; // class OFDCairoRender
-    typedef std::shared_ptr<OFDCairoRender> OFDCairoRenderPtr;
+    }; // class CairoRender
+    typedef std::shared_ptr<CairoRender> CairoRenderPtr;
 
 }; // namespace ofd
 

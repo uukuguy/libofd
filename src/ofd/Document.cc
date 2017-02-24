@@ -2,7 +2,7 @@
 #include "ofd/Package.h"
 #include "ofd/Document.h"
 #include "ofd/Page.h"
-#include "OFDRes.h"
+#include "ofd/Resource.h"
 #include "utils/xml.h"
 #include "utils/uuid.h"
 #include "utils/logger.h"
@@ -41,8 +41,8 @@ std::string Document::to_string() const{
 // ======== Document::CreateNewDocument() ========
 DocumentPtr Document::CreateNewDocument(PackagePtr package, const std::string &docRoot){
     DocumentPtr document = std::shared_ptr<Document>(new Document(package, docRoot));
-    document->m_commonData.PublicRes = OFDRes::CreateNewRes(package);
-    document->m_commonData.DocumentRes = OFDRes::CreateNewRes(document->GetSelf()); 
+    document->m_commonData.PublicRes = Resource::CreateNewResource(package);
+    document->m_commonData.DocumentRes = Resource::CreateNewResource(document->GetSelf()); 
     return document;
 }
 
@@ -665,7 +665,7 @@ bool Document::fromCommonDataXML(XMLElementPtr commonDataElement){
             std::tie(resDescFile, std::ignore) = childElement->GetStringValue();
             if ( !resDescFile.empty() ){
                 //m_commonData.PublicRes = std::make_shared<OFDRes>(m_package.lock(), nullptr, nullptr, resDescFile);
-                m_commonData.PublicRes = OFDRes::CreateNewRes(m_package.lock());
+                m_commonData.PublicRes = Resource::CreateNewResource(m_package.lock());
             }
 
         } else if ( childName == "DocumentRes" ){
@@ -677,7 +677,7 @@ bool Document::fromCommonDataXML(XMLElementPtr commonDataElement){
                 //m_commonData.DocumentRes = std::make_shared<OFDRes>(m_ofdDocument->GetPackage(), m_ofdDocument->GetSelf(), nullptr, resDescFile);
 
                 // FIXME
-                //m_commonData.DocumentRes = OFDRes::CreateNewRes(m_ofdDocument->GetSelf());
+                //m_commonData.DocumentRes = Resource::CreateNewResource(m_ofdDocument->GetSelf());
             }
 
         //} else if ( childName == "TemplatePage" ){

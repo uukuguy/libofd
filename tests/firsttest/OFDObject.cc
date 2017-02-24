@@ -6,9 +6,9 @@
 #include "OFDImageObject.h"
 #include "utils/logger.h"
 #include "utils/tinyxml2.h"
-#include "utils/utils.h"
+#include "utils/xml.h"
+#include "utils/logger.h"
 
-using namespace utils;
 using namespace ofd;
 
 OFDObject::OFDObject(OFDObjectType objectType) 
@@ -64,7 +64,7 @@ bool OFDObject::ParseFromXML(const XMLElement* xmlElement){
     if ( attrCTM != NULL ){
         std::string c = attrCTM->Value();
         //std::string c = xmlElement->Attribute("CTM"); 
-        std::vector<std::string> ctmTokens = SplitString(c);
+        std::vector<std::string> ctmTokens = utils::SplitString(c);
         if ( ctmTokens.size() == 6 ){
             this->CTM.xx = atof(ctmTokens[0].c_str());
             this->CTM.xy = atof(ctmTokens[1].c_str());
@@ -80,7 +80,7 @@ bool OFDObject::ParseFromXML(const XMLElement* xmlElement){
     if ( attrBoundary != NULL ){
         std::string b = attrBoundary->Value();
         //std::string b = xmlElement->Attribute("Boundary");
-        std::vector<std::string> boundaryTokens = SplitString(b);
+        std::vector<std::string> boundaryTokens = utils::SplitString(b);
         if ( boundaryTokens.size() == 4 ){
             this->Boundary.x0 = atof(boundaryTokens[0].c_str());
             this->Boundary.y0 = atof(boundaryTokens[1].c_str());

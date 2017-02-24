@@ -12,7 +12,18 @@
 
 namespace utils{
 
+    class XMLWriter;
+    class XMLElement;
+    typedef std::shared_ptr<XMLElement> XMLElementPtr;
+    class Zip;
+    typedef std::shared_ptr<Zip> ZipPtr;
+    
     static const double EPS = 1e-6;
+
+    typedef std::vector<uint64_t> IDArray;
+    typedef std::vector<int> IntArray;
+    typedef std::vector<double> DoubleArray;
+    typedef std::vector<std::string> StringArray;
 
     std::vector<std::string> SplitString(const std::string& content);
 

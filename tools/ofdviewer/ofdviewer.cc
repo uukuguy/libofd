@@ -7,7 +7,7 @@
 #include "ofd/Page.h"
 #include "utils/logger.h"
 #include "utils/utils.h"
-#include "OFDCairoRender.h"
+#include "ofd/CairoRender.h"
 
 using namespace ofd;
 double g_resolutionX = 144.0;
@@ -345,7 +345,7 @@ public:
     DocumentPtr m_document;
     size_t m_pageIndex;
 
-    std::unique_ptr<OFDCairoRender> m_cairoRender;
+    std::unique_ptr<ofd::CairoRender> m_cairoRender;
 
 }; // class MySDLApp
 
@@ -355,7 +355,7 @@ MySDLApp::MySDLApp(const std::string &title, double screenWidth, double screenHe
     SDLApp(title, screenWidth, screenHeight, screenBPP),
     m_document(document), m_pageIndex(0){
 
-    m_cairoRender = utils::make_unique<OFDCairoRender>(m_screenWidth, m_screenHeight, g_resolutionX, g_resolutionY);
+    m_cairoRender = utils::make_unique<ofd::CairoRender>(m_screenWidth, m_screenHeight, g_resolutionX, g_resolutionY);
 }
 
 // ======== MySDLApp::~MySDLApp() ========
@@ -411,7 +411,7 @@ void MySDLApp::OnRender(cairo_surface_t *surface){
                 //std::unique_ptr<OFDCairoRender> m_cairoRender(new OFDCairoRender(m_screenWidth, m_screenHeight, g_resolutionX, g_resolutionY));
 
                 /***
-                 * drawParams {pixelX, pixelY, scaling}
+                 * visibleParams {pixelX, pixelY, scaling}
                  * (pixelX, pixelY) 显示窗口左上角坐标与页面原点（左上角）的像素偏移。
                  * scaling - 缩放比例
                  *
@@ -434,8 +434,8 @@ void MySDLApp::OnRender(cairo_surface_t *surface){
 
                 m_cairoRender->SaveState();
                 //if ( pixelX != m_origPixelX || pixelY != m_origPixelY || scaling != m_origScaling ){
-                    ofd::Render::DrawParams drawParams = std::make_tuple(pixelX, pixelY, scaling);
-                    m_cairoRender->DrawPage(page, drawParams);
+                    ofd::VisibleParams visibleParams = std::make_tuple(pixelX, pixelY, scaling);
+                    m_cairoRender->DrawPage(page, visibleParams);
                     m_origPixelX = pixelY;
                     m_origPixelY = pixelY;
                     m_origScaling = scaling;

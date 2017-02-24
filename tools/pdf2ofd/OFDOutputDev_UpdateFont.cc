@@ -2,7 +2,7 @@
 #include <fstream>
 #include "OFDOutputDev.h"
 #include "ofd/Font.h"
-#include "OFDRes.h"
+#include "ofd/Resource.h"
 #include "utils/logger.h"
 #include "Gfx2Ofd.h"
 
