@@ -59,6 +59,11 @@ namespace ofd{
                                        // 2: 起始(椭圆中心)点往结束(椭圆中心)点延长线方向绘制渐变
                                        // 3: 两端延长线方向绘制渐变
 
+            // =============== Public Methods ================
+        public:
+            virtual void WriteShadingXML(utils::XMLWriter &writer) const override {};
+            static ShadingPtr ReadShadingXML(utils::XMLElementPtr shadingElement){return nullptr;};
+
     }; // class AxialShading
 
     // ======== class RadialShading ========
@@ -83,6 +88,7 @@ namespace ofd{
         public:
             virtual cairo_pattern_t *CreateFillPattern(cairo_t *cr) override;
             virtual void WriteShadingXML(utils::XMLWriter &writer) const override;
+            static ShadingPtr ReadShadingXML(utils::XMLElementPtr shadingElement);
 
     }; // class RadialShading
 
@@ -101,6 +107,11 @@ namespace ofd{
         public:
             ColorArray Colors;
 
+            // =============== Public Methods ================
+        public:
+            virtual void WriteShadingXML(utils::XMLWriter &writer) const override {};
+            static ShadingPtr ReadShadingXML(utils::XMLElementPtr shadingElement){return nullptr;};
+
     }; // GouraudShading
 
 
@@ -116,6 +127,11 @@ namespace ofd{
 
             // =============== Public Attributes ================
         public:
+
+            // =============== Public Methods ================
+        public:
+            virtual void WriteShadingXML(utils::XMLWriter &writer) const override {};
+            static ShadingPtr ReadShadingXML(utils::XMLElementPtr shadingElement){return nullptr;};
 
     }; // LaGouraudShading
 

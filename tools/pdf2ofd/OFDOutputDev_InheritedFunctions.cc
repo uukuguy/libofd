@@ -5,6 +5,7 @@
 #include <UnicodeMap.h>
 #include "OFDOutputDev.h"
 #include "ofd/Resource.h"
+#include "ofd/Document.h"
 #include "ofd/Page.h"
 #include "ofd/TextObject.h"
 #include "ofd/Color.h"

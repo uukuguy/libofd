@@ -5,6 +5,20 @@
 
 using namespace ofd;
 
+// Example
+//double alpha=1;
+//cairo_pattern_t *spat =
+    ////cairo_pattern_create_linear(0, 0, 500, 360);
+    //cairo_pattern_create_radial(0, 0, 80,  500, 360, 20);
+//cairo_pattern_add_color_stop_rgba(spat, 0,  0, 0, 0.8, alpha);
+//cairo_pattern_add_color_stop_rgba(spat, 0.25,  1, 1, 0, alpha);
+//cairo_pattern_add_color_stop_rgba(spat, 0.5,  0.9, 0.0, 0.0, alpha);
+//cairo_pattern_add_color_stop_rgba(spat, 0.75,  0.8, 0.12, 0.56, alpha);
+//cairo_pattern_add_color_stop_rgba(spat, 1,  0, 0, 0, alpha);
+
+//cairo_set_source (cr, spat);
+//cairo_paint(cr);
+
 cairo_pattern_t *RadialShading::CreateFillPattern(cairo_t *cr){
 
     cairo_pattern_t *fillPattern = nullptr;
@@ -34,26 +48,27 @@ cairo_pattern_t *RadialShading::CreateFillPattern(cairo_t *cr){
             + sqrt(matrix.xy * matrix.xy + matrix.yy * matrix.yy)) / 2;
     cairo_matrix_init_scale(&matrix, scale, scale);
 
-    //double sMin;
-    //double sMax;
-    //fillPattern = cairo_pattern_create_radial ((x0 + sMin * dx) * scale,
-            //(y0 + sMin * dy) * scale,
-            //(r0 + sMin * dr) * scale,
-            //(x0 + sMax * dx) * scale,
-            //(y0 + sMax * dy) * scale,
-            //(r0 + sMax * dr) * scale);
-    for ( size_t i = 0 ; i < ColorSegments.size() ; i++ ){
+    double sMin = 0;
+    double sMax = 1;
+    fillPattern = cairo_pattern_create_radial ((x0 + sMin * dx) * scale,
+            (y0 + sMin * dy) * scale,
+            (r0 + sMin * dr) * scale,
+            (x0 + sMax * dx) * scale,
+            (y0 + sMax * dy) * scale,
+            (r0 + sMax * dr) * scale);
 
-        const ColorStop_t &cs = ColorSegments[i];
-        const ColorPtr color = cs.Color;
-        double pos = cs.Position;
+    //for ( size_t i = 0 ; i < ColorSegments.size() ; i++ ){
 
-        double r = color->Value.RGB.Red / 255.0;
-        double g = color->Value.RGB.Green / 255.0;
-        double b = color->Value.RGB.Blue / 255.0;
-        double a = color->Alpha / 255.0;
-        cairo_pattern_add_color_stop_rgba(fillPattern, pos, r, g, b, a);
-    } 
+        //const ColorStop_t &cs = ColorSegments[i];
+        //const ColorPtr color = cs.Color;
+        //double pos = cs.Position;
+
+        //double r = color->Value.RGB.Red / 255.0;
+        //double g = color->Value.RGB.Green / 255.0;
+        //double b = color->Value.RGB.Blue / 255.0;
+        //double a = color->Alpha / 255.0;
+        //cairo_pattern_add_color_stop_rgba(fillPattern, pos, r, g, b, a);
+    //} 
 
     cairo_pattern_set_matrix(fillPattern, &matrix);
 
@@ -70,6 +85,79 @@ cairo_pattern_t *RadialShading::CreateFillPattern(cairo_t *cr){
 void RadialShading::WriteShadingXML(utils::XMLWriter &writer) const{
 
     writer.StartElement("RadialShd");{
+
+        // -------- <ofd::RadialShd StartPoint="">
+        std::stringstream ss;
+        ss << StartPoint.x << " " << StartPoint.y;
+        writer.WriteAttribute("StartPoint", ss.str());
+        ss.str("");
+
+        // -------- <ofd::RadialShd EndPoint="">
+        ss << EndPoint.x << " " << EndPoint.y;
+        writer.WriteAttribute("EndPoint", ss.str());
+        ss.str("");
+
+        // -------- <ofd::RadialShd StartRadius="">
+        if ( StartRadius > 0.0 ){
+            ss << StartRadius;
+            writer.WriteAttribute("StartRadius", ss.str());
+            ss.str("");
+        }
+
+        // -------- <ofd::RadialShd EndRadius="">
+        ss << EndRadius;
+        writer.WriteAttribute("EndRadius", ss.str());
+        ss.str("");
+
+        for ( auto cs : ColorSegments ){
+            writer.StartElement("Segment");{
+                writer.WriteAttribute("Position", cs.Position);
+
+                writer.StartElement("Color");{
+                    std::stringstream ssValue;
+                    ssValue << cs.Color->Value.RGB.Red << " " 
+                            << cs.Color->Value.RGB.Green << " "
+                            << cs.Color->Value.RGB.Blue;
+                    writer.WriteAttribute("Value", ssValue.str());
+
+                } writer.EndElement();
+
+            } writer.EndElement();
+        }
+
     } writer.EndElement();
+}
+
+ShadingPtr RadialShading::ReadShadingXML(utils::XMLElementPtr shadingElement){
+    RadialShading *radialShading = new RadialShading();
+
+    bool exist = false;
+    std::string strStartPoint, strEndPoint;
+    std::tie(strStartPoint, exist) = shadingElement->GetStringAttribute("StartPoint");
+    std::tie(strEndPoint, exist) = shadingElement->GetStringAttribute("EndPoint");
+
+    Point_t startPoint, endPoint;
+    std::vector<std::string> tokens0 = utils::SplitString(strStartPoint);
+    if ( tokens0.size() == 2 ){
+        startPoint.x = atof(tokens0[0].c_str());
+        startPoint.y = atof(tokens0[1].c_str());
+    }
+    std::vector<std::string> tokens1 = utils::SplitString(strEndPoint);
+    if ( tokens1.size() == 2 ){
+        endPoint.x = atof(tokens1[0].c_str());
+        endPoint.y = atof(tokens1[1].c_str());
+    }
+
+    double startRadius = 0.0, endRadius = 0.0;
+    std::tie(startRadius, exist) = shadingElement->GetFloatAttribute("StartRadius");
+    std::tie(endRadius, exist) = shadingElement->GetFloatAttribute("EndRadius");
+
+    radialShading->StartPoint = startPoint;
+    radialShading->EndPoint = endPoint;
+    radialShading->StartRadius = startRadius;
+    radialShading->EndRadius = endRadius;
+
+    ShadingPtr shading = std::shared_ptr<Shading>(radialShading); 
+    return shading;
 }
 

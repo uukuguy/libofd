@@ -1,6 +1,8 @@
 #include <Gfx.h>
+#include "ofd/Page.h"
 #include "ofd/PathObject.h"
 #include "ofd/Color.h"
+#include "ofd/Shading.h"
 #include "utils/logger.h"
 #include "OFDOutputDev.h"
 #include "Gfx2Ofd.h"
@@ -206,6 +208,8 @@ void OFDOutputDev::fill(GfxState *state) {
         fillColor->Alpha = m_fillOpacity * 255.0;
         pathObject->SetFillColor(fillColor);
         pathObject->LineWidth = m_lineWidth;
+        pathObject->FillShading = m_shading;
+        m_shading = nullptr;
 
         LOG(INFO) << "[imageSurface] DrawPathObject m_matrix=(" << m_matrix.xx << "," << m_matrix.yx << "," << m_matrix.xy << "," << m_matrix.yy << "," << m_matrix.x0 << "," << m_matrix.y0 << ")";
         showCairoMatrix(m_cairo, "imageSurface", "DrawPathObject cairo_matrix");
@@ -606,40 +610,52 @@ GBool OFDOutputDev::axialShadedSupportExtend(GfxState *state, GfxAxialShading *s
 }
 
 GBool OFDOutputDev::radialShadedFill(GfxState *state, GfxRadialShading *shading, double sMin, double sMax) {
-  double x0, y0, r0, x1, y1, r1;
-  double dx, dy, dr;
-  cairo_matrix_t matrix;
-  double scale;
+    double x0, y0, r0, x1, y1, r1;
+    double dx, dy, dr;
+    cairo_matrix_t matrix;
+    double scale;
 
-  shading->getCoords(&x0, &y0, &r0, &x1, &y1, &r1);
-  dx = x1 - x0;
-  dy = y1 - y0;
-  dr = r1 - r0;
+    shading->getCoords(&x0, &y0, &r0, &x1, &y1, &r1);
+    dx = x1 - x0;
+    dy = y1 - y0;
+    dr = r1 - r0;
 
-  // Cairo/pixman do not work well with a very large or small scaled
-  // matrix.  See cairo bug #81657.
-  //
-  // As a workaround, scale the pattern by the average of the vertical
-  // and horizontal scaling of the current transformation matrix.
-  cairo_get_matrix(m_cairo, &matrix);
-  scale = (sqrt(matrix.xx * matrix.xx + matrix.yx * matrix.yx)
-	   + sqrt(matrix.xy * matrix.xy + matrix.yy * matrix.yy)) / 2;
-  cairo_matrix_init_scale(&matrix, scale, scale);
+    // Cairo/pixman do not work well with a very large or small scaled
+    // matrix.  See cairo bug #81657.
+    //
+    // As a workaround, scale the pattern by the average of the vertical
+    // and horizontal scaling of the current transformation matrix.
+    cairo_get_matrix(m_cairo, &matrix);
+    scale = (sqrt(matrix.xx * matrix.xx + matrix.yx * matrix.yx)
+            + sqrt(matrix.xy * matrix.xy + matrix.yy * matrix.yy)) / 2;
+    cairo_matrix_init_scale(&matrix, scale, scale);
 
-  cairo_pattern_destroy(m_fillPattern);
-  m_fillPattern = cairo_pattern_create_radial ((x0 + sMin * dx) * scale,
-					      (y0 + sMin * dy) * scale,
-					      (r0 + sMin * dr) * scale,
-					      (x0 + sMax * dx) * scale,
-					      (y0 + sMax * dy) * scale,
-					      (r0 + sMax * dr) * scale);
-  cairo_pattern_set_matrix(m_fillPattern, &matrix);
-  if (shading->getExtend0() && shading->getExtend1())
-    cairo_pattern_set_extend(m_fillPattern, CAIRO_EXTEND_PAD);
-  else
-    cairo_pattern_set_extend (m_fillPattern, CAIRO_EXTEND_NONE);
+    cairo_pattern_destroy(m_fillPattern);
+    m_fillPattern = cairo_pattern_create_radial ((x0 + sMin * dx) * scale,
+            (y0 + sMin * dy) * scale,
+            (r0 + sMin * dr) * scale,
+            (x0 + sMax * dx) * scale,
+            (y0 + sMax * dy) * scale,
+            (r0 + sMax * dr) * scale);
+    cairo_pattern_set_matrix(m_fillPattern, &matrix);
+    if (shading->getExtend0() && shading->getExtend1())
+        cairo_pattern_set_extend(m_fillPattern, CAIRO_EXTEND_PAD);
+    else
+        cairo_pattern_set_extend (m_fillPattern, CAIRO_EXTEND_NONE);
 
-  return gFalse;
+
+    // -------- Create ofd::RadialShading
+    ofd::RadialShading *radialShading = new ofd::RadialShading();
+    radialShading->StartPoint = ofd::Point_t(x0, y0);
+    radialShading->EndPoint = ofd::Point_t(x1, y1);
+    radialShading->StartRadius = r0;
+    radialShading->EndRadius = r1;
+
+    //radialShading->ColorSegments.push_back();
+
+    m_shading = std::shared_ptr<ofd::Shading>(radialShading);
+
+    return gFalse;
 }
 
 GBool OFDOutputDev::radialShadedSupportExtend(GfxState *state, GfxRadialShading *shading) {

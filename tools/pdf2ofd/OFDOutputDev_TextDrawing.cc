@@ -4,9 +4,12 @@
 #include <GfxState.h>
 #include "OFDOutputDev.h"
 #include "Gfx2Ofd.h"
-#include "ofd/Color.h"
 #include "ofd/Resource.h"
+#include "ofd/Document.h"
+#include "ofd/Page.h"
 #include "ofd/TextObject.h"
+#include "ofd/Font.h"
+#include "ofd/Color.h"
 #include "utils/unicode.h"
 #include "utils/logger.h"
 #include "utils/utils.h"

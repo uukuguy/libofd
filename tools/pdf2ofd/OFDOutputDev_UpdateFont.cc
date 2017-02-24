@@ -1,8 +1,9 @@
 #include <fofi/FoFiTrueType.h>
 #include <fstream>
 #include "OFDOutputDev.h"
-#include "ofd/Font.h"
 #include "ofd/Resource.h"
+#include "ofd/Document.h"
+#include "ofd/Font.h"
 #include "utils/logger.h"
 #include "Gfx2Ofd.h"
 

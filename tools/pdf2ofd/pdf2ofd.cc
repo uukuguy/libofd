@@ -13,6 +13,7 @@
 
 #include "OFDOutputDev.h"
 #include "FontOutputDev.h"
+#include "ofd/Package.h"
 #include "utils/logger.h"
 
 std::shared_ptr<PDFDoc> OpenPDFFile(const std::string &pdfFilename, const std::string &ownerPassword, const std::string &userPassword){

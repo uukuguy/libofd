@@ -593,25 +593,27 @@ void CairoRender::ImplCls::DrawPathObject(cairo_t *cr, PathObject *pathObject){
         //cairo_set_source_rgba(cr, b, g, r, alpha);
         cairo_stroke(cr);
     } else {
-        ColorPtr fillColor = pathObject->GetFillColor();
-        if ( fillColor != nullptr ){
-            const ColorRGB &rgb = fillColor->Value.RGB;
+        if ( pathObject->FillShading != nullptr ){
+            cairo_pattern_destroy(m_fillPattern);
+            m_fillPattern = pathObject->FillShading->CreateFillPattern(cr);
+        } else {
+            ColorPtr fillColor = pathObject->GetFillColor();
+            if ( fillColor != nullptr ){
+                const ColorRGB &rgb = fillColor->Value.RGB;
 
-            double r = (double)rgb.Red / 255.0;
-            double g = (double)rgb.Green / 255.0;
-            double b = (double)rgb.Blue / 255.0;
-            double alpha = (double)pathObject->Alpha / 255.0;
-            //LOG(DEBUG) << "DrawPathObject() rgb = (" << r << "," << g << "," << b << ")";
+                double r = (double)rgb.Red / 255.0;
+                double g = (double)rgb.Green / 255.0;
+                double b = (double)rgb.Blue / 255.0;
+                double alpha = (double)pathObject->Alpha / 255.0;
+                //LOG(DEBUG) << "DrawPathObject() rgb = (" << r << "," << g << "," << b << ")";
 
-            UpdateFillPattern(r, g, b, alpha);
-            cairo_set_source(cr, m_fillPattern);
-            
-            //cairo_set_source_rgba(cr, b, g, r, alpha);
-
-            cairo_fill(cr);
-
-            Clip(path);
+                UpdateFillPattern(r, g, b, alpha);
+            }
         }
+        cairo_set_source(cr, m_fillPattern);
+        //cairo_set_source_rgba(cr, b, g, r, alpha);
+        cairo_fill(cr);
+        Clip(path);
     }
 
 }

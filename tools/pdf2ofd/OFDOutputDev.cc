@@ -6,7 +6,10 @@
 
 #include "OFDOutputDev.h"
 #include "FontOutputDev.h"
+#include "ofd/Package.h"
+#include "ofd/Document.h"
 #include "ofd/Page.h"
+#include "ofd/Font.h"
 #include "utils/logger.h"
 
 
@@ -140,6 +143,7 @@ OFDOutputDev::OFDOutputDev(ofd::PackagePtr package) :
 
     m_strokePattern = nullptr;
     m_fillPattern = nullptr;
+    m_shading = nullptr;
     m_lineWidth = 1.0;
     m_strokeOpacity = 1.0;
     m_fillOpacity = 1.0;

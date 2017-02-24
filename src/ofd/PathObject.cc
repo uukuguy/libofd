@@ -166,11 +166,22 @@ bool PathObject::IterateElementsXML(XMLElementPtr childElement){
         std::string childName = childElement->GetName();
 
         if ( childName == "FillColor" ){
-            ColorPtr fillColor = nullptr;
-            bool exist = false;
-            std::tie(fillColor, exist) = Color::ReadColorXML(childElement);
-            if ( exist ){
-                FillColor = fillColor;
+
+            utils::XMLElementPtr shadingElement = childElement->GetFirstChildElement();
+            if ( shadingElement != nullptr ){
+                std::string name = shadingElement->GetName();
+                if ( name == "RadialShd" ){
+                    FillShading = RadialShading::ReadShadingXML(shadingElement);
+                } else if ( name == "AxialShd" ){
+                    FillShading = AxialShading::ReadShadingXML(shadingElement);
+                }
+            } else {
+                ColorPtr fillColor = nullptr;
+                bool exist = false;
+                std::tie(fillColor, exist) = Color::ReadColorXML(childElement);
+                if ( exist ){
+                    FillColor = fillColor;
+                }
             }
         } else if ( childName == "StrokeColor" ){
             ColorPtr strokeColor = nullptr;

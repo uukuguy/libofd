@@ -8,10 +8,6 @@
 #include <PDFDoc.h>
 #include <GfxState.h>
 #include "ofd/Common.h"
-#include "ofd/Package.h"
-#include "ofd/Document.h"
-#include "ofd/Page.h"
-#include "ofd/Font.h"
 #include "ofd/CairoRender.h"
 #include "FontOutputDev.h"
 #include "utils/StringFormatter.h"
@@ -307,6 +303,7 @@ public:
     double m_currentFontSize;
     double *m_currentCTM;
     cairo_pattern_t *m_fillPattern, *m_strokePattern;
+    ofd::ShadingPtr m_shading;
     cairo_antialias_t m_antialias;
     bool m_prescaleImages;
     int m_knockoutCount;
