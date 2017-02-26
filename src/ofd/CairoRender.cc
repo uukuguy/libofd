@@ -46,11 +46,13 @@ public:
     void SetLineWidth(double lineWidth);
     void UpdateStrokePattern(double R, double G, double B, double opacity);
     void UpdateFillPattern(double R, double G, double B, double opacity);
+    void UpdateFillPattern(ShadingPtr fillShading);
     void Transform(cairo_matrix_t *matrix);
 
     void SaveState();
     void RestoreState();
     void Clip(PathPtr clipPath);
+    void EoClip(PathPtr clipPath);
 
 private:
     void Destroy();
@@ -544,12 +546,43 @@ void DoCairoPath(cairo_t *cr, PathPtr path){
         cairo_move_to(cr, p0.x, p0.y);
 
         for ( size_t n = 1 ; n < numPoints ; n++ ){
-            const Point_t &p = subpath->GetPoint(n);
-            cairo_line_to(cr, p.x, p.y);
-            //LOG(DEBUG) << "[" << n << "] " << "(" << p.x << ", " << p.y << ") ";
+            char flag = subpath->GetFlag(n);
+            if ( flag == 'L' ){
+                const Point_t &p = subpath->GetPoint(n);
+                cairo_line_to(cr, p.x, p.y);
+            } else if ( flag == 'B' ){
+                // 三次贝塞尔曲线
+                const Point_t &p1 = subpath->GetPoint(n);
+                const Point_t &p2 = subpath->GetPoint(n+1);
+                const Point_t &p3 = subpath->GetPoint(n+2);
+                cairo_curve_to(cr, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
+                //cairo_line_to(cr, p1.x, p1.y);
+                //cairo_line_to(cr, p2.x, p2.y);
+                //cairo_line_to(cr, p3.x, p3.y);
+                n += 2;
+            } else if ( flag == 'Q' ){
+                // 二次贝塞尔曲线
+                // 需要转换成三次贝塞尔曲线，才能用cairo绘制。
+                // http://blog.csdn.net/ch_soft/article/details/7401655
+                // P_i^' = i/(n+1) P_(i-1) + (n+1-i)/(n+1) P_i
+                Point_t p_2[2];
+                Point_t p_3[3];
+                p_2[0] = subpath->GetPoint(n);
+                p_2[1] = subpath->GetPoint(n+1);
+                n += 1;
+
+                p_3[0] = p_2[0];
+                p_3[1].x = (1.0/(2+1)) * p_2[0].x  + ((2+1-1)/(2+1)) * p_2[1].x;
+                p_3[1].y = (1.0/(2+1)) * p_2[0].y  + ((2+1-1)/(2+1)) * p_2[1].y;
+                p_3[2].x = (2.0/(2+1)) * p_2[1].x  + ((2+1-2)/(2+1)) * p_2[2].x;
+                p_3[2].y = (2.0/(2+1)) * p_2[1].y  + ((2+1-2)/(2+1)) * p_2[2].y;
+
+                cairo_curve_to(cr, p_3[0].x, p_3[0].y, p_3[1].x, p_3[1].y, p_3[2].x, p_3[2].y);
+            }
         }
         if ( subpath->IsClosed() ){
-            cairo_close_path(cr);
+            cairo_line_to(cr, p0.x, p0.y);
+            //cairo_close_path(cr);
         }
     }
 }
@@ -581,39 +614,40 @@ void CairoRender::ImplCls::DrawPathObject(cairo_t *cr, PathObject *pathObject){
 
     ColorPtr strokeColor = pathObject->GetStrokeColor();
     if ( strokeColor != nullptr ){
-        const ColorRGB &rgb = pathObject->GetStrokeColor()->Value.RGB;
-
-        double r = (double)rgb.Red / 255.0;
-        double g = (double)rgb.Green / 255.0;
-        double b = (double)rgb.Blue / 255.0;
-        double a = (double)pathObject->Alpha / 255.0;
-        //LOG(DEBUG) << "DrawPathObject() rgb = (" << r << "," << g << "," << b << ")";
+        double r, g, b, a;
+        std::tie(r, g, b, a) = strokeColor->GetRGBA();
         UpdateStrokePattern(r, g, b, a);
+        //LOG(DEBUG) << "DrawPathObject() rgb = (" << r << "," << g << "," << b << ")";
+
         cairo_set_source(cr, m_strokePattern);
-        //cairo_set_source_rgba(cr, b, g, r, alpha);
         cairo_stroke(cr);
     } else {
         if ( pathObject->FillShading != nullptr ){
-            cairo_pattern_destroy(m_fillPattern);
-            m_fillPattern = pathObject->FillShading->CreateFillPattern(cr);
+            UpdateFillPattern(pathObject->FillShading);
         } else {
             ColorPtr fillColor = pathObject->GetFillColor();
             if ( fillColor != nullptr ){
-                const ColorRGB &rgb = fillColor->Value.RGB;
-
-                double r = (double)rgb.Red / 255.0;
-                double g = (double)rgb.Green / 255.0;
-                double b = (double)rgb.Blue / 255.0;
-                double alpha = (double)pathObject->Alpha / 255.0;
+                double r, g, b, a;
+                std::tie(r, g, b, a) = fillColor->GetRGBA();
+                UpdateFillPattern(r, g, b, a);
                 //LOG(DEBUG) << "DrawPathObject() rgb = (" << r << "," << g << "," << b << ")";
-
-                UpdateFillPattern(r, g, b, alpha);
             }
         }
         cairo_set_source(cr, m_fillPattern);
-        //cairo_set_source_rgba(cr, b, g, r, alpha);
+
+        if ( pathObject->Rule == ofd::PathRule::EvenOdd ){
+            cairo_set_fill_rule(cr, CAIRO_FILL_RULE_EVEN_ODD);
+        } else {
+            cairo_set_fill_rule(cr, CAIRO_FILL_RULE_WINDING);
+        }
+
         cairo_fill(cr);
-        Clip(path);
+
+        if ( pathObject->Rule == ofd::PathRule::EvenOdd ){
+            EoClip(path);
+        } else {
+            Clip(path);
+        }
     }
 
 }
@@ -652,6 +686,14 @@ void CairoRender::ImplCls::UpdateFillPattern(double r, double g, double b, doubl
     m_fillPattern = cairo_pattern_create_rgba(b, g, r, a);
 }
 
+void CairoRender::ImplCls::UpdateFillPattern(ShadingPtr fillShading){
+    if ( m_fillPattern != nullptr ){
+        cairo_pattern_destroy(m_fillPattern);
+        m_fillPattern = nullptr;
+    }
+    m_fillPattern = fillShading->CreateFillPattern(m_cr);
+}
+
 void CairoRender::ImplCls::Transform(cairo_matrix_t *matrix){
 
     //LOG(DEBUG) << "[CairoRender] Transform (" << matrix->xx << ", " << matrix->yx << ", " << matrix->xy 
@@ -672,6 +714,12 @@ void CairoRender::ImplCls::RestoreState(){
 void CairoRender::ImplCls::Clip(PathPtr clipPath){
     DoCairoPath(m_cr, clipPath);
     cairo_set_fill_rule(m_cr, CAIRO_FILL_RULE_WINDING);
+    cairo_clip(m_cr);
+}
+
+void CairoRender::ImplCls::EoClip(PathPtr clipPath){
+    DoCairoPath(m_cr, clipPath);
+    cairo_set_fill_rule(m_cr, CAIRO_FILL_RULE_EVEN_ODD);
     cairo_clip(m_cr);
 }
 
@@ -751,6 +799,10 @@ void CairoRender::RestoreState(){
 
 void CairoRender::Clip(PathPtr clipPath){
     m_impl->Clip(clipPath);
+}
+
+void CairoRender::EoClip(PathPtr clipPath){
+    m_impl->EoClip(clipPath);
 }
 
 void CairoRender::Rebuild(double pixelWidth, double pixelHeight, double resolutionX, double resolutionY){

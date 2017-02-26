@@ -20,17 +20,22 @@ namespace ofd{
     // 基础渐变类
     class Shading {
         public:
-            Shading(){};
+            Shading() : Extend(0) {};
             virtual ~Shading(){};
 
             // =============== Public Attributes ================
         public:
+            int           Extend;      // 延长线是否继续绘制渐变？默认值为0，可选。
+                                       // 0: 延长线方向不绘制渐变
+                                       // 1: 结束(椭圆中心)点往起始(椭圆中心)点延长线方向绘制渐变
+                                       // 2: 起始(椭圆中心)点往结束(椭圆中心)点延长线方向绘制渐变
+                                       // 3: 两端延长线方向绘制渐变
             ShadingType Type;
 
             // =============== Public Methods ================
         public:
             virtual cairo_pattern_t *CreateFillPattern(cairo_t *cr){return nullptr;};
-            virtual void WriteShadingXML(utils::XMLWriter &writer) const{};
+            virtual void WriteShadingXML(utils::XMLWriter &writer) const;
 
     }; // Shading
 
@@ -39,7 +44,7 @@ namespace ofd{
     // 径向渐变
     class AxialShading : public Shading {
         public:
-            AxialShading() : MapType("Direct"), MapUnit(0.0), Extend(0){
+            AxialShading() : MapType("Direct"), MapUnit(0.0){
                 Type = ShadingType::AxialShd;
             }
             virtual ~AxialShading(){};
@@ -53,16 +58,12 @@ namespace ofd{
             std::string   MapType;       // 渐变绘制方式，可取值Direct、Repeat、Reflect，默认值为Direct。
             double        MapUnit;       // 中心点连线上一个渐变区域绘制的长度，
                                        // 当MapType的值不为Direct时出现，默认值为中心点连线长度。
-            int           Extend;        // 延长线是否继续绘制渐变？默认值为0，可选。
-                                       // 0: 延长线方向不绘制渐变
-                                       // 1: 结束(椭圆中心)点往起始(椭圆中心)点延长线方向绘制渐变
-                                       // 2: 起始(椭圆中心)点往结束(椭圆中心)点延长线方向绘制渐变
-                                       // 3: 两端延长线方向绘制渐变
 
             // =============== Public Methods ================
         public:
-            virtual void WriteShadingXML(utils::XMLWriter &writer) const override {};
-            static ShadingPtr ReadShadingXML(utils::XMLElementPtr shadingElement){return nullptr;};
+            virtual cairo_pattern_t *CreateFillPattern(cairo_t *cr) override;
+            virtual void WriteShadingXML(utils::XMLWriter &writer) const override;
+            static ShadingPtr ReadShadingXML(utils::XMLElementPtr shadingElement);
 
     }; // class AxialShading
 

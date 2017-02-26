@@ -449,7 +449,6 @@ void OFDOutputDev::drawImage(GfxState *state, Object *ref, Stream *str,
 			       GBool interpolate,
 			       int *maskColors, GBool inlineImg) {
 
-
     //// -------- Write image stream to zip file. --------
     //ImageStream *imgStream = new ImageStream(str, widthA,
                              //colorMap->getNumPixelComps(),

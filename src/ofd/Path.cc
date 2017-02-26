@@ -11,6 +11,7 @@ using namespace ofd;
 Subpath::Subpath(const Point_t &startPoint) :
     m_bClosed(false){
     m_points.push_back(startPoint);
+    m_flags.push_back('S');
 }
 
 Subpath::Subpath(const Subpath *other) :
@@ -45,12 +46,12 @@ void Subpath::SetPoint(size_t idx, const Point_t& point){
 void Subpath::ClosePath(){
     size_t numPoints = GetNumPoints();
     if ( numPoints < 1 ) return;
-    Point_t p0 = m_points[0];
-    Point_t p1 = m_points[numPoints - 1];
-    if ( p0 != p1 ){
+    //Point_t p0 = m_points[0];
+    //Point_t p1 = m_points[numPoints - 1];
+    //if ( p0 != p1 ){
     //if ( m_points[0] != m_points[numPoints - 1]){
         LineTo(m_points[0]);
-    }
+    //}
     m_bClosed = true;
 }
 
@@ -63,16 +64,20 @@ void Subpath::Offset(double dx, double dy){
 
 void Subpath::LineTo(const Point_t& point){
     m_points.push_back(point);
-    m_curves.push_back(false);
+    m_flags.push_back('L');
 }
 
 void Subpath::CurveTo(const Point_t& p0, const Point_t& p1, const Point_t& p2){
     m_points.push_back(p0);
     m_points.push_back(p1);
     m_points.push_back(p2);
-    m_curves.push_back(true);
-    m_curves.push_back(true);
-    m_curves.push_back(false);
+    m_flags.push_back('B');
+    m_flags.push_back(' ');
+    m_flags.push_back(' ');
+}
+
+char Subpath::GetFlag(size_t idx) const{
+    return m_flags[idx];
 }
 
 // **************** class Path ****************
@@ -196,8 +201,24 @@ std::string Path::ToPathData() const{
                 ss << "M " << startPoint.x << " " << startPoint.y << " ";
             }
             for ( size_t n = 1 ; n < numPoints ; n++ ){
-                const Point_t &p = subpath->GetPoint(n);
-                ss << "L " << p.x << " " << p.y << " ";
+                char flag = subpath->GetFlag(n);
+                if ( flag == 'L' ){
+                    const Point_t &p = subpath->GetPoint(n);
+                    ss << "L " << p.x << " " << p.y << " ";
+                } else if ( flag == 'Q' ){
+                    const Point_t &p1 = subpath->GetPoint(n);
+                    const Point_t &p2 = subpath->GetPoint(n+1);
+                    ss << "Q " << p1.x << " " << p1.y << " " << p2.x << " " << p2.y << " ";
+                    n += 1;
+                } else if ( flag == 'B' ) {
+                    const Point_t &p1 = subpath->GetPoint(n);
+                    const Point_t &p2 = subpath->GetPoint(n+1);
+                    const Point_t &p3 = subpath->GetPoint(n+2);
+                    ss << "B " << p1.x << " " << p1.y << " " 
+                               << p2.x << " " << p2.y << " "
+                               << p3.x << " " << p3.y << " ";
+                    n += 2;
+                }
             }
             if ( subpath->IsClosed() ){
                 ss << "C ";
@@ -273,6 +294,7 @@ PathPtr Path::FromPathData(const std::string &pathData){
                 __attribute__((unused)) double y2 = std::atof(tokens[idx+3].c_str());
                 __attribute__((unused)) double x3 = std::atof(tokens[idx+4].c_str());
                 __attribute__((unused)) double y3 = std::atof(tokens[idx+5].c_str());
+                path->CurveTo(Point_t(x1,y1), Point_t(x2,y2), Point_t(x3,y3));
                 idx += 6;
                 numTokens -= 6;
             } else {

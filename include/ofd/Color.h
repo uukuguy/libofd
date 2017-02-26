@@ -78,7 +78,14 @@ namespace ofd{
         ColorRGB() : Red(0), Green(0), Blue(0){
         }
         ColorRGB(uint32_t r, uint32_t g, uint32_t b):
-            Red(r), Green(g), Blue(b){
+            Red(r), Green(g), Blue(b){ 
+        }
+
+        std::tuple<double, double, double> GetRGB() const{
+            double r = (double)Red / 255.0;
+            double g = (double)Green / 255.0;
+            double b = (double)Blue / 255.0;
+            return std::make_tuple(r, g, b);
         }
     } ColorRGB_t;
 
@@ -91,6 +98,13 @@ namespace ofd{
         }
         ColorCMYK(uint32_t c, uint32_t m, uint32_t y, uint32_t k):
             Cyan(c), Magenta(m), Yellow(y), blacK(k){
+        }
+        std::tuple<double, double, double, double> GetCMYK() const{
+            double c = (double)Cyan / 255.0;
+            double m = (double)Magenta / 255.0;
+            double y = (double)Yellow / 255.0;
+            double k = (double)blacK / 255.0;
+            return std::make_tuple(c, m, y, k);
         }
     } ColorCMYK_t;
 
@@ -185,6 +199,8 @@ namespace ofd{
             void WriteColorXML(utils::XMLWriter &writer) const;
             static std::tuple<ColorPtr, bool> ReadColorXML(utils::XMLElementPtr colorElement);
             bool Equal(ColorPtr color) const;
+            std::tuple<double, double, double, double> GetRGBA()const;
+            std::tuple<double, double, double, double> GetCMYK()const;
 
             // ---------------- Private Attributes ----------------
         public:

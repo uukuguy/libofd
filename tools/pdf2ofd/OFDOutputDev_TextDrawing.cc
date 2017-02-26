@@ -1,4 +1,5 @@
 #include <iomanip>
+#include <inttypes.h>
 #include <GlobalParams.h>
 #include <UnicodeMap.h>
 #include <GfxState.h>
@@ -167,20 +168,22 @@ void OFDOutputDev::drawChar(GfxState *state, double x, double y,
         CharCode code, int nBytes, Unicode *u, int uLen){
 
     
-      ////UnicodeMap *map = new UnicodeMap("UTF-8", gTrue, &mapUTF8);
-      //GooString enc("UTF-8");
-      //UnicodeMap *utf8Map = globalParams->getUnicodeMap(&enc);
-      //char buf[6];
-      ////mapUCS2( *u, buf, 5);
-      //int tLen = utf8Map->mapUnicode( *u, buf, 5);
-      //buf[tLen] = '\0';
+    ////UnicodeMap *map = new UnicodeMap("UTF-8", gTrue, &mapUTF8);
+    //GooString enc("UTF-8");
+    //UnicodeMap *utf8Map = globalParams->getUnicodeMap(&enc);
+    //char buf[6];
+    ////mapUCS2( *u, buf, 5);
+    //int tLen = utf8Map->mapUnicode( *u, buf, 5);
+    //buf[tLen] = '\0';
 
-      unsigned char buf[8];
-      int tLen = enc_unicode_to_utf8_one(*u, buf, 7); 
-      buf[tLen] = '\0';
+    if ( u == nullptr ) return;
 
-      unsigned long unic;
-      int ucLen = enc_utf8_to_unicode_one(buf, &unic);  
+    unsigned char buf[8];
+    int tLen = enc_unicode_to_utf8_one(*u, buf, 7); 
+    buf[tLen] = '\0';
+
+    unsigned long unic;
+    int ucLen = enc_utf8_to_unicode_one(buf, &unic);  
 
     LOG(DEBUG) << "(x,y,dx,dy):" << std::setprecision(3) << "(" << x << ", " << y << ", " << dx << ", " << dy << ")" 
         << " (originX, originY):" << "(" << originX << ", " << originY << ")"
@@ -211,6 +214,18 @@ void OFDOutputDev::drawChar(GfxState *state, double x, double y,
         textCode.X = x1;
         textCode.Y = y1;
         textCode.Text = (char*)buf;
+        // FIXME
+        bool bInvalidChar = false;
+        char invalidChar;
+        if ( textCode.Text.length() == 1 ){
+            const char* b = textCode.Text.c_str();
+            if ( *b  <= 0x20 ){
+                bInvalidChar = true;
+                invalidChar = *b;
+
+                textCode.Text = "";
+            }
+        }
         textObject->AddTextCode(textCode);
 
         GfxFont *gfxFont = state->getFont();
@@ -220,6 +235,12 @@ void OFDOutputDev::drawChar(GfxState *state, double x, double y,
         Ref *ref = gfxFont->getID();
         // FIXME
         uint64_t fontID = ref->num;
+
+        //if ( bInvalidChar ){
+            //char buf[1024];
+            //sprintf(buf, "Invalid Char (%.3f, %.3f) %X lineWidth:%.3f FontID: %llu FontSize: %llu !..", textCode.X, textCode.Y, invalidChar, m_lineWidth, fontID, fontSize);
+            //LOG(ERROR) << buf;
+        //}
         ofd::Document::CommonData &commonData = m_document->GetCommonData();
         assert(commonData.DocumentRes != nullptr );
         ofd::FontPtr ofdFont = commonData.DocumentRes->GetFont(fontID);
@@ -263,7 +284,6 @@ void OFDOutputDev::drawChar(GfxState *state, double x, double y,
             m_clustersCount++;
         }
     }
-
 }
 
 void OFDOutputDev::incCharCount(int nChars){

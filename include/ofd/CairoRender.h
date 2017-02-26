@@ -34,6 +34,7 @@ namespace ofd{
         void SaveState();
         void RestoreState();
         void Clip(PathPtr clipPath);
+        void EoClip(PathPtr clipPath);
 
     private:
         class ImplCls;

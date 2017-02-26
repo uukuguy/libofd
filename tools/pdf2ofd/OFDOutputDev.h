@@ -9,6 +9,7 @@
 #include <GfxState.h>
 #include "ofd/Common.h"
 #include "ofd/CairoRender.h"
+#include "ofd/PathObject.h"
 #include "FontOutputDev.h"
 #include "utils/StringFormatter.h"
 
@@ -359,6 +360,7 @@ private:
     std::tuple<double, double> getPageSize(PDFDocPtr pdfDoc, int pg, int firstPage);
 
     void writeCairoSurfaceImage(cairo_surface_t *surface, const std::string &filename);
+    ofd::PathObjectPtr createPathObject(GfxState *state);
 
     std::tuple<cairo_surface_t*, FILE*> beforeDocument(const std::string &outputFileName, double w, double h); 
     void afterDocument();

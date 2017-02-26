@@ -108,6 +108,7 @@ void OFDOutputDev::popTransparencyGroup() {
 }
 
 void OFDOutputDev::paintTransparencyGroup(GfxState * /*state*/, double * /*bbox*/) {
+
     LOG(DEBUG) << "paint transparency group";
 
     cairo_save(m_cairo);

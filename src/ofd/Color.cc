@@ -93,6 +93,19 @@ bool Color::Equal(ColorPtr color) const {
     }
 };
 
+// ================ Color::GetRGBA() ================
+std::tuple<double, double, double, double> Color::GetRGBA()const{
+    double r, g, b, a;
+    std::tie(r, g, b) = Value.RGB.GetRGB();
+    a = (double)Alpha / 255.0;
+    return std::make_tuple(r, g, b, a);
+}
+
+// ================ Color::GetCMYK() ================
+std::tuple<double, double, double, double> Color::GetCMYK()const{
+    return Value.CMYK.GetCMYK();
+}
+
 // ================ Color::GetColorSpace() ================
 ColorSpacePtr Color::GetColorSpace() const {
     if ( !weakColorSpace.expired() ){

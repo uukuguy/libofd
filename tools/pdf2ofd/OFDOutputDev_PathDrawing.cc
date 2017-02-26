@@ -137,6 +137,7 @@ void OFDOutputDev::stroke(GfxState *state) {
         cairo_matrix_t matrix1;
         matrix1.xx = gfxCTM[0];
         matrix1.yx = gfxCTM[1];
+
         matrix1.xy = gfxCTM[2];
         matrix1.yy = gfxCTM[3];
         matrix1.x0 = gfxCTM[4];
@@ -184,24 +185,12 @@ void OFDOutputDev::stroke(GfxState *state) {
     }
 }
 
-void OFDOutputDev::fill(GfxState *state) {
-  //if (inType3Char) {
-      //GfxGray gray;
-      //state->getFillGray(&gray);
-      //if (colToDbl(gray) > 0.5)
-	  //return;
-  //}
+PathObjectPtr OFDOutputDev::createPathObject(GfxState *state){
+    PathObjectPtr pathObject = nullptr;
 
-    LOG(INFO) << "[imageSurface] DrawPathObject Fill Path";
-
-    LOG(INFO) << "[imageSurface] DrawPathObject m_matrix=(" << m_matrix.xx << "," << m_matrix.yx << "," << m_matrix.xy << "," << m_matrix.yy << "," << m_matrix.x0 << "," << m_matrix.y0 << ")";
-
-    showCairoMatrix(m_cairo, "imageSurface", "DrawPathObject cairo_matrix");
-
-    // Add PathObject
     PathPtr ofdPath = GfxPath_to_OfdPath(state->getPath());
     if ( ofdPath != nullptr ){
-        PathObjectPtr pathObject = std::make_shared<PathObject>(m_currentOFDPage->GetBodyLayer());
+        pathObject = std::make_shared<PathObject>(m_currentOFDPage->GetBodyLayer());
         pathObject->SetPath(ofdPath);
         LOG(DEBUG) <<  "fill color in fill(): " << m_fillColor.r << ", " << m_fillColor.g << ", " <<  m_fillColor.b;
         ColorPtr fillColor = GfxColor_to_OfdColor(&m_fillColor);
@@ -241,6 +230,29 @@ void OFDOutputDev::fill(GfxState *state) {
         pathObject->CTM[4] = objMatrix.x0;
         pathObject->CTM[5] = objMatrix.y0;
 
+    }
+
+    return pathObject;
+}
+
+void OFDOutputDev::fill(GfxState *state) {
+
+    //if (inType3Char) {
+    //GfxGray gray;
+    //state->getFillGray(&gray);
+    //if (colToDbl(gray) > 0.5)
+    //return;
+    //}
+
+    //LOG(INFO) << "[imageSurface] DrawPathObject Fill Path";
+
+    //LOG(INFO) << "[imageSurface] DrawPathObject m_matrix=(" << m_matrix.xx << "," << m_matrix.yx << "," << m_matrix.xy << "," << m_matrix.yy << "," << m_matrix.x0 << "," << m_matrix.y0 << ")";
+
+    //showCairoMatrix(m_cairo, "imageSurface", "DrawPathObject cairo_matrix");
+
+    // Add PathObject
+    PathObjectPtr pathObject = createPathObject(state);
+    if ( pathObject != nullptr ){
         m_currentOFDPage->AddObject(pathObject);
 
         if ( m_cairoRender != nullptr ){
@@ -249,45 +261,55 @@ void OFDOutputDev::fill(GfxState *state) {
         }
     }
 
-
-
-
-
-  doPath(m_cairo, state, state->getPath());
-  cairo_set_fill_rule(m_cairo, CAIRO_FILL_RULE_WINDING);
-  cairo_set_source(m_cairo, m_fillPattern);
-  //XXX: how do we get the path
-  if ( m_maskPattern != nullptr ) {
-    cairo_save(m_cairo);
-    if ( m_cairoRender != nullptr ){
-        m_cairoRender->SaveState();
+    doPath(m_cairo, state, state->getPath());
+    cairo_set_fill_rule(m_cairo, CAIRO_FILL_RULE_WINDING);
+    cairo_set_source(m_cairo, m_fillPattern);
+    //XXX: how do we get the path
+    if ( m_maskPattern != nullptr ) {
+        cairo_save(m_cairo);
+        if ( m_cairoRender != nullptr ){
+            m_cairoRender->SaveState();
+        }
+        cairo_clip(m_cairo);
+        if ( m_strokePathClip) {
+            cairo_push_group(m_cairo);
+            fillToStrokePathClip(state);
+            cairo_pop_group_to_source(m_cairo);
+        }
+        cairo_set_matrix(m_cairo, &m_mask_matrix);
+        cairo_mask(m_cairo, m_maskPattern);
+        cairo_restore(m_cairo);
+        if ( m_cairoRender != nullptr ){
+            m_cairoRender->RestoreState();
+        }
+    } else if ( m_strokePathClip) {
+        fillToStrokePathClip(state);
+    } else {
+        cairo_fill(m_cairo);
     }
-    cairo_clip(m_cairo);
-    if ( m_strokePathClip) {
-      cairo_push_group(m_cairo);
-      fillToStrokePathClip(state);
-      cairo_pop_group_to_source(m_cairo);
-    }
-    cairo_set_matrix(m_cairo, &m_mask_matrix);
-    cairo_mask(m_cairo, m_maskPattern);
-    cairo_restore(m_cairo);
-    if ( m_cairoRender != nullptr ){
-        m_cairoRender->RestoreState();
-    }
-  } else if ( m_strokePathClip) {
-    fillToStrokePathClip(state);
-  } else {
-    cairo_fill(m_cairo);
-  }
 
-  if ( m_cairoShape) {
-    cairo_set_fill_rule(m_cairoShape, CAIRO_FILL_RULE_WINDING);
-    doPath(m_cairoShape, state, state->getPath());
-    cairo_fill(m_cairoShape);
-  }
+    if ( m_cairoShape) {
+        cairo_set_fill_rule(m_cairoShape, CAIRO_FILL_RULE_WINDING);
+        doPath(m_cairoShape, state, state->getPath());
+        cairo_fill(m_cairoShape);
+    }
 }
 
 void OFDOutputDev::eoFill(GfxState *state){
+
+    // Add PathObject
+    PathObjectPtr pathObject = createPathObject(state);
+    if ( pathObject != nullptr ){
+        pathObject->Rule = ofd::PathRule::EvenOdd;
+
+        m_currentOFDPage->AddObject(pathObject);
+
+        if ( m_cairoRender != nullptr ){
+            ObjectPtr object = std::shared_ptr<ofd::Object>(pathObject);
+            m_cairoRender->DrawObject(object);
+        }
+    }
+
     doPath(m_cairo, state, state->getPath());
     cairo_set_fill_rule(m_cairo, CAIRO_FILL_RULE_EVEN_ODD);
     cairo_set_source(m_cairo, m_fillPattern);
@@ -600,6 +622,30 @@ GBool OFDOutputDev::axialShadedFill(GfxState *state, GfxAxialShading *shading, d
     else
         cairo_pattern_set_extend (m_fillPattern, CAIRO_EXTEND_PAD);
 
+
+    // -------- Create ofd::AxialShading
+    ofd::AxialShading *axialShading = new ofd::AxialShading();
+    axialShading->StartPoint = ofd::Point_t(x0, y0);
+    axialShading->EndPoint = ofd::Point_t(x1, y1);
+
+    if ( shading->getExtend0() ){
+        if (shading->getExtend1() ){
+            axialShading->Extend = 3;
+        } else {
+            axialShading->Extend = 2;
+        }
+    } else {
+        if (shading->getExtend1() ){
+            axialShading->Extend = 1;
+        } else {
+            axialShading->Extend = 0;
+        }
+    }
+
+    //axialShading->ColorSegments.push_back();
+
+    m_shading = std::shared_ptr<ofd::Shading>(axialShading);
+
     // TODO: use the actual stops in the shading in the case
     // of linear interpolation (Type 2 Exponential functions with N=1)
     return gFalse;
@@ -650,6 +696,20 @@ GBool OFDOutputDev::radialShadedFill(GfxState *state, GfxRadialShading *shading,
     radialShading->EndPoint = ofd::Point_t(x1, y1);
     radialShading->StartRadius = r0;
     radialShading->EndRadius = r1;
+
+    if ( shading->getExtend0() ){
+        if (shading->getExtend1() ){
+            radialShading->Extend = 3;
+        } else {
+            radialShading->Extend = 2;
+        }
+    } else {
+        if (shading->getExtend1() ){
+            radialShading->Extend = 1;
+        } else {
+            radialShading->Extend = 0;
+        }
+    }
 
     //radialShading->ColorSegments.push_back();
 

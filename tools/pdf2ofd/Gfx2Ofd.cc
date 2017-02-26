@@ -41,9 +41,9 @@ PathPtr GfxPath_to_OfdPath(GfxPath *gfxPath){
                     ++j;
                 }
             }
-            if ( subpath->isClosed() ){
-                ofdPath->ClosePath();
-            }
+            //if ( subpath->isClosed() ){
+                //ofdPath->ClosePath();
+            //}
         }
     }
 

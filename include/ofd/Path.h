@@ -34,10 +34,11 @@ namespace ofd{
             void Offset(double dx, double dy);
             void LineTo(const Point_t& point);
             void CurveTo(const Point_t& p0, const Point_t& p1, const Point_t& p2);
+            char GetFlag(size_t idx) const;
 
         private:
             std::vector<Point_t> m_points;
-            std::vector<bool> m_curves;
+            std::vector<char> m_flags;
             bool m_bClosed;
 
     }; // class Subpath
