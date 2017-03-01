@@ -215,8 +215,8 @@ void OFDOutputDev::drawChar(GfxState *state, double x, double y,
         textCode.Y = y1;
         textCode.Text = (char*)buf;
         // FIXME
-        bool bInvalidChar = false;
-        char invalidChar;
+        __attribute__((unused)) bool bInvalidChar = false;
+        __attribute__((unused)) char invalidChar;
         if ( textCode.Text.length() == 1 ){
             const char* b = textCode.Text.c_str();
             if ( *b  <= 0x20 ){

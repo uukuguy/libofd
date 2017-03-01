@@ -439,18 +439,23 @@ void CairoRender::ImplCls::DrawTextObject(cairo_t *cr, TextObject *textObject){
     //font = defaultFont;
 
 
-    assert(font != nullptr);
+    //assert(font != nullptr);
     //LOG(DEBUG) << "DrawTextObject using font (ID=" << font->ID << ")";
-    assert(font->IsLoaded());
+    //assert(font->IsLoaded());
 
     //if ( font->ID != 3 ) {
         //return;
     //}
 
-    cairo_font_face_t *font_face = font->GetCairoFontFace();
-    assert(font_face != nullptr);
+    cairo_font_face_t *font_face = nullptr;
+    if ( font != nullptr && font->IsLoaded() ){
+        font_face = font->GetCairoFontFace();
+        assert(font_face != nullptr);
 
-    cairo_set_font_face(cr, font_face);
+        cairo_set_font_face(cr, font_face);
+    } else {
+        return;
+    }
 
     // -------- fontMatrix --------
     double ctm[6] = {1.0, 0.0, 0.0, 1.0, 0.0, 0.0};

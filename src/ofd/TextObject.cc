@@ -48,7 +48,7 @@ void TextObject::GenerateAttributesXML(utils::XMLWriter &writer) const{
     if ( Font != nullptr ){
         writer.WriteAttribute("Font", Font->ID);
     } else {
-        LOG(ERROR) << "Attribute Font is required in TextObject XML.";
+        LOG(WARNING) << "Attribute Font is required in TextObject XML.";
     }
 
     // -------- <TextObject Size="">

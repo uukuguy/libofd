@@ -395,8 +395,19 @@ void MySDLApp::OnEvent(SDL_Event event, bool &done){
         } else if (event.key.keysym.sym == SDLK_RETURN) {
             ToggleFullScreen();
             break;
-        }
-        break;
+        } break;
+    case SDL_WINDOWEVENT:
+        switch ( event.window.event ){
+            case SDL_WINDOWEVENT_SIZE_CHANGED:
+                {
+                    m_screenWidth = event.window.data1;
+                    m_screenHeight = event.window.data2;
+
+                    if ( m_cairoRender != nullptr ){
+                        m_cairoRender->Rebuild(m_screenWidth, m_screenHeight, g_resolutionX, g_resolutionY);
+                    }
+                } break;
+        }; break;
     };
 }
 

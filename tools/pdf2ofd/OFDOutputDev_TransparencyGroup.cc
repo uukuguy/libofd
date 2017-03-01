@@ -30,6 +30,7 @@ void OFDOutputDev::beginTransparencyGroup(GfxState * /*state*/, double * /*bbox*
                                       GfxColorSpace * blendingColorSpace,
                                       GBool /*isolated*/, GBool knockout,
 				      GBool forSoftMask) {
+
     /* push color space */
     ColorSpaceStack* css = new ColorSpaceStack;
     css->cs = blendingColorSpace;
@@ -57,9 +58,12 @@ void OFDOutputDev::beginTransparencyGroup(GfxState * /*state*/, double * /*bbox*
             cairo_set_matrix(m_cairoShape, &matrix);
         }
     }
-    if (m_groupColorSpaceStack->next && m_groupColorSpaceStack->next->knockout) {
+    //if (m_groupColorSpaceStack->next && m_groupColorSpaceStack->next->knockout) {
+    if (m_groupColorSpaceStack->next ){
+        if ( m_groupColorSpaceStack->next->knockout) {
         /* we need to track the shape */
         cairo_push_group(m_cairoShape);
+        }
     }
     if (0 && forSoftMask)
         cairo_push_group_with_content(m_cairo, CAIRO_CONTENT_ALPHA);
@@ -76,6 +80,9 @@ void OFDOutputDev::beginTransparencyGroup(GfxState * /*state*/, double * /*bbox*
 }
 
 void OFDOutputDev::endTransparencyGroup(GfxState * /*state*/) {
+    // FIXME
+    return;
+
     if ( m_groupPattern != nullptr ){
         cairo_pattern_destroy(m_groupPattern);
     }
