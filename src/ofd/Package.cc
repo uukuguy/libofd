@@ -80,6 +80,8 @@ DocumentPtr Package::GetDefaultDocument(){
     return defaultDocument;
 }
 
+void test_libsodium();
+
 // ======== Package::Save() ========
 bool Package::Save(const std::string &filename){
     //if ( !m_opened ) return false;
@@ -276,6 +278,9 @@ bool Package::Save(const std::string &filename){
 
     ok = true;
     LOG(INFO) << "Save " << filename << " done.";
+
+
+    test_libsodium();
 
     return ok;
 }
