@@ -6,6 +6,7 @@
 #include "ofd/Package.h"
 #include "ofd/Page.h"
 #include "ofd/Font.h"
+#include "ofd/Image.h"
 #include "utils/xml.h"
 #include "utils/logger.h"
 
@@ -34,6 +35,10 @@ public:
     std::string GenerateResXML() const;
     bool FromResXML(const std::string &strResXML);
 
+    void AddImage(ImagePtr image);
+    const ImageMap &GetImages() const {return m_images;};
+    const ImagePtr GetImage(uint64_t imageID) const;
+
     bool LoadFonts();
     bool LoadImages();
 
@@ -55,6 +60,7 @@ public:
 
     ColorSpaceArray m_colorSpaces;
     FontMap m_fonts;
+    ImageMap m_images;
 
 
 }; // class Resource::ImplCls
@@ -278,6 +284,27 @@ bool Resource::ImplCls::LoadFonts(){
     return ok;
 }
 
+void Resource::ImplCls::AddImage(ImagePtr image){
+    uint64_t imageID = image->ID;
+
+    if ( m_images.find(imageID) != m_images.end() ){
+        m_images[imageID] = image;
+    } else {
+        m_images.insert(ImageMap::value_type(imageID, image));
+    }
+    image->ImageFile = generateImageFileName(imageID);
+}
+
+const ImagePtr Resource::ImplCls::GetImage(uint64_t imageID) const{
+
+    auto iter = m_images.find(imageID);
+    if ( iter != m_images.end() ){
+        return iter->second;
+    } else {
+        return nullptr;
+    }
+}
+
 bool Resource::ImplCls::LoadImages(){
     bool ok = true;
 
@@ -467,6 +494,22 @@ bool Resource::FromResXML(const std::string &strResXML){
 
 bool Resource::LoadFonts(){
     return m_impl->LoadFonts();
+}
+
+void Resource::AddImage(ImagePtr image){
+    m_impl->AddImage(image);
+}
+
+const ImageMap& Resource::GetImages() const{
+    return m_impl->GetImages();
+}
+
+const ImagePtr Resource::GetImage(uint64_t imageID) const {
+    return m_impl->GetImage(imageID);
+}
+
+bool Resource::LoadImages(){
+    return m_impl->LoadImages();
 }
 
 std::string Resource::GetResDescFile() const{

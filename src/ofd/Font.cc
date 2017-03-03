@@ -20,6 +20,7 @@ using namespace ofd;
 using namespace utils;
 
 namespace ofd{
+
     std::string generateFontFileName(uint64_t fontID){
         char buf[1024];
         sprintf(buf, "Font_%" PRIu64 ".ttf", fontID);

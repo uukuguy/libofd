@@ -52,6 +52,10 @@ namespace ofd{
 
         bool LoadFonts();
 
+        void AddImage(ImagePtr image);
+        const ImageMap &GetImages() const;
+        const ImagePtr GetImage(uint64_t imageID) const;
+        bool LoadImages();
 
     private:
         class ImplCls;

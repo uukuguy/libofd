@@ -42,6 +42,11 @@ namespace ofd{
     typedef std::shared_ptr<Resource> ResourcePtr;
     typedef std::vector<ResourcePtr> ResourceArray;
 
+    class Image;
+    typedef std::shared_ptr<Image> ImagePtr;
+    typedef std::vector<ImagePtr> ImageArray;
+    typedef std::map<uint64_t, ImagePtr> ImageMap;
+
     class Font;
     typedef std::shared_ptr<Font> FontPtr;
     typedef std::vector<FontPtr> FontArray;
@@ -54,6 +59,7 @@ namespace ofd{
     class ColorSpace;
     typedef std::shared_ptr<ColorSpace> ColorSpacePtr;
     typedef std::vector<ColorSpacePtr> ColorSpaceArray;
+
 
     class Pattern;
     typedef std::shared_ptr<Pattern> PatternPtr;

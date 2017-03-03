@@ -1,60 +1,39 @@
 #include <cairo/cairo.h>
-#include "ofd/ImageObject.h"
-#include "ofd/Page.h"
+#include <limits.h>
+#include "ofd/Package.h"
 #include "ofd/Document.h"
-
+#include "ofd/Page.h"
+#include "ofd/ImageObject.h"
+#include "ofd/Color.h"
+#include "ofd/Image.h"
 #include "utils/logger.h"
 #include "utils/xml.h"
 
 using namespace utils;
 using namespace ofd;
 
-
-// **************** class ofd::ImageBlock ****************
-ImageBlock::ImageBlock(int widthA, int heightA, int nCompsA, int nBitsA) :
-    width(widthA), height(heightA),
-    nComps(nCompsA), nBits(nBitsA), nVals(0),
-    inputLineSize(0), inputLine(nullptr),
-    imgLine(nullptr), imgIdx(0) {
-
-    int imgLineSize = 0;
-    nVals = width * nComps;
-    inputLineSize = (nVals * nBits + 7) >> 3;
-    if (nBits <= 0 || nVals > INT_MAX / nBits - 7 || width > INT_MAX / nComps) {
-        inputLineSize = -1;
-    }
-    inputLine = (uint8_t *)new uint8_t(inputLineSize* sizeof(uint8_t));
-    if (nBits == 8) {
-        imgLine = (uint8_t *)inputLine;
-    } else {
-        if (nBits == 1) {
-            imgLineSize = (nVals + 7) & ~7;
-        } else {
-            imgLineSize = nVals;
-        }
-        if (width > INT_MAX / nComps) {
-            // force a call to gmallocn(-1,...), which will throw an exception
-            imgLineSize = -1;
-        }
-        imgLine = (uint8_t *)new uint8_t(imgLineSize *  sizeof(uint8_t));
-    }
-    imgIdx = nVals;
+// **************** class ofd::ImageBorder ****************
+ImageBorder::ImageBorder() : 
+    LineWidth(0.353), HorizonalCornerRadius(0.0), VerticalCornerRadius(0.0), DashOffset(0.0),
+    BorderColor(COLOR_BLACK)
+{
 }
 
-ImageBlock::~ImageBlock(){
-    if ( imgLine != (uint8_t *)inputLine ) {
-        delete imgLine;
-    }
-    delete inputLine;
-}
 // **************** class ofd::ImageObject ****************
 
 ImageObject::ImageObject(LayerPtr layer) :
-    Object(layer, ObjectType::IMAGE, "ImageObject"){
+    Object(layer, ObjectType::IMAGE, "ImageObject"),
+    ResourceID(0), Substitution(0), ImageMask(0),
+    m_image(nullptr){
     Type = ofd::ObjectType::IMAGE;
 }
 
 ImageObject::~ImageObject(){
+}
+
+void ImageObject::SetImage(ImagePtr image){
+    ResourceID = image->ID;
+    m_image = image;
 }
 
 void ImageObject::GenerateAttributesXML(XMLWriter &writer) const{
@@ -101,13 +80,38 @@ void ImageObject::GenerateElementsXML(XMLWriter &writer) const{
 
 bool ImageObject::FromAttributesXML(XMLElementPtr objectElement){
     if ( Object::FromAttributesXML(objectElement) ){
+
+        bool exist = false;
+
+        // -------- <ImageObject ResourceID="">
+        std::tie(ResourceID, exist) = objectElement->GetIntAttribute("ResourceID");
+        if ( !exist ){
+            LOG(WARNING) << "ResourceID does not exist in ImageObject";
+            return false;
+        }
+
+        // -------- <ImageObject Substitution="">
+        // Optional.
+        std::tie(Substitution, std::ignore) = objectElement->GetIntAttribute("Substitution");
+
+        // -------- <ImageObject ="ImageMask">
+        // Optional.
+        std::tie(ImageMask, std::ignore) = objectElement->GetIntAttribute("ImageMask");
+
         return true;
     }
+
     return false;
 }
 
 bool ImageObject::IterateElementsXML(XMLElementPtr childElement){
     if ( Object::IterateElementsXML(childElement) ){
+
+        std::string childName = childElement->GetName();
+
+        if ( childName == "Border" ){
+        }
+
         return true;
     }
     return false;

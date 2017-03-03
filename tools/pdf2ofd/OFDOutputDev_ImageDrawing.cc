@@ -2,8 +2,11 @@
 #include <JBIG2Stream.h>
 #include "CairoRescaleBox.h"
 #include "OFDOutputDev.h"
+#include "ofd/Document.h"
+#include "ofd/Resource.h"
 #include "ofd/Page.h"
 #include "ofd/ImageObject.h"
+#include "ofd/Image.h"
 #include "utils/logger.h"
 
 
@@ -444,7 +447,6 @@ void OFDOutputDev::setMimeData(GfxState *state, Stream *str, Object *ref, GfxIma
     }
 }
 
-size_t numImages = 0;
 #include <fstream>
 void OFDOutputDev::drawImage(GfxState *state, Object *ref, Stream *str,
 			       int widthA, int heightA,
@@ -458,8 +460,11 @@ void OFDOutputDev::drawImage(GfxState *state, Object *ref, Stream *str,
                              //colorMap->getBits());
     //imgStream->reset();
 
-    __attribute__((unused)) std::string jpgFileName = "/tmp/Image_" + std::to_string(numImages++) + ".jpg";
-    __attribute__((unused)) std::string pngFileName = "/tmp/Image_" + std::to_string(numImages++) + ".png";
+    ofd::ImagePtr image = std::make_shared<ofd::Image>();
+    uint64_t imageID = image->ID;
+
+    __attribute__((unused)) std::string jpgFileName = "/tmp/Image_" + std::to_string(imageID) + ".jpg";
+    __attribute__((unused)) std::string pngFileName = "/tmp/Image_" + std::to_string(imageID) + ".png";
     //std::ofstream imgFile(strImageFileName, std::ios::binary | std::ios::out);
     //int row = 0;
     //while ( row++ < heightA ){
@@ -471,7 +476,7 @@ void OFDOutputDev::drawImage(GfxState *state, Object *ref, Stream *str,
     //delete imgStream;
 
     // ----------------
-    cairo_surface_t *image;
+    cairo_surface_t *imageSurface = nullptr;
     cairo_pattern_t *pattern, *maskPattern;
     cairo_matrix_t matrix;
     int width, height;
@@ -483,15 +488,21 @@ void OFDOutputDev::drawImage(GfxState *state, Object *ref, Stream *str,
 
     cairo_get_matrix(m_cairo, &matrix);
     getImageScaledSize (&matrix, widthA, heightA, &scaledWidth, &scaledHeight);
-    image = rescale.getSourceImage(str, widthA, heightA, scaledWidth, scaledHeight, m_printing, colorMap, maskColors);
-    if (!image)
+    imageSurface = rescale.getSourceImage(str, widthA, heightA, scaledWidth, scaledHeight, m_printing, colorMap, maskColors);
+    if (!imageSurface)
         return;
 
-    //writeCairoSurfaceImage(image, jpgFileName);
-    cairo_surface_write_to_png(image, pngFileName.c_str());
+    //writeCairoSurfaceImage(imageSurface, jpgFileName);
+    cairo_surface_write_to_png(imageSurface, pngFileName.c_str());
+
+    ofd::Document::CommonData &commonData = m_document->GetCommonData();
+    assert(commonData.DocumentRes != nullptr );
+    commonData.DocumentRes->AddImage(image);
 
     // Add image object into current page.
     ofd::ImageObject *imageObject = new ofd::ImageObject(m_currentOFDPage->GetBodyLayer());
+    imageObject->SetImage(image);
+
     double *gfxCTM = state->getCTM();
     cairo_matrix_t matrix1;
     matrix1.xx = gfxCTM[0];
@@ -513,16 +524,16 @@ void OFDOutputDev::drawImage(GfxState *state, Object *ref, Stream *str,
     ofd::ObjectPtr object = std::shared_ptr<ofd::Object>(imageObject);
     m_currentOFDPage->AddObject(object);
 
-    width = cairo_image_surface_get_width (image);
-    height = cairo_image_surface_get_height (image);
+    width = cairo_image_surface_get_width (imageSurface);
+    height = cairo_image_surface_get_height (imageSurface);
     if (width == widthA && height == heightA)
-        filter = getFilterForSurface (image, interpolate);
+        filter = getFilterForSurface (imageSurface, interpolate);
 
     if (!inlineImg) /* don't read stream twice if it is an inline image */
-        setMimeData(state, str, ref, colorMap, image);
+        setMimeData(state, str, ref, colorMap, imageSurface);
 
-    pattern = cairo_pattern_create_for_surface (image);
-    cairo_surface_destroy (image);
+    pattern = cairo_pattern_create_for_surface (imageSurface);
+    cairo_surface_destroy (imageSurface);
     if (cairo_pattern_status (pattern))
         return;
 

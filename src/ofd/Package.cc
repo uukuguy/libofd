@@ -1,8 +1,10 @@
 #include <assert.h>
+#include <fstream>
 #include "ofd/Package.h"
 #include "ofd/Document.h"
 #include "ofd/Page.h"
 #include "ofd/Font.h"
+#include "ofd/Image.h"
 #include "ofd/Resource.h"
 #include "utils/xml.h"
 #include "utils/zip.h"
@@ -178,13 +180,8 @@ bool Package::Save(const std::string &filename){
             std::string pageResDir = pageDir + "/Res";
             zip->AddDir(pageResDir);
 
-            for ( auto m = 0 ; m < 1 ; m++ ){
-                // Doc_N/Pages/Page_K/Res/Image_M.png
-                std::string imageFileName = pageResDir + "/Image_" + std::to_string(m) + ".png";
-
-                std::string strImage;
-                zip->AddFile(imageFileName, strImage);
-            }
+            // FIXME
+            // Doc_N/Pages/Page_K/Res/Image_M.png
         }
 
         // mkdir Doc_N/Signs
@@ -219,17 +216,10 @@ bool Package::Save(const std::string &filename){
         std::string resDir = Doc_N + "/Res";
         zip->AddDir(resDir); 
 
-        for ( auto m = 0 ; m < 1 ; m++ ){
-            // Doc_N/Res/Image_M.png
-            std::string imageFileName = resDir + "/Image_" + std::to_string(m) + ".png";
-
-            std::string strImage;
-            zip->AddFile(imageFileName, strImage);
-        }
-
         ResourcePtr documentRes = document->GetDocumentRes();
         assert(documentRes != nullptr);
 
+        // Font Resource
         const FontMap &fonts = documentRes->GetFonts();
         for ( auto iter : fonts){
             auto font = iter.second;
@@ -239,6 +229,42 @@ bool Package::Save(const std::string &filename){
                 std::string fontFileName = resDir + "/" + generateFontFileName(font->ID);
                 //LOG(ERROR) << "zip->AddFile() while save Font. file = " << fontFileName;
                 zip->AddFile(fontFileName, fontData, fontDataSize);
+            }
+        }
+
+        // Image Resource
+        // Doc_N/Res/Image_M.png
+        const ImageMap &images = documentRes->GetImages();
+        for ( auto iter : images ){
+            auto image = iter.second;
+            uint64_t imageID = image->ID;
+
+            std::string imageFileName = generateImageFileName(imageID);
+
+            char *imageData = nullptr;
+            size_t imageDataSize = 0;
+
+            std::string tmpImageFileName = "/tmp/" + imageFileName;
+            std::ifstream ifile;
+            ifile.open(tmpImageFileName, std::ios::binary | std::ios::in);
+            if ( ifile.is_open() ){
+                ifile.seekg(0, std::ios::end);
+                imageDataSize = ifile.tellg();
+                ifile.seekg(0, std::ios::beg);
+
+                if ( imageDataSize >0 ){
+                    imageData = new char[imageDataSize];
+                    ifile.read(imageData, imageDataSize);
+                }
+
+                ifile.close();
+            }
+            
+            if ( imageData != nullptr ){
+                std::string imageFilePath = resDir + "/" + imageFileName;
+                zip->AddFile(imageFilePath, imageData, imageDataSize);
+
+                delete imageData;
             }
         }
 
