@@ -212,6 +212,12 @@ namespace ofd{
             bool                  m_bUsePalette; // 使用颜色空间调色板标志
 
     }; // class Color
+    #define COLOR_BLACK ofd::Color::Instance(0,0,0) 
+    #define COLOR_WHITE ofd::Color::Instance(255,255,255) 
+    #define COLOR_TRANSPARENT ofd::Color::Instance(0,0,0,nullptr, 0)
+    #define COLOR_RED ofd::Color::Instance(255,0,0) 
+    #define COLOR_GREEN ofd::Color::Instance(0,255,0) 
+    #define COLOR_BLUE ofd::Color::Instance(0,0,255) 
 
     // ======== struct ColorStop_t ========
     typedef struct _ColorStop {

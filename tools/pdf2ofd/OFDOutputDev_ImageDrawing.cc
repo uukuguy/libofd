@@ -2,7 +2,10 @@
 #include <JBIG2Stream.h>
 #include "CairoRescaleBox.h"
 #include "OFDOutputDev.h"
+#include "ofd/Page.h"
+#include "ofd/ImageObject.h"
 #include "utils/logger.h"
+
 
 static inline int splashRound(SplashCoord x) {
   return (int)floor(x + 0.5);
@@ -455,7 +458,8 @@ void OFDOutputDev::drawImage(GfxState *state, Object *ref, Stream *str,
                              //colorMap->getBits());
     //imgStream->reset();
 
-    std::string strImageFileName = "output/Image_" + std::to_string(numImages++) + ".jpg";
+    __attribute__((unused)) std::string jpgFileName = "/tmp/Image_" + std::to_string(numImages++) + ".jpg";
+    __attribute__((unused)) std::string pngFileName = "/tmp/Image_" + std::to_string(numImages++) + ".png";
     //std::ofstream imgFile(strImageFileName, std::ios::binary | std::ios::out);
     //int row = 0;
     //while ( row++ < heightA ){
@@ -482,7 +486,32 @@ void OFDOutputDev::drawImage(GfxState *state, Object *ref, Stream *str,
     image = rescale.getSourceImage(str, widthA, heightA, scaledWidth, scaledHeight, m_printing, colorMap, maskColors);
     if (!image)
         return;
-    writeCairoSurfaceImage(image, strImageFileName);
+
+    //writeCairoSurfaceImage(image, jpgFileName);
+    cairo_surface_write_to_png(image, pngFileName.c_str());
+
+    // Add image object into current page.
+    ofd::ImageObject *imageObject = new ofd::ImageObject(m_currentOFDPage->GetBodyLayer());
+    double *gfxCTM = state->getCTM();
+    cairo_matrix_t matrix1;
+    matrix1.xx = gfxCTM[0];
+    matrix1.yx = gfxCTM[1];
+    matrix1.xy = gfxCTM[2];
+    matrix1.yy = gfxCTM[3];
+    matrix1.x0 = gfxCTM[4];
+    matrix1.y0 = gfxCTM[5];
+    // FIXME
+    cairo_matrix_t objMatrix = matrix1;
+
+    imageObject->CTM[0] = objMatrix.xx;
+    imageObject->CTM[1] = objMatrix.yx;
+    imageObject->CTM[2] = objMatrix.xy;
+    imageObject->CTM[3] = objMatrix.yy;
+    imageObject->CTM[4] = objMatrix.x0;
+    imageObject->CTM[5] = objMatrix.y0;
+
+    ofd::ObjectPtr object = std::shared_ptr<ofd::Object>(imageObject);
+    m_currentOFDPage->AddObject(object);
 
     width = cairo_image_surface_get_width (image);
     height = cairo_image_surface_get_height (image);

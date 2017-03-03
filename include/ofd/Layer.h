@@ -31,11 +31,7 @@ namespace ofd{
             size_t GetNumObjects() const{return m_objects.size();};
             const ObjectPtr GetObject(size_t idx) const {return m_objects[idx];};
             ObjectPtr GetObject(size_t idx) {return m_objects[idx];};
-            void AddObject(ObjectPtr object) {
-                if ( object != nullptr ){
-                    m_objects.push_back(object);
-                }
-            }
+            void AddObject(ObjectPtr object); 
 
             // ---------------- Private Attributes ----------------
         public:
