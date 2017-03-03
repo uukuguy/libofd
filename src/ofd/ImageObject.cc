@@ -110,6 +110,19 @@ bool ImageObject::IterateElementsXML(XMLElementPtr childElement){
         std::string childName = childElement->GetName();
 
         if ( childName == "Border" ){
+            XMLElementPtr borderElement = childElement;
+            std::tie(Border.LineWidth, std::ignore)  = borderElement->GetFloatAttribute("LineWidth");
+            std::tie(Border.HorizonalCornerRadius, std::ignore)  = borderElement->GetFloatAttribute("HorizonalCornerRadius");
+            std::tie(Border.VerticalCornerRadius, std::ignore) = borderElement->GetFloatAttribute("VerticalCornerRadius");
+            std::tie(Border.DashOffset, std::ignore) = borderElement->GetFloatAttribute("DashOffset");
+
+
+            XMLElementPtr borderColorElement = borderElement->GetFirstChildElement();
+            if ( borderColorElement != nullptr ){
+                if ( borderColorElement->GetName() == "BorderColor" ){
+                    std::tie(Border.BorderColor, std::ignore) =  Color::ReadColorXML(borderColorElement);
+                }
+            }
         }
 
         return true;

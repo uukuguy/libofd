@@ -30,7 +30,24 @@ namespace ofd{
             std::string ImageFile;
             // =============== Public Methods ================
         public:
-            bool Load(PackagePtr package, bool reload);
+            bool Load(PackagePtr package, bool reload = false);
+
+            // Reset the stream.
+            void Reset();
+
+            // Close the stream previously reset
+            void Close();
+
+            // Gets the next pixel from the stream.  <pix> should be able to hold
+            // at least nComps elements.  Returns false at end of file.
+            bool GetPixel(uint8_t *pix);
+
+            // Returns a pointer to the next line of pixels.  Returns NULL at
+            // end of file.
+            uint8_t *GetLine();
+
+            // Skip an entire line from the image.
+            void SkipLine();
 
             // ---------------- Private Attributes ----------------
         public:

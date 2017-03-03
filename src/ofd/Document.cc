@@ -66,6 +66,7 @@ bool Document::Open(){
             return false;
         } else {
             m_commonData.DocumentRes->LoadFonts();
+            m_commonData.DocumentRes->LoadImages();
         }
     }
     m_opened = true;

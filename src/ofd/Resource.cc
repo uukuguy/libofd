@@ -308,6 +308,18 @@ const ImagePtr Resource::ImplCls::GetImage(uint64_t imageID) const{
 bool Resource::ImplCls::LoadImages(){
     bool ok = true;
 
+    if ( m_package.expired() ){
+        return false;
+    }
+
+    for ( auto imageIter : m_images ){
+        auto image = imageIter.second;
+
+        if ( !image->Load(m_package.lock()) ){
+            LOG(ERROR) << "Load image " << image->ImageFile << " failed.";
+        }
+    }
+
     return ok;
 }
 

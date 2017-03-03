@@ -41,5 +41,21 @@ namespace utils{
     static inline bool equal(double x, double y) { return fabs(x-y) <= EPS; }
 }
 
+#ifndef likely
+#if defined(__GNUC__)
+#define likely(x) __builtin_expect((x),1)
+#else
+#define likely(x) (x)
+#endif
+#endif
+
+
+#ifndef unlikely
+#if defined(__GNUC__)
+#define unlikely(x) __builtin_expect((x),0)
+#else
+#define unlikely(x) (x)
+#endif
+#endif
 
 #endif // __UTILS_UTILS_H__
