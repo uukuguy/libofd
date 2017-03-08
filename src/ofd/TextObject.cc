@@ -151,12 +151,7 @@ bool TextObject::FromAttributesXML(utils::XMLElementPtr objectElement){
         LOG(ERROR) << "Attribute Font is required in TextObject XML."; 
         return false;
     } else {
-        const PagePtr page = GetPage();
-        assert(page != nullptr);
-        const DocumentPtr document = page->GetDocument();
-        assert(document != nullptr);
-        const Document::CommonData &commonData = document->GetCommonData();
-        const ResourcePtr documentRes = commonData.DocumentRes;
+        const ResourcePtr documentRes = GetDocumentRes();
         assert(documentRes != nullptr);
         const FontPtr font = documentRes->GetFont(fontID);
         if ( font == nullptr ){

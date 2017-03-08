@@ -192,9 +192,30 @@ bool Image::Load(PackagePtr package, bool reload){
     char *imageData = nullptr;
     size_t imageDataSize = 0;
     bool readOK = false;
-    std::tie(imageData, imageDataSize, readOK) = package->ReadZipFileRaw(imageFilePath);
-    if ( readOK ){
 
+    // FIXME
+    //std::tie(imageData, imageDataSize, readOK) = package->ReadZipFileRaw(imageFilePath);
+
+    imageFilePath = "/tmp/Image_" + std::to_string(ID) + ".dat";
+    char *fileData = nullptr;
+    size_t fileSize = 0;
+    std::tie(fileData, fileSize, readOK) = utils::ReadFileData(imageFilePath);
+
+    ImageDataHead *imageDataHead = (ImageDataHead*)fileData;
+    width = imageDataHead->Width;
+    height = imageDataHead->Height;
+    nComps = imageDataHead->Components;
+    nBits = imageDataHead->Bits;
+
+    imageDataSize = fileSize - sizeof(ImageDataHead);
+    imageData = new char[imageDataSize];
+    memcpy(imageData, &fileData[sizeof(ImageDataHead)], imageDataSize);
+
+    delete fileData;
+
+    if ( readOK ){
+        m_imageData = imageData;
+        m_imageDataSize = imageDataSize;
     } else {
         ok = false;
         LOG(ERROR) << "Call ReadZipFileRaw() to read image file " << imageFilePath << " failed.";

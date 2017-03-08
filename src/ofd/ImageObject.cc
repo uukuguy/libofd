@@ -1,8 +1,11 @@
 #include <cairo/cairo.h>
+#include <assert.h>
 #include <limits.h>
 #include "ofd/Package.h"
 #include "ofd/Document.h"
 #include "ofd/Page.h"
+#include "ofd/Document.h"
+#include "ofd/Resource.h"
 #include "ofd/ImageObject.h"
 #include "ofd/Color.h"
 #include "ofd/Image.h"
@@ -88,6 +91,16 @@ bool ImageObject::FromAttributesXML(XMLElementPtr objectElement){
         if ( !exist ){
             LOG(WARNING) << "ResourceID does not exist in ImageObject";
             return false;
+        } else {
+            const ResourcePtr documentRes = GetDocumentRes();
+            assert(documentRes != nullptr);
+            ImagePtr image = documentRes->GetImage(ResourceID);
+            if ( image == nullptr ){
+                LOG(ERROR) << "Image ID = " << ResourceID << " not found in documentRes.";
+                return false;
+            } else {
+                m_image = image;
+            }
         }
 
         // -------- <ImageObject Substitution="">

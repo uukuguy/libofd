@@ -448,23 +448,57 @@ void OFDOutputDev::setMimeData(GfxState *state, Stream *str, Object *ref, GfxIma
 }
 
 #include <fstream>
+
+bool SaveImageStream(const std::string &filename, Stream *str, int widthA, int heightA, int nComps, int nBits){
+
+    ofd::ImageDataHead imageDataHead(widthA, heightA, nComps, nBits);
+    int lineSize = imageDataHead.GetLineSize();
+    uint8_t *buffer = new uint8_t[lineSize];
+
+    std::ofstream datFile;
+    datFile.open(filename.c_str(), std::ios::binary | std::ios::out | std::ios::trunc);
+
+    datFile.write((const char*)&imageDataHead, sizeof(ofd::ImageDataHead));
+    int n = 0;
+    while ( n++ < heightA ){
+
+        int readedChars = str->doGetChars(lineSize, buffer);
+        LOG(DEBUG) << "Write image data file. readedChars:" << readedChars << " lineSize:" <<  lineSize;
+        if ( readedChars > 0 ){
+            datFile.write((const char *)buffer, readedChars);
+        }
+    };
+    datFile.close();
+
+    delete buffer;
+
+    return true;
+
+}
+
 void OFDOutputDev::drawImage(GfxState *state, Object *ref, Stream *str,
 			       int widthA, int heightA,
 			       GfxImageColorMap *colorMap,
 			       GBool interpolate,
 			       int *maskColors, GBool inlineImg) {
 
-    //// -------- Write image stream to zip file. --------
-    //ImageStream *imgStream = new ImageStream(str, widthA,
-                             //colorMap->getNumPixelComps(),
-                             //colorMap->getBits());
-    //imgStream->reset();
 
+    str->reset();
+
+    //// -------- Write image stream to zip file. --------
     ofd::ImagePtr image = std::make_shared<ofd::Image>();
     uint64_t imageID = image->ID;
 
     __attribute__((unused)) std::string jpgFileName = "/tmp/Image_" + std::to_string(imageID) + ".jpg";
     __attribute__((unused)) std::string pngFileName = "/tmp/Image_" + std::to_string(imageID) + ".png";
+
+
+    __attribute__((unused)) std::string imageDataFile = "/tmp/Image_" + std::to_string(imageID) + ".dat";
+
+    int nComps = colorMap->getNumPixelComps();
+    int nBits = colorMap->getBits();
+    SaveImageStream(imageDataFile, str, widthA, heightA, nComps, nBits);
+
     //std::ofstream imgFile(strImageFileName, std::ios::binary | std::ios::out);
     //int row = 0;
     //while ( row++ < heightA ){

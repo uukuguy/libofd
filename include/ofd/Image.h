@@ -6,6 +6,24 @@
 
 namespace ofd{
 
+    typedef struct ImageDataHead{
+        int Width;
+        int Height;
+        int Components;
+        int Bits;
+
+        ImageDataHead(int width, int height, int comps, int bits) :
+            Width(width), Height(height), Components(comps), Bits(bits)
+        {
+        }
+
+        int GetLineSize() const{
+            int nVals = Width * Components;
+            int lineSize = (nVals * Bits + 7) >> 3;
+            return lineSize;
+        }
+    } ImageDataHead_t;
+
     std::string generateImageFileName(uint64_t imageID);
 
     class Image {
@@ -52,6 +70,7 @@ namespace ofd{
             // ---------------- Private Attributes ----------------
         public:
             const char *GetImageData() const {return m_imageData;};
+            char *GetImageData(){return m_imageData;};
             size_t GetImageDataSize() const {return m_imageDataSize;};
             void SetImageFilePaht(const std::string &imageFilePath){m_imageFilePath = imageFilePath;};
             std::string GetImageFilePath() const {return m_imageFilePath;};

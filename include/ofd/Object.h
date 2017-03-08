@@ -54,6 +54,12 @@ namespace ofd{
             LayerPtr GetLayer();
             const PagePtr GetPage() const;
             PagePtr GetPage();
+            const DocumentPtr GetDocument() const;
+            DocumentPtr GetDocument();
+            const ResourcePtr GetDocumentRes() const;
+            ResourcePtr GetDocumentRes();
+            const ResourcePtr GetPublicRes() const;
+            ResourcePtr GetPublicRes();
 
         protected:
             std::weak_ptr<Layer> m_layer;

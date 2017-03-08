@@ -1,5 +1,7 @@
 #include "ofd/Object.h"
 #include "ofd/Layer.h"
+#include "ofd/Page.h"
+#include "ofd/Document.h"
 #include "utils/xml.h"
 #include "utils/logger.h"
 #include "utils/utils.h"
@@ -37,6 +39,78 @@ const PagePtr Object::GetPage() const{
 
 PagePtr Object::GetPage(){
     return GetLayer()->GetPage();
+}
+
+const DocumentPtr Object::GetDocument() const{
+    const PagePtr page = GetPage();
+    //assert(page != nullptr);
+    if ( page != nullptr ){
+        const DocumentPtr document = page->GetDocument();
+        return document;
+    }
+    return nullptr;
+}
+
+DocumentPtr Object::GetDocument(){
+    PagePtr page = GetPage();
+    //assert(page != nullptr);
+    if ( page != nullptr ){
+        DocumentPtr document = page->GetDocument();
+        return document;
+    }
+    return nullptr;
+}
+
+const ResourcePtr Object::GetDocumentRes() const{
+    const DocumentPtr document = GetDocument();
+    //assert(document != nullptr);
+    if ( document != nullptr ){
+        const Document::CommonData &commonData = document->GetCommonData();
+        const ResourcePtr documentRes = commonData.DocumentRes;
+        //assert(documentRes != nullptr);
+        return documentRes;
+    }
+
+    return nullptr;
+}
+
+ResourcePtr Object::GetDocumentRes(){
+    DocumentPtr document = GetDocument();
+    //assert(document != nullptr);
+    if ( document != nullptr ){
+        Document::CommonData &commonData = document->GetCommonData();
+        ResourcePtr documentRes = commonData.DocumentRes;
+        //assert(documentRes != nullptr);
+        return documentRes;
+    }
+
+    return nullptr;
+}
+
+const ResourcePtr Object::GetPublicRes() const{
+    const DocumentPtr document = GetDocument();
+    //assert(document != nullptr);
+    if ( document != nullptr ){
+        const Document::CommonData &commonData = document->GetCommonData();
+        const ResourcePtr publicRes = commonData.PublicRes;
+        //assert(publicRes != nullptr);
+        return publicRes;
+    }
+
+    return nullptr;
+}
+
+ResourcePtr Object::GetPublicRes(){
+    DocumentPtr document = GetDocument();
+    //assert(document != nullptr);
+    if ( document != nullptr ){
+        Document::CommonData &commonData = document->GetCommonData();
+        ResourcePtr publicRes = commonData.PublicRes;
+        //assert(publicRes != nullptr);
+        return publicRes;
+    }
+
+    return nullptr;
 }
 
 // Called by OFDPage::ImplCls::generateContentXML()
