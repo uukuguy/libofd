@@ -1,9 +1,11 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include <limits.h>
+#include <cairo/cairo.h>
 #include "ofd/Package.h"
 #include "ofd/Image.h"
 #include "utils/logger.h"
+#include "utils/xml.h"
 
 using namespace ofd;
 
@@ -216,6 +218,7 @@ bool Image::Load(PackagePtr package, bool reload){
     if ( readOK ){
         m_imageData = imageData;
         m_imageDataSize = imageDataSize;
+        ok = true;
     } else {
         ok = false;
         LOG(ERROR) << "Call ReadZipFileRaw() to read image file " << imageFilePath << " failed.";
@@ -304,3 +307,132 @@ uint8_t *Image::GetLine(){
 
 void Image::SkipLine(){
 }
+
+void Image::GenerateXML(utils::XMLWriter &writer) const{
+    writer.StartElement("Image");{
+        // -------- <Font ID="">
+        writer.WriteAttribute("ID", ID);
+    }; writer.EndElement();
+
+}
+
+bool Image::FromXML(utils::XMLElementPtr imageElement){
+    bool ok = false;
+    ImagePtr image = nullptr;
+
+    std::string childName = imageElement->GetName();
+
+    // -------- <Font>
+    // OFD (section 11.1) P61. Res.xsd.
+    if ( childName == "Image" ){
+        bool exist = false;
+
+        // -------- <Image FontName="">
+        // Required.
+        std::tie(ID, exist) = imageElement->GetIntAttribute("ID");
+        if ( exist ){
+            // -------- <Image ="">
+            // Required.
+
+        } else {
+            LOG(ERROR) << "Attribute ID is required in Image XML.";
+        }
+
+        if ( exist ){
+            ok = true;
+        } else {
+            ok = false;
+        }
+    }
+
+    return ok;
+}
+
+namespace ofd{
+
+/* Taken from cairo/doc/tutorial/src/singular.c */
+static void get_singular_values (const cairo_matrix_t *matrix, double *major, double *minor){
+    double xx = matrix->xx, xy = matrix->xy;
+    double yx = matrix->yx, yy = matrix->yy;
+
+    double a = xx*xx+yx*yx;
+    double b = xy*xy+yy*yy;
+    double k = xx*xy+yx*yy;
+
+    double f = (a+b) * .5;
+    double g = (a-b) * .5;
+    double delta = sqrt (g*g + k*k);
+
+    if (major)
+        *major = sqrt (f + delta);
+    if (minor)
+        *minor = sqrt (f - delta);
+}
+
+void getImageScaledSize(const cairo_matrix_t *matrix,
+        int                   orig_width,
+        int                   orig_height,
+        int                  *scaledWidth,
+        int                  *scaledHeight) {
+    double xScale;
+    double yScale;
+    if (orig_width > orig_height)
+        get_singular_values(matrix, &xScale, &yScale);
+    else
+        get_singular_values (matrix, &yScale, &xScale);
+
+    int tx, tx2, ty, ty2; /* the integer co-oridinates of the resulting image */
+    if (xScale >= 0) {
+        tx = splashRound(matrix->x0 - 0.01);
+        tx2 = splashRound(matrix->x0 + xScale + 0.01) - 1;
+    } else {
+        tx = splashRound(matrix->x0 + 0.01) - 1;
+        tx2 = splashRound(matrix->x0 + xScale - 0.01);
+    }
+    *scaledWidth = abs(tx2 - tx) + 1;
+    //scaledWidth = splashRound(fabs(xScale));
+    if (*scaledWidth == 0) {
+        // technically, this should draw nothing, but it generally seems
+        // better to draw a one-pixel-wide stripe rather than throwing it
+        // away
+        *scaledWidth = 1;
+    }
+    if (yScale >= 0) {
+        ty = splashFloor(matrix->y0 + 0.01);
+        ty2 = splashCeil(matrix->y0 + yScale - 0.01);
+    } else {
+        ty = splashCeil(matrix->y0 - 0.01);
+        ty2 = splashFloor(matrix->y0 + yScale + 0.01);
+    }
+    *scaledHeight = abs(ty2 - ty);
+    if (*scaledHeight == 0) {
+        *scaledHeight = 1;
+    }
+}
+
+cairo_filter_t getFilterForSurface(cairo_surface_t *image, cairo_t *cr, bool interpolate) {
+    if (interpolate)
+        return CAIRO_FILTER_BILINEAR;
+
+    int orig_width = cairo_image_surface_get_width(image);
+    int orig_height = cairo_image_surface_get_height(image);
+    if (orig_width == 0 || orig_height == 0)
+        return CAIRO_FILTER_NEAREST;
+
+    /* When printing, don't change the interpolation. */
+    //if ( m_printing )
+    //return CAIRO_FILTER_NEAREST;
+
+    cairo_matrix_t matrix;
+    cairo_get_matrix(cr, &matrix);
+    int scaled_width, scaled_height;
+    getImageScaledSize(&matrix, orig_width, orig_height, &scaled_width, &scaled_height);
+
+    /* When scale factor is >= 400% we don't interpolate. See bugs #25268, #9860 */
+    if (scaled_width / orig_width >= 4 || scaled_height / orig_height >= 4)
+        return CAIRO_FILTER_NEAREST;
+
+    return CAIRO_FILTER_BILINEAR;
+}
+
+} // namespace ofd

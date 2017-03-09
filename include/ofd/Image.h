@@ -2,9 +2,34 @@
 #define __OFD_IMAGE_H__
 
 #include <string>
+#include <cairo/cairo.h>
 #include "ofd/Common.h"
 
 namespace ofd{
+
+    typedef float SplashCoord;
+
+    static inline int splashRound(SplashCoord x) {
+        return (int)floor(x + 0.5);
+    }
+
+    static inline int splashCeil(SplashCoord x) {
+        return (int)ceil(x);
+    }
+
+    static inline int splashFloor(SplashCoord x) {
+        return (int)floor(x);
+    }
+
+    // Defined in Image.cc
+    void getImageScaledSize(const cairo_matrix_t *matrix,
+            int                   orig_width,
+            int                   orig_height,
+            int                  *scaledWidth,
+            int                  *scaledHeight); 
+
+    // Defined in Image.cc
+    cairo_filter_t getFilterForSurface(cairo_surface_t *image, cairo_t *cr, bool interpolate); 
 
     typedef struct ImageDataHead{
         int Width;
@@ -66,6 +91,9 @@ namespace ofd{
 
             // Skip an entire line from the image.
             void SkipLine();
+
+            void GenerateXML(utils::XMLWriter &writer) const;
+            bool FromXML(utils::XMLElementPtr imageElement);
 
             // ---------------- Private Attributes ----------------
         public:

@@ -48,6 +48,7 @@ public:
 private:
     bool FromColorSpacesXML(utils::XMLElementPtr colorSpacesElement);
     bool FromFontsXML(utils::XMLElementPtr fontsElement);
+    bool FromImagesXML(utils::XMLElementPtr fontsElement);
 
     // -------- Private Attributes --------
 public:
@@ -190,6 +191,17 @@ void generateFontsXML(utils::XMLWriter &writer, const FontMap &fonts){
     }
 }
 
+// -------- generateImagesXML() --------
+// OFD (section 11.1) P61. Res.xsd.
+void generateImagesXML(utils::XMLWriter &writer, const ImageMap &images){
+
+    for ( auto iter : images ){
+        auto image = iter.second;
+
+        image->GenerateXML(writer);
+    }
+}
+
 void generateMultiMediasXML(utils::XMLWriter &writer){
 }
 
@@ -232,6 +244,14 @@ std::string Resource::ImplCls::GenerateResXML() const{
         if ( m_fonts.size() > 0 ){
             writer.StartElement("Fonts");{
                 generateFontsXML(writer, m_fonts);    
+            } writer.EndElement();
+        }
+
+        // -------- <Images>
+        // Optional.
+        if ( m_images.size() > 0 ){
+            writer.StartElement("Images");{
+                generateImagesXML(writer, m_images);    
             } writer.EndElement();
         }
 
@@ -343,6 +363,24 @@ bool Resource::ImplCls::FromFontsXML(utils::XMLElementPtr fontsElement){
     return ok;
 }
 
+bool Resource::ImplCls::FromImagesXML(utils::XMLElementPtr imagesElement){
+    bool ok = false;
+
+    utils::XMLElementPtr childElement = imagesElement->GetFirstChildElement();
+    while ( childElement != nullptr ){
+
+        ImagePtr image = std::make_shared<Image>();
+        if ( image->FromXML(childElement) ){
+            AddImage(image);
+            ok = true;
+        }
+
+        childElement = childElement->GetNextSiblingElement();
+    }
+
+    return ok;
+}
+
 // ======== Resource::ImplCls::FromResXML() ========
 // OFD (section 7.9) P23. Res.xml.
 bool Resource::ImplCls::FromResXML(const std::string &strResXML){
@@ -380,6 +418,11 @@ bool Resource::ImplCls::FromResXML(const std::string &strResXML){
                     // Optional
                     FromFontsXML(childElement);
 
+                } else if ( childName == "Images" ){
+                    // -------- <Images>
+                    // Optional
+                    FromImagesXML(childElement);
+
                 //} else if ( childName == "MultiMedias" ){
                     // TODO
                     // -------- <MultiMedias>
@@ -392,7 +435,7 @@ bool Resource::ImplCls::FromResXML(const std::string &strResXML){
 
                 }
 
-                childElement = rootElement->GetNextSiblingElement();
+                childElement = childElement->GetNextSiblingElement();
             }
         }
     }

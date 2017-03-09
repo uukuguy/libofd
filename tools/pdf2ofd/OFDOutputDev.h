@@ -343,8 +343,8 @@ protected:
     void fillToStrokePathClip(GfxState *state);
     void doPath(cairo_t *cairo, GfxState *state, GfxPath *path);
     void alignStrokeCoords(GfxSubpath *subpath, int i, double *x, double *y);
-    cairo_filter_t getFilterForSurface(cairo_surface_t *image, GBool interpolate);
-    void getImageScaledSize(const cairo_matrix_t *matrix, int orig_width, int orig_height, int *scaledWidth, int *scaledHeight);
+    //cairo_filter_t getFilterForSurface(cairo_surface_t *image, GBool interpolate);
+    //void getImageScaledSize(const cairo_matrix_t *matrix, int orig_width, int orig_height, int *scaledWidth, int *scaledHeight);
     GBool getStreamData (Stream *str, char **buffer, int *length);
     void setMimeData(GfxState *state, Stream *str, Object *ref,
             GfxImageColorMap *colorMap, cairo_surface_t *image);

@@ -50,6 +50,8 @@ samples: ${PDF2OFD}
 	rm -f ./output/magazine.ofd
 	rm -f ./output/scientific.ofd
 	rm -f ./output/trading.ofd
+	rm -f ./output/fontforge_en.ofd
+	rm -f ./output/fontforge_cn.ofd
 	rm -f ./output/sample0.ofd
 	rm -f ./output/sample2.ofd
 	${PDF2OFD} ./data/pdf/bibble.pdf ./output/bible.ofd && \
@@ -58,7 +60,9 @@ samples: ${PDF2OFD}
 	${PDF2OFD} ./data/pdf/magazine.pdf ./output/magazine.ofd && \
 	${PDF2OFD} ./data/pdf/scientific.pdf ./output/scientific.ofd && \
 	${PDF2OFD} ./data/pdf/trading.pdf ./output/trading.ofd && \
-	${PDF2OFD} ./data/sample0.pdf ./output/sample0.ofd && \ 
+	${PDF2OFD} ./data/pdf/fontforge_cn.pdf ./output/fontforge_cn.ofd  && \
+	${PDF2OFD} ./data/pdf/fontforge_en.pdf ./output/fontforge_en.ofd  && \
+	${PDF2OFD} ./data/sample0.pdf ./output/sample0.ofd && \
 	${PDF2OFD} ./data/sample2.pdf ./output/sample2.ofd
 
 view0: ${OFDVIEWER} 

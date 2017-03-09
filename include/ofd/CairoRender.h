@@ -5,7 +5,14 @@
 #include <cairo/cairo.h>
 #include "ofd/Render.h"
 
+class Stream;
+class GfxImageColorMap;
+
 namespace ofd{
+
+    cairo_surface_t *createImageSurface(Stream *str, int widthA, int heightA, int scaledWidth, int scaledHeight, int nComps, int nBits); 
+
+    cairo_surface_t *createImageSurface(Stream *str, int widthA, int heightA, int scaledWidth, int scaledHeight, GfxImageColorMap *colorMap, int *maskColors); 
 
     // ======== class CairoRender ========
     class CairoRender : public Render {

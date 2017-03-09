@@ -663,180 +663,215 @@ void CairoRender::ImplCls::DrawPathObject(cairo_t *cr, PathObject *pathObject){
 
 }
 
-#include "CairoRescaleBox.h"
-#include <GfxState.h>
-#include <OutputDev.h>
-class RescaleDrawImage : public CairoRescaleBox {
-private:
-  ImageStream *imgStr;
-  GfxRGB *lookup;
-  int width;
-  GfxImageColorMap *colorMap;
-  int *maskColors;
-  int current_row;
-  GBool imageError;
+//// Defined in CairoRender_Poppler.cc
+//cairo_surface_t *createImageSurface(Stream *str, int widthA, int heightA, int scaledWidth, int scaledHeight, int nComps, int nBits);
 
-public:
-  cairo_surface_t *getSourceImage(Stream *str,
-                                  int widthA, int height,
-                                  int scaledWidth, int scaledHeight,
-                                  GBool printing,
-                                  GfxImageColorMap *colorMapA,
-                                  int *maskColorsA) {
-    cairo_surface_t *image = NULL;
-    int i;
-
-    lookup = NULL;
-    colorMap = colorMapA;
-    maskColors = maskColorsA;
-    width = widthA;
-    current_row = -1;
-    imageError = gFalse;
-
-    /* TODO: Do we want to cache these? */
-    imgStr = new ImageStream(str, width,
-                             colorMap->getNumPixelComps(),
-                             colorMap->getBits());
-    imgStr->reset();
-
-#if 0
-    /* ICCBased color space doesn't do any color correction
-     * so check its underlying color space as well */
-    int is_identity_transform;
-    is_identity_transform = colorMap->getColorSpace()->getMode() == csDeviceRGB ||
-      (colorMap->getColorSpace()->getMode() == csICCBased &&
-       ((GfxICCBasedColorSpace*)colorMap->getColorSpace())->getAlt()->getMode() == csDeviceRGB);
-#endif
-
-    // special case for one-channel (monochrome/gray/separation) images:
-    // build a lookup table here
-    if (colorMap->getNumPixelComps() == 1) {
-      int n;
-      Guchar pix;
-
-      n = 1 << colorMap->getBits();
-      lookup = (GfxRGB *)gmallocn(n, sizeof(GfxRGB));
-      for (i = 0; i < n; ++i) {
-        pix = (Guchar)i;
-
-        colorMap->getRGB(&pix, &lookup[i]);
-      }
-    }
-
-    if (printing || scaledWidth >= width || scaledHeight >= height) {
-      // No downscaling. Create cairo image containing the source image data.
-      unsigned char *buffer;
-      int stride;
-
-      image = cairo_image_surface_create (maskColors ?
-                                          CAIRO_FORMAT_ARGB32 :
-                                          CAIRO_FORMAT_RGB24,
-                                          width, height);
-      if (cairo_surface_status (image))
-        goto cleanup;
-
-      buffer = cairo_image_surface_get_data (image);
-      stride = cairo_image_surface_get_stride (image);
-      for (int y = 0; y < height; y++) {
-        uint32_t *dest = (uint32_t *) (buffer + y * stride);
-        getRow(y, dest);
-      }
-    } else {
-      // // Downscaling required. Create cairo image the size of the
-      // rescaled image and // downscale the source image data into
-      // the cairo image. downScaleImage() will call getRow() to read
-      // source image data from the image stream. This avoids having
-      // to create an image the size of the source image which may
-      // exceed cairo's 32676x32767 image size limit (and also saves a
-      // lot of memory).
-      image = cairo_image_surface_create (maskColors ?
-                                          CAIRO_FORMAT_ARGB32 :
-                                          CAIRO_FORMAT_RGB24,
-                                          scaledWidth, scaledHeight);
-      if (cairo_surface_status (image))
-        goto cleanup;
-
-      downScaleImage(width, height,
-                     scaledWidth, scaledHeight,
-                     0, 0, scaledWidth, scaledHeight,
-                     image);
-    }
-    cairo_surface_mark_dirty (image);
-
-  cleanup:
-    gfree(lookup);
-    imgStr->close();
-    delete imgStr;
-    return image;
-  }
-
-  void getRow(int row_num, uint32_t *row_data) {
-    int i;
-    Guchar *pix;
-
-    if (row_num <= current_row)
-      return;
-
-    while (current_row  < row_num) {
-      pix = imgStr->getLine();
-      current_row++;
-    }
-
-    if (unlikely(pix == NULL)) {
-      memset(row_data, 0, width*4);
-      if (!imageError) {
-	error(errInternal, -1, "Bad image stream");
-	imageError = gTrue;
-      }
-    } else if (lookup) {
-      Guchar *p = pix;
-      GfxRGB rgb;
-
-      for (i = 0; i < width; i++) {
-        rgb = lookup[*p];
-        row_data[i] =
-          ((int) colToByte(rgb.r) << 16) |
-          ((int) colToByte(rgb.g) << 8) |
-          ((int) colToByte(rgb.b) << 0);
-        p++;
-      }
-    } else {
-      colorMap->getRGBLine (pix, row_data, width);
-    }
-
-    if (maskColors) {
-      for (int x = 0; x < width; x++) {
-        bool is_opaque = false;
-        for (int i = 0; i < colorMap->getNumPixelComps(); ++i) {
-          if (pix[i] < maskColors[2*i] ||
-              pix[i] > maskColors[2*i+1]) {
-            is_opaque = true;
-            break;
-          }
+namespace ofd{
+class MemStream : public Stream{
+    public:
+        MemStream(char *data, size_t startA, size_t dataSize): 
+            buf(data), length(dataSize), start(startA), bufPtr(data), bufEnd(data+startA+dataSize),
+            needFree(false){
         }
-        if (is_opaque)
-          *row_data |= 0xff000000;
-        else
-          *row_data = 0;
-        row_data++;
-        pix += colorMap->getNumPixelComps();
-      }
-    }
-  }
+        virtual ~MemStream(){
+            if (needFree){
+                delete[] buf;
+            }
+        }
 
-};
+        virtual StreamKind getKind(){return strWeird;} ;
+        virtual void reset(){
+            bufPtr = buf + start;
+        }
+        virtual void close(){
+        }
+        // Get next char from stream.
+        virtual int getChar(){
+            return (bufPtr < bufEnd) ? (*bufPtr++ & 0xff) : EOF; 
+        }
+
+        // Peek at next char in stream.
+        virtual int lookChar(){
+            return (bufPtr < bufEnd) ? (*bufPtr & 0xff) : EOF; 
+        }
+
+        virtual Goffset getPos() { return (int)(bufPtr - buf); }
+        virtual void setPos(Goffset pos, int dir = 0){
+            Guint i;
+
+            if (dir >= 0) {
+                i = pos;
+            } else {
+                i = start + length - pos;
+            }
+            if (i < start) {
+                i = start;
+            } else if (i > start + length) {
+                i = start + length;
+            }
+            bufPtr = buf + i;
+        }
+        virtual Goffset getStart() { return start; }
+        //virtual void moveStart(Goffset delta);
+
+        //if needFree = true, the stream will delete buf when it is destroyed
+        //otherwise it will not touch it. Default value is false
+        virtual void setNeedFree (GBool val) { needFree = val; }
+
+        virtual int getUnfilteredChar () { return getChar(); }
+        virtual void unfilteredReset () { reset (); } 
+
+        virtual GBool hasGetChars() { return true; }
+        virtual int getChars(int nChars, Guchar *buffer) {
+            int n;
+
+            if (nChars <= 0) {
+                return 0;
+            }
+            if (bufEnd - bufPtr < nChars) {
+                n = (int)(bufEnd - bufPtr);
+            } else {
+                n = nChars;
+            }
+            memcpy(buffer, bufPtr, n);
+            bufPtr += n;
+            return n;
+        }
+
+
+        virtual GBool isBinary(GBool last = gTrue) { return last; }
+        virtual BaseStream *getBaseStream() { return nullptr; }
+        virtual Stream *getUndecodedStream() { return this; }
+        virtual Dict *getDict() { return nullptr; }
+    private:
+        char *buf;
+        size_t length;
+        size_t start;
+        char *bufPtr;
+        char *bufEnd;
+        bool needFree;
+
+}; // class MemStream
+}
+
 void CairoRender::ImplCls::DrawImageObject(cairo_t *cr, ImageObject *imageObject){
     if ( imageObject == nullptr ) return;
 
 
     ofd::ImagePtr image = imageObject->GetImage();
     if ( image == nullptr ) return;
+    int widthA = image->width;
+    int heightA = image->height;
+    int nComps = image->nComps;
+    int nBits = image->nBits;
 
     char *imageData = image->GetImageData();
     size_t imageDataSize = image->GetImageDataSize();
-    MemStream memStream(imageData, 0, imageDataSize, nullptr);
+
+    //MemStream *memStream = new MemStream(imageData, 0, imageDataSize, nullptr);
+    ofd::MemStream *memStream = new ofd::MemStream(imageData, 0, imageDataSize);
+    //memStream->reset();
+
+    cairo_surface_t *imageSurface = nullptr;
+    cairo_matrix_t matrix;
+    cairo_get_matrix(cr, &matrix);
+
+    int scaledWidth, scaledHeight;
+
+    cairo_save(cr);
+
+    cairo_matrix_t objMatrix;
+    objMatrix.xx = imageObject->CTM[0];
+    objMatrix.yx = imageObject->CTM[1];
+    objMatrix.xy = imageObject->CTM[2];
+    objMatrix.yy = imageObject->CTM[3];
+    objMatrix.x0 = imageObject->CTM[4];
+    objMatrix.y0 = imageObject->CTM[5];
+    cairo_transform(cr, &objMatrix);
+
+    cairo_get_matrix(cr, &matrix);
+    getImageScaledSize (&matrix, widthA, heightA, &scaledWidth, &scaledHeight);
+
+    imageSurface = createImageSurface(memStream, widthA, heightA, scaledWidth, scaledHeight, nComps, nBits);
+    if ( imageSurface == nullptr ){
+        delete memStream;
+        cairo_restore(cr);
+        return;
+    }
+    std::string pngFileName = "/tmp/Image_draw_" + std::to_string(image->ID) + ".png";
+    cairo_surface_write_to_png(imageSurface, pngFileName.c_str());
+
+    int width = cairo_image_surface_get_width (imageSurface);
+    int height = cairo_image_surface_get_height (imageSurface);
+    cairo_filter_t filter = CAIRO_FILTER_BILINEAR;
+    if (width == widthA && height == heightA){
+        bool interpolate = false;
+        filter = getFilterForSurface (imageSurface, cr, interpolate);
+    }
+
+    //if (!inlineImg) [> don't read stream twice if it is an inline image <]
+        //setMimeData(state, str, ref, colorMap, imageSurface);
+
+    cairo_pattern_t *pattern = cairo_pattern_create_for_surface(imageSurface);
+    cairo_surface_destroy (imageSurface);
+    if (cairo_pattern_status (pattern))
+        return;
+
+    cairo_pattern_set_filter (pattern, filter);
+
+    //if (!m_printing)
+        cairo_pattern_set_extend (pattern, CAIRO_EXTEND_PAD);
+
+    cairo_matrix_init_translate (&matrix, 0, height);
+    cairo_matrix_scale (&matrix, width, -height);
+    cairo_pattern_set_matrix (pattern, &matrix);
+    if (cairo_pattern_status (pattern)) {
+        cairo_pattern_destroy (pattern);
+        return;
+    }
+
+    cairo_pattern_t *maskPattern = nullptr;
+    //if (!m_maskPattern && m_fillOpacity != 1.0) {
+        //maskPattern = cairo_pattern_create_rgba (1., 1., 1., m_fillOpacity);
+    //} else if ( m_maskPattern != nullptr ) {
+        //maskPattern = cairo_pattern_reference(m_maskPattern);
+    //}
 
 
+    cairo_set_source(cr, pattern);
+    //if (!m_printing)
+        cairo_rectangle(cr, 0., 0., 1., 1.);
+    if (maskPattern != nullptr ) {
+        //if (!m_printing)
+            cairo_clip(cr);
+        //if ( m_maskPattern != nullptr )
+            //cairo_set_matrix(m_cairo, &m_mask_matrix);
+        cairo_mask(cr, maskPattern);
+    } else {
+        //if (m_printing)
+            //cairo_paint(cr);
+        //else
+            cairo_fill(cr);
+    }
+    cairo_restore(cr);
+
+    cairo_pattern_destroy(maskPattern);
+
+    //if ( m_cairoShape) {
+        //cairo_save(m_cairoShape);
+        //cairo_set_source(m_cairoShape, pattern);
+        //if ( m_printing ) {
+            //cairo_paint(m_cairoShape);
+        //} else {
+            //cairo_rectangle(m_cairoShape, 0., 0., 1., 1.);
+            //cairo_fill(m_cairoShape);
+        //}
+        //cairo_restore(m_cairoShape);
+    //}
+
+    cairo_pattern_destroy (pattern);
+
+    delete memStream;
 }
 
 void CairoRender::ImplCls::DrawVideoObject(cairo_t *cr, VideoObject *videoObject){

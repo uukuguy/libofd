@@ -1,274 +1,115 @@
 #include <splash/SplashBitmap.h>
 #include <JBIG2Stream.h>
-#include "CairoRescaleBox.h"
 #include "OFDOutputDev.h"
 #include "ofd/Document.h"
 #include "ofd/Resource.h"
 #include "ofd/Page.h"
 #include "ofd/ImageObject.h"
 #include "ofd/Image.h"
+#include "ofd/CairoRender.h"
 #include "utils/logger.h"
 
 
-static inline int splashRound(SplashCoord x) {
-  return (int)floor(x + 0.5);
-}
+//static inline int splashRound(SplashCoord x) {
+  //return (int)floor(x + 0.5);
+//}
 
-static inline int splashCeil(SplashCoord x) {
-  return (int)ceil(x);
-}
+//static inline int splashCeil(SplashCoord x) {
+  //return (int)ceil(x);
+//}
 
-static inline int splashFloor(SplashCoord x) {
-  return (int)floor(x);
-}
+//static inline int splashFloor(SplashCoord x) {
+  //return (int)floor(x);
+//}
 
-/* Taken from cairo/doc/tutorial/src/singular.c */
-static void get_singular_values (const cairo_matrix_t *matrix,
-		     double               *major,
-		     double               *minor) {
-    double xx = matrix->xx, xy = matrix->xy;
-    double yx = matrix->yx, yy = matrix->yy;
+//[> Taken from cairo/doc/tutorial/src/singular.c <]
+//static void get_singular_values (const cairo_matrix_t *matrix,
+			 //double               *major,
+			 //double               *minor) {
+    //double xx = matrix->xx, xy = matrix->xy;
+    //double yx = matrix->yx, yy = matrix->yy;
 
-    double a = xx*xx+yx*yx;
-    double b = xy*xy+yy*yy;
-    double k = xx*xy+yx*yy;
+    //double a = xx*xx+yx*yx;
+    //double b = xy*xy+yy*yy;
+    //double k = xx*xy+yx*yy;
 
-    double f = (a+b) * .5;
-    double g = (a-b) * .5;
-    double delta = sqrt (g*g + k*k);
+    //double f = (a+b) * .5;
+    //double g = (a-b) * .5;
+    //double delta = sqrt (g*g + k*k);
 
-    if (major)
-        *major = sqrt (f + delta);
-    if (minor)
-        *minor = sqrt (f - delta);
-}
+    //if (major)
+        //*major = sqrt (f + delta);
+    //if (minor)
+        //*minor = sqrt (f - delta);
+//}
 
-void OFDOutputDev::getImageScaledSize(const cairo_matrix_t *matrix,
-                                   int                   orig_width,
-				   int                   orig_height,
-				   int                  *scaledWidth,
-				   int                  *scaledHeight) {
-    double xScale;
-    double yScale;
-    if (orig_width > orig_height)
-        get_singular_values(matrix, &xScale, &yScale);
-    else
-        get_singular_values (matrix, &yScale, &xScale);
+//void OFDOutputDev::getImageScaledSize(const cairo_matrix_t *matrix,
+                                   //int                   orig_width,
+				   //int                   orig_height,
+				   //int                  *scaledWidth,
+				   //int                  *scaledHeight) {
+    //double xScale;
+    //double yScale;
+    //if (orig_width > orig_height)
+        //get_singular_values(matrix, &xScale, &yScale);
+    //else
+        //get_singular_values (matrix, &yScale, &xScale);
 
-    int tx, tx2, ty, ty2; /* the integer co-oridinates of the resulting image */
-    if (xScale >= 0) {
-        tx = splashRound(matrix->x0 - 0.01);
-        tx2 = splashRound(matrix->x0 + xScale + 0.01) - 1;
-    } else {
-        tx = splashRound(matrix->x0 + 0.01) - 1;
-        tx2 = splashRound(matrix->x0 + xScale - 0.01);
-    }
-    *scaledWidth = abs(tx2 - tx) + 1;
-    //scaledWidth = splashRound(fabs(xScale));
-    if (*scaledWidth == 0) {
-        // technically, this should draw nothing, but it generally seems
-        // better to draw a one-pixel-wide stripe rather than throwing it
-        // away
-        *scaledWidth = 1;
-    }
-    if (yScale >= 0) {
-        ty = splashFloor(matrix->y0 + 0.01);
-        ty2 = splashCeil(matrix->y0 + yScale - 0.01);
-    } else {
-        ty = splashCeil(matrix->y0 - 0.01);
-        ty2 = splashFloor(matrix->y0 + yScale + 0.01);
-    }
-    *scaledHeight = abs(ty2 - ty);
-    if (*scaledHeight == 0) {
-        *scaledHeight = 1;
-    }
-}
+    //int tx, tx2, ty, ty2; [> the integer co-oridinates of the resulting image <]
+    //if (xScale >= 0) {
+        //tx = splashRound(matrix->x0 - 0.01);
+        //tx2 = splashRound(matrix->x0 + xScale + 0.01) - 1;
+    //} else {
+        //tx = splashRound(matrix->x0 + 0.01) - 1;
+        //tx2 = splashRound(matrix->x0 + xScale - 0.01);
+    //}
+    //*scaledWidth = abs(tx2 - tx) + 1;
+    ////scaledWidth = splashRound(fabs(xScale));
+    //if (*scaledWidth == 0) {
+        //// technically, this should draw nothing, but it generally seems
+        //// better to draw a one-pixel-wide stripe rather than throwing it
+        //// away
+        //*scaledWidth = 1;
+    //}
+    //if (yScale >= 0) {
+        //ty = splashFloor(matrix->y0 + 0.01);
+        //ty2 = splashCeil(matrix->y0 + yScale - 0.01);
+    //} else {
+        //ty = splashCeil(matrix->y0 - 0.01);
+        //ty2 = splashFloor(matrix->y0 + yScale + 0.01);
+    //}
+    //*scaledHeight = abs(ty2 - ty);
+    //if (*scaledHeight == 0) {
+        //*scaledHeight = 1;
+    //}
+//}
 
-cairo_filter_t OFDOutputDev::getFilterForSurface(cairo_surface_t *image, GBool interpolate) {
-    if (interpolate)
-        return CAIRO_FILTER_BILINEAR;
+//cairo_filter_t OFDOutputDev::getFilterForSurface(cairo_surface_t *image, GBool interpolate) {
+    //if (interpolate)
+        //return CAIRO_FILTER_BILINEAR;
 
-    int orig_width = cairo_image_surface_get_width(image);
-    int orig_height = cairo_image_surface_get_height(image);
-    if (orig_width == 0 || orig_height == 0)
-        return CAIRO_FILTER_NEAREST;
+    //int orig_width = cairo_image_surface_get_width(image);
+    //int orig_height = cairo_image_surface_get_height(image);
+    //if (orig_width == 0 || orig_height == 0)
+        //return CAIRO_FILTER_NEAREST;
 
-    /* When printing, don't change the interpolation. */
-    if ( m_printing )
-        return CAIRO_FILTER_NEAREST;
+    //[> When printing, don't change the interpolation. <]
+    //if ( m_printing )
+        //return CAIRO_FILTER_NEAREST;
 
-    cairo_matrix_t matrix;
-    cairo_get_matrix(m_cairo, &matrix);
-    int scaled_width, scaled_height;
-    getImageScaledSize(&matrix, orig_width, orig_height, &scaled_width, &scaled_height);
+    //cairo_matrix_t matrix;
+    //cairo_get_matrix(m_cairo, &matrix);
+    //int scaled_width, scaled_height;
+    //getImageScaledSize(&matrix, orig_width, orig_height, &scaled_width, &scaled_height);
 
-    /* When scale factor is >= 400% we don't interpolate. See bugs #25268, #9860 */
-    if (scaled_width / orig_width >= 4 || scaled_height / orig_height >= 4)
-        return CAIRO_FILTER_NEAREST;
+    //[> When scale factor is >= 400% we don't interpolate. See bugs #25268, #9860 <]
+    //if (scaled_width / orig_width >= 4 || scaled_height / orig_height >= 4)
+        //return CAIRO_FILTER_NEAREST;
 
-    return CAIRO_FILTER_BILINEAR;
-}
+    //return CAIRO_FILTER_BILINEAR;
+//}
 
 
-class RescaleDrawImage : public CairoRescaleBox {
-private:
-  ImageStream *imgStr;
-  GfxRGB *lookup;
-  int width;
-  GfxImageColorMap *colorMap;
-  int *maskColors;
-  int current_row;
-  GBool imageError;
-
-public:
-  cairo_surface_t *getSourceImage(Stream *str,
-                                  int widthA, int height,
-                                  int scaledWidth, int scaledHeight,
-                                  GBool printing,
-                                  GfxImageColorMap *colorMapA,
-                                  int *maskColorsA) {
-    cairo_surface_t *image = NULL;
-    int i;
-
-    lookup = NULL;
-    colorMap = colorMapA;
-    maskColors = maskColorsA;
-    width = widthA;
-    current_row = -1;
-    imageError = gFalse;
-
-    /* TODO: Do we want to cache these? */
-    imgStr = new ImageStream(str, width,
-                             colorMap->getNumPixelComps(),
-                             colorMap->getBits());
-    imgStr->reset();
-
-#if 0
-    /* ICCBased color space doesn't do any color correction
-     * so check its underlying color space as well */
-    int is_identity_transform;
-    is_identity_transform = colorMap->getColorSpace()->getMode() == csDeviceRGB ||
-      (colorMap->getColorSpace()->getMode() == csICCBased &&
-       ((GfxICCBasedColorSpace*)colorMap->getColorSpace())->getAlt()->getMode() == csDeviceRGB);
-#endif
-
-    // special case for one-channel (monochrome/gray/separation) images:
-    // build a lookup table here
-    if (colorMap->getNumPixelComps() == 1) {
-      int n;
-      Guchar pix;
-
-      n = 1 << colorMap->getBits();
-      lookup = (GfxRGB *)gmallocn(n, sizeof(GfxRGB));
-      for (i = 0; i < n; ++i) {
-        pix = (Guchar)i;
-
-        colorMap->getRGB(&pix, &lookup[i]);
-      }
-    }
-
-    if (printing || scaledWidth >= width || scaledHeight >= height) {
-      // No downscaling. Create cairo image containing the source image data.
-      unsigned char *buffer;
-      int stride;
-
-      image = cairo_image_surface_create (maskColors ?
-                                          CAIRO_FORMAT_ARGB32 :
-                                          CAIRO_FORMAT_RGB24,
-                                          width, height);
-      if (cairo_surface_status (image))
-        goto cleanup;
-
-      buffer = cairo_image_surface_get_data (image);
-      stride = cairo_image_surface_get_stride (image);
-      for (int y = 0; y < height; y++) {
-        uint32_t *dest = (uint32_t *) (buffer + y * stride);
-        getRow(y, dest);
-      }
-    } else {
-      // // Downscaling required. Create cairo image the size of the
-      // rescaled image and // downscale the source image data into
-      // the cairo image. downScaleImage() will call getRow() to read
-      // source image data from the image stream. This avoids having
-      // to create an image the size of the source image which may
-      // exceed cairo's 32676x32767 image size limit (and also saves a
-      // lot of memory).
-      image = cairo_image_surface_create (maskColors ?
-                                          CAIRO_FORMAT_ARGB32 :
-                                          CAIRO_FORMAT_RGB24,
-                                          scaledWidth, scaledHeight);
-      if (cairo_surface_status (image))
-        goto cleanup;
-
-      downScaleImage(width, height,
-                     scaledWidth, scaledHeight,
-                     0, 0, scaledWidth, scaledHeight,
-                     image);
-    }
-    cairo_surface_mark_dirty (image);
-
-  cleanup:
-    gfree(lookup);
-    imgStr->close();
-    delete imgStr;
-    return image;
-  }
-
-  void getRow(int row_num, uint32_t *row_data) {
-    int i;
-    Guchar *pix;
-
-    if (row_num <= current_row)
-      return;
-
-    while (current_row  < row_num) {
-      pix = imgStr->getLine();
-      current_row++;
-    }
-
-    if (unlikely(pix == NULL)) {
-      memset(row_data, 0, width*4);
-      if (!imageError) {
-	error(errInternal, -1, "Bad image stream");
-	imageError = gTrue;
-      }
-    } else if (lookup) {
-      Guchar *p = pix;
-      GfxRGB rgb;
-
-      for (i = 0; i < width; i++) {
-        rgb = lookup[*p];
-        row_data[i] =
-          ((int) colToByte(rgb.r) << 16) |
-          ((int) colToByte(rgb.g) << 8) |
-          ((int) colToByte(rgb.b) << 0);
-        p++;
-      }
-    } else {
-      colorMap->getRGBLine (pix, row_data, width);
-    }
-
-    if (maskColors) {
-      for (int x = 0; x < width; x++) {
-        bool is_opaque = false;
-        for (int i = 0; i < colorMap->getNumPixelComps(); ++i) {
-          if (pix[i] < maskColors[2*i] ||
-              pix[i] > maskColors[2*i+1]) {
-            is_opaque = true;
-            break;
-          }
-        }
-        if (is_opaque)
-          *row_data |= 0xff000000;
-        else
-          *row_data = 0;
-        row_data++;
-        pix += colorMap->getNumPixelComps();
-      }
-    }
-  }
-
-};
 
 #if CAIRO_VERSION >= CAIRO_VERSION_ENCODE(1, 11, 2)
 static cairo_status_t setMimeIdFromRef(cairo_surface_t *surface,
@@ -459,6 +300,7 @@ bool SaveImageStream(const std::string &filename, Stream *str, int widthA, int h
     datFile.open(filename.c_str(), std::ios::binary | std::ios::out | std::ios::trunc);
 
     datFile.write((const char*)&imageDataHead, sizeof(ofd::ImageDataHead));
+    str->reset();
     int n = 0;
     while ( n++ < heightA ){
 
@@ -470,7 +312,7 @@ bool SaveImageStream(const std::string &filename, Stream *str, int widthA, int h
     };
     datFile.close();
 
-    delete buffer;
+    delete[] buffer;
 
     return true;
 
@@ -482,8 +324,6 @@ void OFDOutputDev::drawImage(GfxState *state, Object *ref, Stream *str,
 			       GBool interpolate,
 			       int *maskColors, GBool inlineImg) {
 
-
-    str->reset();
 
     //// -------- Write image stream to zip file. --------
     ofd::ImagePtr image = std::make_shared<ofd::Image>();
@@ -516,13 +356,17 @@ void OFDOutputDev::drawImage(GfxState *state, Object *ref, Stream *str,
     int width, height;
     int scaledWidth, scaledHeight;
     cairo_filter_t filter = CAIRO_FILTER_BILINEAR;
-    RescaleDrawImage rescale;
 
     LOG(DEBUG) << "drawImage " << widthA << " x " <<  heightA;
 
     cairo_get_matrix(m_cairo, &matrix);
-    getImageScaledSize (&matrix, widthA, heightA, &scaledWidth, &scaledHeight);
-    imageSurface = rescale.getSourceImage(str, widthA, heightA, scaledWidth, scaledHeight, m_printing, colorMap, maskColors);
+    ofd::getImageScaledSize (&matrix, widthA, heightA, &scaledWidth, &scaledHeight);
+
+    //RescaleDrawImage rescale;
+    //imageSurface = rescale.getSourceImage(str, widthA, heightA, scaledWidth, scaledHeight, m_printing, colorMap, maskColors);
+
+    imageSurface = ofd::createImageSurface(str, widthA, heightA, scaledWidth, scaledHeight, colorMap, maskColors);
+
     if (!imageSurface)
         return;
 
@@ -561,7 +405,7 @@ void OFDOutputDev::drawImage(GfxState *state, Object *ref, Stream *str,
     width = cairo_image_surface_get_width (imageSurface);
     height = cairo_image_surface_get_height (imageSurface);
     if (width == widthA && height == heightA)
-        filter = getFilterForSurface (imageSurface, interpolate);
+        filter = ofd::getFilterForSurface (imageSurface, m_cairo, interpolate);
 
     if (!inlineImg) /* don't read stream twice if it is an inline image */
         setMimeData(state, str, ref, colorMap, imageSurface);
@@ -673,7 +517,7 @@ void OFDOutputDev::drawSoftMaskedImage(GfxState *state, Object *ref, Stream *str
     maskImgStr->close();
     delete maskImgStr;
 
-    maskFilter = getFilterForSurface (maskImage, maskInterpolate);
+    maskFilter = ofd::getFilterForSurface (maskImage, m_cairo, (bool)maskInterpolate);
 
     cairo_surface_mark_dirty (maskImage);
     maskPattern = cairo_pattern_create_for_surface (maskImage);
@@ -708,7 +552,7 @@ void OFDOutputDev::drawSoftMaskedImage(GfxState *state, Object *ref, Stream *str
         colorMap->getRGBLine (pix, dest, width);
     }
 
-    filter = getFilterForSurface (image, interpolate);
+    filter = ofd::getFilterForSurface (image, m_cairo, (bool)interpolate);
 
     cairo_surface_mark_dirty (image);
 
@@ -841,7 +685,7 @@ void OFDOutputDev::drawMaskedImage(GfxState *state, Object *ref,
     maskImgStr->close();
     delete maskImgStr;
 
-    maskFilter = getFilterForSurface (maskImage, maskInterpolate);
+    maskFilter = ofd::getFilterForSurface (maskImage, m_cairo, (bool)maskInterpolate);
 
     cairo_surface_mark_dirty (maskImage);
     maskPattern = cairo_pattern_create_for_surface (maskImage);
@@ -876,7 +720,7 @@ void OFDOutputDev::drawMaskedImage(GfxState *state, Object *ref,
         colorMap->getRGBLine (pix, dest, width);
     }
 
-    filter = getFilterForSurface (image, interpolate);
+    filter = ofd::getFilterForSurface (image, m_cairo, (bool)interpolate);
 
     cairo_surface_mark_dirty (image);
     pattern = cairo_pattern_create_for_surface (image);
@@ -1027,11 +871,11 @@ void OFDOutputDev::drawImageMaskPrescaled(GfxState *state, Object *ref, Stream *
     int scaledHeight;
     int scaledWidth;
     if (xScale >= 0) {
-        tx = splashRound(matrix.x0 - 0.01);
-        tx2 = splashRound(matrix.x0 + xScale + 0.01) - 1;
+        tx = ofd::splashRound(matrix.x0 - 0.01);
+        tx2 = ofd::splashRound(matrix.x0 + xScale + 0.01) - 1;
     } else {
-        tx = splashRound(matrix.x0 + 0.01) - 1;
-        tx2 = splashRound(matrix.x0 + xScale - 0.01);
+        tx = ofd::splashRound(matrix.x0 + 0.01) - 1;
+        tx2 = ofd::splashRound(matrix.x0 + xScale - 0.01);
     }
     scaledWidth = abs(tx2 - tx) + 1;
     //scaledWidth = splashRound(fabs(xScale));
@@ -1042,11 +886,11 @@ void OFDOutputDev::drawImageMaskPrescaled(GfxState *state, Object *ref, Stream *
         scaledWidth = 1;
     }
     if (yScale >= 0) {
-        ty = splashFloor(matrix.y0 + 0.01);
-        ty2 = splashCeil(matrix.y0 + yScale - 0.01);
+        ty = ofd::splashFloor(matrix.y0 + 0.01);
+        ty2 = ofd::splashCeil(matrix.y0 + yScale - 0.01);
     } else {
-        ty = splashCeil(matrix.y0 - 0.01);
-        ty2 = splashFloor(matrix.y0 + yScale + 0.01);
+        ty = ofd::splashCeil(matrix.y0 - 0.01);
+        ty2 = ofd::splashFloor(matrix.y0 + yScale + 0.01);
     }
     scaledHeight = abs(ty2 - ty);
     if (scaledHeight == 0) {
@@ -1063,7 +907,7 @@ void OFDOutputDev::drawImageMaskPrescaled(GfxState *state, Object *ref, Stream *
        We compute total_pad to make (height+total_pad)/scaledHeight as close to height/yScale as possible */
     int head_pad = 0;
     int tail_pad = 0;
-    int total_pad = splashRound(height*(scaledHeight/fabs(yScale)) - height);
+    int total_pad = ofd::splashRound(height*(scaledHeight/fabs(yScale)) - height);
 
     /* compute the two pieces of padding */
     if (total_pad > 0) {
@@ -1071,7 +915,7 @@ void OFDOutputDev::drawImageMaskPrescaled(GfxState *state, Object *ref, Stream *
         float tail_error = fabs(matrix.y0 - ty);
         float head_error = fabs(ty2 - (matrix.y0 + yScale));
         float tail_fraction = tail_error/(tail_error + head_error);
-        tail_pad = splashRound(total_pad*tail_fraction);
+        tail_pad = ofd::splashRound(total_pad*tail_fraction);
         head_pad = total_pad - tail_pad;
     } else {
         tail_pad = 0;
@@ -1207,7 +1051,7 @@ void OFDOutputDev::drawImageMaskPrescaled(GfxState *state, Object *ref, Stream *
                     pixAcc0 += pixBuf[xSrc + i*width + j];
                 }
             }
-            buffer[y * row_stride + x] = splashFloor(pixAcc0 / (origN*m));
+            buffer[y * row_stride + x] = ofd::splashFloor(pixAcc0 / (origN*m));
             xSrc += xStep;
             x1 += 1;
         }
@@ -1344,7 +1188,7 @@ void OFDOutputDev::drawImageMaskRegular(GfxState *state, Object *ref, Stream *st
         }
     }
 
-    filter = getFilterForSurface (image, interpolate);
+    filter = ofd::getFilterForSurface (image, m_cairo, (bool)interpolate);
 
     cairo_surface_mark_dirty (image);
     pattern = cairo_pattern_create_for_surface (image);
