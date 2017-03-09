@@ -100,7 +100,7 @@ namespace ofd{
             const char *GetImageData() const {return m_imageData;};
             char *GetImageData(){return m_imageData;};
             size_t GetImageDataSize() const {return m_imageDataSize;};
-            void SetImageFilePaht(const std::string &imageFilePath){m_imageFilePath = imageFilePath;};
+            void SetImageFilePath(const std::string &imageFilePath){m_imageFilePath = imageFilePath;};
             std::string GetImageFilePath() const {return m_imageFilePath;};
 
         private:

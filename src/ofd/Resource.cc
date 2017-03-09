@@ -371,6 +371,8 @@ bool Resource::ImplCls::FromImagesXML(utils::XMLElementPtr imagesElement){
 
         ImagePtr image = std::make_shared<Image>();
         if ( image->FromXML(childElement) ){
+            std::string imageFilePath = GetEntryRoot() + "/" + m_baseLoc + "/" + image->ImageFile;
+            image->SetImageFilePath(imageFilePath);
             AddImage(image);
             ok = true;
         }

@@ -38,9 +38,9 @@ class PNGStream{
 
 class ImageSource {
     public:
-        ImageSource() : data(nullptr), dataSize(0), offset(0){};
+        ImageSource(char *dataA, size_t dataSizeA) : data(dataA), dataSize(dataSizeA), offset(0){};
 
-        uint8_t *data;
+        char *data;
         size_t dataSize;
         size_t offset;
 };
@@ -67,16 +67,16 @@ void PNGStream::Reset(){
 void PNGStream::Close(){
 }
 
-int PNGStream::DoGetChars(int nChars, uint8_t *buffer){
-    int dataSize = 0;
+std::tuple<char*, size_t> LoadPNGData(char* data, size_t dataSize){
+    char *imageData = nullptr;
+    size_t imageDataSize = 0; 
+
     png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, 0, 0, 0);
     if ( png_ptr != 0 ){
         png_infop info_ptr = png_create_info_struct(png_ptr);
         if ( info_ptr != 0 ){
             if ( setjmp(png_jmpbuf(png_ptr)) == 0 ){
-                ImageSource imageSource;
-                // imageSource.data = 
-                // imageSource.dataSize = 
+                ImageSource imageSource(data, dataSize);
                 
                 png_set_read_fn(png_ptr, (png_voidp)&imageSource, pngReadCallback);
                 png_read_png(png_ptr, info_ptr, PNG_TRANSFORM_EXPAND /*| PNG_TRANSFORM_STRIP_ALPHA*/, 0);
@@ -85,6 +85,10 @@ int PNGStream::DoGetChars(int nChars, uint8_t *buffer){
                 // 图像的宽高
                 int w = png_get_image_width(png_ptr, info_ptr);
                 int h = png_get_image_height(png_ptr, info_ptr);
+                imageDataSize = (size_t)w * (size_t)h * 4;
+                imageData = (char*)new char[imageDataSize];
+                size_t idx = 0;
+
                 // 获得图像的所有行像素数据
                 png_bytep *row_pointers = png_get_rows(png_ptr, info_ptr);
                 switch ( color_type ){
@@ -96,6 +100,10 @@ int PNGStream::DoGetChars(int nChars, uint8_t *buffer){
                                 __attribute__((unused)) uint8_t green = row_pointers[y][x++];
                                 __attribute__((unused)) uint8_t blue = row_pointers[y][x++];
                                 __attribute__((unused)) uint8_t alpha = row_pointers[y][x++];
+                                imageData[idx++] = red;
+                                imageData[idx++] = green;
+                                imageData[idx++] = blue;
+                                imageData[idx++] = alpha;
                             }
                         }
                         break;
@@ -108,6 +116,11 @@ int PNGStream::DoGetChars(int nChars, uint8_t *buffer){
                                 __attribute__((unused)) uint8_t green = row_pointers[y][x++];
                                 __attribute__((unused)) uint8_t blue = row_pointers[y][x++];
                                 __attribute__((unused)) uint8_t alpha = 255;
+
+                                imageData[idx++] = red;
+                                imageData[idx++] = green;
+                                imageData[idx++] = blue;
+                                imageData[idx++] = alpha;
                             }
                         }
                         break;
@@ -123,6 +136,12 @@ int PNGStream::DoGetChars(int nChars, uint8_t *buffer){
             png_destroy_read_struct(&png_ptr, 0, 0);
         }
     }
+
+    return std::make_tuple(imageData, imageDataSize);
+}
+
+int PNGStream::DoGetChars(int nChars, uint8_t *buffer){
+    int dataSize = 0;
     return dataSize;
 }
 
@@ -196,24 +215,39 @@ bool Image::Load(PackagePtr package, bool reload){
     bool readOK = false;
 
     // FIXME
-    //std::tie(imageData, imageDataSize, readOK) = package->ReadZipFileRaw(imageFilePath);
+    char *pngData = nullptr;
+    size_t pngDataSize = 0;
+    std::tie(pngData, pngDataSize, readOK) = package->ReadZipFileRaw(imageFilePath);
+    if ( pngDataSize > 0 ){
+        std::tie(imageData, imageDataSize) = LoadPNGData(pngData, pngDataSize);
+        if ( imageDataSize > 0 ){
+            readOK = true;
+        } else {
+            readOK = false;
+        }
+    }
 
-    imageFilePath = "/tmp/Image_" + std::to_string(ID) + ".dat";
-    char *fileData = nullptr;
-    size_t fileSize = 0;
-    std::tie(fileData, fileSize, readOK) = utils::ReadFileData(imageFilePath);
+    // ----------
+    // FIXME
+    // Load from tmp image data
+    //imageFilePath = "/tmp/Image_" + std::to_string(ID) + ".dat";
+    //char *fileData = nullptr;
+    //size_t fileSize = 0;
+    //std::tie(fileData, fileSize, readOK) = utils::ReadFileData(imageFilePath);
 
-    ImageDataHead *imageDataHead = (ImageDataHead*)fileData;
-    width = imageDataHead->Width;
-    height = imageDataHead->Height;
-    nComps = imageDataHead->Components;
-    nBits = imageDataHead->Bits;
+    //ImageDataHead *imageDataHead = (ImageDataHead*)fileData;
+    //width = imageDataHead->Width;
+    //height = imageDataHead->Height;
+    //nComps = imageDataHead->Components;
+    //nBits = imageDataHead->Bits;
 
-    imageDataSize = fileSize - sizeof(ImageDataHead);
-    imageData = new char[imageDataSize];
-    memcpy(imageData, &fileData[sizeof(ImageDataHead)], imageDataSize);
+    //imageDataSize = fileSize - sizeof(ImageDataHead);
+    //imageData = new char[imageDataSize];
+    //memcpy(imageData, &fileData[sizeof(ImageDataHead)], imageDataSize);
 
-    delete fileData;
+    //delete fileData;
+    // ----------
+
 
     if ( readOK ){
         m_imageData = imageData;
