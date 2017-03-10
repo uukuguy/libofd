@@ -601,6 +601,11 @@ void DoCairoPath(cairo_t *cr, PathPtr path){
 void CairoRender::ImplCls::DrawPathObject(cairo_t *cr, PathObject *pathObject){
     if ( pathObject == nullptr ) return;
 
+    // FIXME 渐变色缺陷调试
+    //if ( pathObject->ID == 71 ){
+        //LOG(DEBUG) << "Debug missing path image.";
+    //}
+
     //setDefaultCTM(cr);
     //clearCTM(cr);
 
@@ -611,9 +616,7 @@ void CairoRender::ImplCls::DrawPathObject(cairo_t *cr, PathObject *pathObject){
     matrix.yy = pathObject->CTM[3];
     matrix.x0 = pathObject->CTM[4];
     matrix.y0 = pathObject->CTM[5];
-
-    Transform(&matrix);
-    //cairo_transform(cr, &matrix);
+    cairo_transform(cr, &matrix);
 
     showCairoMatrix(cr, "CairoRender", "DrawPathObject");
 
@@ -633,6 +636,7 @@ void CairoRender::ImplCls::DrawPathObject(cairo_t *cr, PathObject *pathObject){
         cairo_set_source(cr, m_strokePattern);
         cairo_stroke(cr);
     } else {
+        // FIXME 渐变色缺陷
         if ( pathObject->FillShading != nullptr ){
             UpdateFillPattern(pathObject->FillShading);
         } else {
@@ -840,7 +844,8 @@ void CairoRender::ImplCls::DrawImageObject(cairo_t *cr, ImageObject *imageObject
 
     cairo_set_source(cr, pattern);
     //if (!m_printing)
-        cairo_rectangle(cr, 0., 0., 1., 1.);
+    cairo_rectangle(cr, 0., 0., 1., 1.);
+
     if (maskPattern != nullptr ) {
         //if (!m_printing)
             cairo_clip(cr);

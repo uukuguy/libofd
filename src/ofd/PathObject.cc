@@ -171,9 +171,15 @@ bool PathObject::IterateElementsXML(XMLElementPtr childElement){
             if ( shadingElement != nullptr ){
                 std::string name = shadingElement->GetName();
                 if ( name == "RadialShd" ){
-                    FillShading = RadialShading::ReadShadingXML(shadingElement);
+                    RadialShading *radialShading = new RadialShading();
+                    if ( radialShading->ReadShadingXML(shadingElement) ){
+                        FillShading = std::shared_ptr<Shading>(radialShading); 
+                    }
                 } else if ( name == "AxialShd" ){
-                    FillShading = AxialShading::ReadShadingXML(shadingElement);
+                    AxialShading *axialShading = new AxialShading();
+                    if ( axialShading->ReadShadingXML(shadingElement) ){
+                        FillShading = std::shared_ptr<Shading>(axialShading); 
+                    }
                 }
             } else {
                 ColorPtr fillColor = nullptr;

@@ -1,5 +1,6 @@
 #include <Gfx.h>
 #include "ofd/Page.h"
+#include "ofd/Path.h"
 #include "ofd/PathObject.h"
 #include "ofd/Color.h"
 #include "ofd/Shading.h"
@@ -235,6 +236,8 @@ PathObjectPtr OFDOutputDev::createPathObject(GfxState *state){
     return pathObject;
 }
 
+//static int xxo = 0;
+
 void OFDOutputDev::fill(GfxState *state) {
 
     //if (inType3Char) {
@@ -260,6 +263,25 @@ void OFDOutputDev::fill(GfxState *state) {
             m_cairoRender->DrawObject(object);
         }
     }
+
+    // FIXME 渐变色缺陷调试
+    //PathPtr path = pathObject->GetPath();
+    //size_t numSubpaths = path->GetNumSubpaths();
+    //if ( numSubpaths > 1  ){
+        //return;
+    //} else {
+        //ofd::SubpathPtr subpath = path->GetSubpath(0);
+        //size_t numPoints = subpath->GetNumPoints();
+        //if ( numPoints >= 6 ){
+            //return;
+        //} else {
+            //xxo++;
+            //if ( xxo % 3 == 0 ){
+                //return;
+            //}
+        //}
+    //}
+    //if ( pathObject->ID == 71 ) return;
 
     doPath(m_cairo, state, state->getPath());
     cairo_set_fill_rule(m_cairo, CAIRO_FILL_RULE_WINDING);

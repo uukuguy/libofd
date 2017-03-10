@@ -36,6 +36,7 @@ namespace ofd{
         public:
             virtual cairo_pattern_t *CreateFillPattern(cairo_t *cr){return nullptr;};
             virtual void WriteShadingXML(utils::XMLWriter &writer) const;
+            virtual bool ReadShadingXML(utils::XMLElementPtr shadingElement);
 
     }; // Shading
 
@@ -63,7 +64,7 @@ namespace ofd{
         public:
             virtual cairo_pattern_t *CreateFillPattern(cairo_t *cr) override;
             virtual void WriteShadingXML(utils::XMLWriter &writer) const override;
-            static ShadingPtr ReadShadingXML(utils::XMLElementPtr shadingElement);
+            virtual bool ReadShadingXML(utils::XMLElementPtr shadingElement) override;
 
     }; // class AxialShading
 
@@ -89,7 +90,7 @@ namespace ofd{
         public:
             virtual cairo_pattern_t *CreateFillPattern(cairo_t *cr) override;
             virtual void WriteShadingXML(utils::XMLWriter &writer) const override;
-            static ShadingPtr ReadShadingXML(utils::XMLElementPtr shadingElement);
+            virtual bool ReadShadingXML(utils::XMLElementPtr shadingElement) override;
 
     }; // class RadialShading
 
@@ -111,7 +112,7 @@ namespace ofd{
             // =============== Public Methods ================
         public:
             virtual void WriteShadingXML(utils::XMLWriter &writer) const override {};
-            static ShadingPtr ReadShadingXML(utils::XMLElementPtr shadingElement){return nullptr;};
+            bool ReadShadingXML(utils::XMLElementPtr shadingElement) override{return true;};
 
     }; // GouraudShading
 
@@ -132,7 +133,7 @@ namespace ofd{
             // =============== Public Methods ================
         public:
             virtual void WriteShadingXML(utils::XMLWriter &writer) const override {};
-            static ShadingPtr ReadShadingXML(utils::XMLElementPtr shadingElement){return nullptr;};
+            bool ReadShadingXML(utils::XMLElementPtr shadingElement) override{return true;};
 
     }; // LaGouraudShading
 

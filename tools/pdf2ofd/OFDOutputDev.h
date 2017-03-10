@@ -368,6 +368,8 @@ private:
     void afterPage(const std::string &imageFileName);
     void renderPage(int pg, double page_w, double page_h, double output_w, double output_h); 
 
+    ofd::ObjectPtr CreateNewImageObject(GfxState *state, ofd::ImagePtr image);
+
     std::shared_ptr<ofd::FontOutputDev> m_fontOutputDev; 
     utils::StringFormatter str_fmt;
 

@@ -318,6 +318,33 @@ bool SaveImageStream(const std::string &filename, Stream *str, int widthA, int h
 
 }
 
+ofd::ObjectPtr OFDOutputDev::CreateNewImageObject(GfxState *state, ofd::ImagePtr image){
+    // Add image object into current page.
+    ofd::ImageObject *imageObject = new ofd::ImageObject(m_currentOFDPage->GetBodyLayer());
+    imageObject->SetImage(image);
+
+    double *gfxCTM = state->getCTM();
+    cairo_matrix_t matrix1;
+    matrix1.xx = gfxCTM[0];
+    matrix1.yx = gfxCTM[1];
+    matrix1.xy = gfxCTM[2];
+    matrix1.yy = gfxCTM[3];
+    matrix1.x0 = gfxCTM[4];
+    matrix1.y0 = gfxCTM[5];
+    // FIXME
+    cairo_matrix_t objMatrix = matrix1;
+
+    imageObject->CTM[0] = objMatrix.xx;
+    imageObject->CTM[1] = objMatrix.yx;
+    imageObject->CTM[2] = objMatrix.xy;
+    imageObject->CTM[3] = objMatrix.yy;
+    imageObject->CTM[4] = objMatrix.x0;
+    imageObject->CTM[5] = objMatrix.y0;
+
+    ofd::ObjectPtr object = std::shared_ptr<ofd::Object>(imageObject);
+    return object;
+}
+
 void OFDOutputDev::drawImage(GfxState *state, Object *ref, Stream *str,
 			       int widthA, int heightA,
 			       GfxImageColorMap *colorMap,
@@ -378,29 +405,34 @@ void OFDOutputDev::drawImage(GfxState *state, Object *ref, Stream *str,
     commonData.DocumentRes->AddImage(image);
 
     // Add image object into current page.
-    ofd::ImageObject *imageObject = new ofd::ImageObject(m_currentOFDPage->GetBodyLayer());
-    imageObject->SetImage(image);
+    ofd::ObjectPtr imageObject = CreateNewImageObject(state, image);
+    if ( imageObject != nullptr ){
+        m_currentOFDPage->AddObject(imageObject);
+    }
 
-    double *gfxCTM = state->getCTM();
-    cairo_matrix_t matrix1;
-    matrix1.xx = gfxCTM[0];
-    matrix1.yx = gfxCTM[1];
-    matrix1.xy = gfxCTM[2];
-    matrix1.yy = gfxCTM[3];
-    matrix1.x0 = gfxCTM[4];
-    matrix1.y0 = gfxCTM[5];
-    // FIXME
-    cairo_matrix_t objMatrix = matrix1;
+    //ofd::ImageObject *imageObject = new ofd::ImageObject(m_currentOFDPage->GetBodyLayer());
+    //imageObject->SetImage(image);
 
-    imageObject->CTM[0] = objMatrix.xx;
-    imageObject->CTM[1] = objMatrix.yx;
-    imageObject->CTM[2] = objMatrix.xy;
-    imageObject->CTM[3] = objMatrix.yy;
-    imageObject->CTM[4] = objMatrix.x0;
-    imageObject->CTM[5] = objMatrix.y0;
+    //double *gfxCTM = state->getCTM();
+    //cairo_matrix_t matrix1;
+    //matrix1.xx = gfxCTM[0];
+    //matrix1.yx = gfxCTM[1];
+    //matrix1.xy = gfxCTM[2];
+    //matrix1.yy = gfxCTM[3];
+    //matrix1.x0 = gfxCTM[4];
+    //matrix1.y0 = gfxCTM[5];
+    //// FIXME
+    //cairo_matrix_t objMatrix = matrix1;
 
-    ofd::ObjectPtr object = std::shared_ptr<ofd::Object>(imageObject);
-    m_currentOFDPage->AddObject(object);
+    //imageObject->CTM[0] = objMatrix.xx;
+    //imageObject->CTM[1] = objMatrix.yx;
+    //imageObject->CTM[2] = objMatrix.xy;
+    //imageObject->CTM[3] = objMatrix.yy;
+    //imageObject->CTM[4] = objMatrix.x0;
+    //imageObject->CTM[5] = objMatrix.y0;
+
+    //ofd::ObjectPtr object = std::shared_ptr<ofd::Object>(imageObject);
+    //m_currentOFDPage->AddObject(object);
 
     width = cairo_image_surface_get_width (imageSurface);
     height = cairo_image_surface_get_height (imageSurface);
@@ -792,6 +824,8 @@ void OFDOutputDev::drawImageMask(GfxState *state, Object *ref, Stream *str,
         int width, int height, GBool invert,
         GBool interpolate, GBool inlineImg) {
 
+
+
     /* FIXME: Doesn't the image mask support any colorspace? */
     cairo_set_source(m_cairo, m_fillPattern);
 
@@ -821,6 +855,12 @@ void OFDOutputDev::drawImageMask(GfxState *state, Object *ref, Stream *str,
             cairo_fill(m_cairoShape);
             cairo_restore(m_cairoShape);
         }
+
+
+        ofd::ImagePtr image = std::make_shared<ofd::Image>();
+        ofd::ObjectPtr object = CreateNewImageObject(state, image);
+        //m_currentOFDPage->AddObject(object);
+
         return;
     }
 

@@ -73,11 +73,11 @@ cairo_pattern_t *RadialShading::CreateFillPattern(cairo_t *cr){
 
     cairo_pattern_set_matrix(fillPattern, &matrix);
 
-    //if ( Extend ){
-        //cairo_pattern_set_extend(fillPattern, CAIRO_EXTEND_PAD);
-    //} else {
-        //cairo_pattern_set_extend (fillPattern, CAIRO_EXTEND_NONE);
-    //}
+    if ( Extend ){
+        cairo_pattern_set_extend(fillPattern, CAIRO_EXTEND_PAD);
+    } else {
+        cairo_pattern_set_extend (fillPattern, CAIRO_EXTEND_NONE);
+    }
 
     return fillPattern;
 }
@@ -132,8 +132,8 @@ void RadialShading::WriteShadingXML(utils::XMLWriter &writer) const{
 }
 
 // ======== RadialShading::ReadShadingXML() ========
-ShadingPtr RadialShading::ReadShadingXML(utils::XMLElementPtr shadingElement){
-    RadialShading *radialShading = new RadialShading();
+bool RadialShading::ReadShadingXML(utils::XMLElementPtr shadingElement){
+    if ( !Shading::ReadShadingXML(shadingElement) ) return false;
 
     bool exist = false;
     std::string strStartPoint, strEndPoint;
@@ -156,13 +156,12 @@ ShadingPtr RadialShading::ReadShadingXML(utils::XMLElementPtr shadingElement){
     std::tie(startRadius, exist) = shadingElement->GetFloatAttribute("StartRadius");
     std::tie(endRadius, exist) = shadingElement->GetFloatAttribute("EndRadius");
 
-    radialShading->StartPoint = startPoint;
-    radialShading->EndPoint = endPoint;
-    radialShading->StartRadius = startRadius;
-    radialShading->EndRadius = endRadius;
+    StartPoint = startPoint;
+    EndPoint = endPoint;
+    StartRadius = startRadius;
+    EndRadius = endRadius;
 
-    ShadingPtr shading = std::shared_ptr<Shading>(radialShading); 
-    return shading;
+    return true;
 }
 
 // ======== AxialShading::CreateFillPattern() ========
@@ -185,11 +184,11 @@ cairo_pattern_t *AxialShading::CreateFillPattern(cairo_t *cr){
     fillPattern = cairo_pattern_create_linear (x0 + tMin * dx, y0 + tMin * dy,
             x0 + tMax * dx, y0 + tMax * dy);
 
-    //if ( Extend ){
-        //cairo_pattern_set_extend(fillPattern, CAIRO_EXTEND_PAD);
-    //} else {
-        //cairo_pattern_set_extend (fillPattern, CAIRO_EXTEND_NONE);
-    //}
+    if ( Extend ){
+        cairo_pattern_set_extend(fillPattern, CAIRO_EXTEND_PAD);
+    } else {
+        cairo_pattern_set_extend (fillPattern, CAIRO_EXTEND_NONE);
+    }
 
     return fillPattern;
 }
@@ -234,8 +233,8 @@ void AxialShading::WriteShadingXML(utils::XMLWriter &writer) const{
 }
 
 // ======== AxialShading::ReadShadingXML() ========
-ShadingPtr AxialShading::ReadShadingXML(utils::XMLElementPtr shadingElement){
-    AxialShading *axialShading = new AxialShading();
+bool AxialShading::ReadShadingXML(utils::XMLElementPtr shadingElement){
+    if ( !Shading::ReadShadingXML(shadingElement) ) return false;
 
     bool exist = false;
     std::string strStartPoint, strEndPoint;
@@ -254,11 +253,10 @@ ShadingPtr AxialShading::ReadShadingXML(utils::XMLElementPtr shadingElement){
         endPoint.y = atof(tokens1[1].c_str());
     }
 
-    axialShading->StartPoint = startPoint;
-    axialShading->EndPoint = endPoint;
+    StartPoint = startPoint;
+    EndPoint = endPoint;
 
-    ShadingPtr shading = std::shared_ptr<Shading>(axialShading); 
-    return shading;
+    return true;
 }
 
 
@@ -267,4 +265,12 @@ void Shading::WriteShadingXML(utils::XMLWriter &writer) const{
     if ( Extend != 0 ){
         writer.WriteAttribute("Extend", (uint64_t)Extend);
     }
+}
+
+
+bool Shading::ReadShadingXML(utils::XMLElementPtr shadingElement){
+    bool exist = false;
+    std::tie(Extend, exist) = shadingElement->GetIntAttribute("Extend");
+
+    return true;
 }

@@ -327,6 +327,9 @@ void OFDOutputDev::ProcessDoc(PDFDocPtr pdfDoc){
     int firstPage = 1;
     // FIXME
     for ( auto pg = firstPage ; pg <= numPages; pg++ ){
+        //// FIXME debug 涠变色缺陷调试
+        //if ( pg != 6 ) continue;
+
         // -------- Page widht and height.
         double pg_w, pg_h;
         std::tie(pg_w, pg_h) = getPageSize(pdfDoc, pg, firstPage);
