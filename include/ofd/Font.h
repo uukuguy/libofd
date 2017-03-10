@@ -42,7 +42,7 @@ namespace ofd{
             bool              Bold;
             bool              Italic;
             bool              FixedWidth;
-            std::string       FontFile;
+            //std::string       FontFile;
             ofd::FontType          FontType;
             ofd::FontLocation      FontLoc;
 
@@ -55,6 +55,7 @@ namespace ofd{
             bool FromXML(utils::XMLElementPtr fontElement);
             bool Load(PackagePtr package, bool reload = false);
             unsigned long GetGlyph(unsigned int code, unsigned int *u, int uLen) const;
+            std::string GenerateFontFileName();
 
         public:
             const char* GetFontData() const {return m_fontData;};

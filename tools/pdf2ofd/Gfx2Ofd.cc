@@ -93,7 +93,8 @@ FontPtr GfxFont_to_OfdFont(GfxFont *gfxFont, XRef *xref){
             ofdFont->FontLoc = ofd::FontLocation::Embedded;
         } else if ( fontLoc->locType == gfxFontLocExternal ){
             ofdFont->FontLoc = ofd::FontLocation::External;
-            ofdFont->FontFile = std::string(fontLoc->path->getCString());
+            std::string fontFilePath = std::string(fontLoc->path->getCString());
+            ofdFont->SetFontFilePath(fontFilePath);
         } else if ( fontLoc->locType == gfxFontLocResident ){
             ofdFont->FontLoc = ofd::FontLocation::Resident;
         } else {

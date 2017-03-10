@@ -57,6 +57,8 @@ namespace ofd{
         const ImagePtr GetImage(uint64_t imageID) const;
         bool LoadImages();
 
+        std::string GenerateResourceFilePath(const std::string resourceFile);
+
     private:
         class ImplCls;
         std::unique_ptr<ImplCls> m_impl;

@@ -45,6 +45,8 @@ public:
     ResourceLevel GetResourceLevel() const;
     std::string GetEntryRoot() const;
 
+    std::string GenerateResourceFilePath(const std::string resourceFile);
+
 private:
     bool FromColorSpacesXML(utils::XMLElementPtr colorSpacesElement);
     bool FromFontsXML(utils::XMLElementPtr fontsElement);
@@ -157,12 +159,16 @@ Resource::ImplCls::~ImplCls(){
 
 void Resource::ImplCls::AddFont(FontPtr font){
     uint64_t fontID = font->ID;
+
+    std::string fontFile = font->GenerateFontFileName();
+    std::string fontFilePath = GenerateResourceFilePath(fontFile);
+    font->SetFontFilePath(fontFilePath);
+
     if ( m_fonts.find(fontID) != m_fonts.end() ){
         m_fonts[fontID] = font;
     } else {
         m_fonts.insert(FontMap::value_type(fontID, font));
     }
-    font->FontFile = generateFontFileName(font->ID);
 }
 
 const FontPtr Resource::ImplCls::GetFont(uint64_t fontID) const{
@@ -307,12 +313,15 @@ bool Resource::ImplCls::LoadFonts(){
 void Resource::ImplCls::AddImage(ImagePtr image){
     uint64_t imageID = image->ID;
 
+    std::string imageFile = image->GenerateImageFileName();
+    std::string imageFilePath = GenerateResourceFilePath(imageFile);
+    image->SetImageFilePath(imageFilePath);
+
     if ( m_images.find(imageID) != m_images.end() ){
         m_images[imageID] = image;
     } else {
         m_images.insert(ImageMap::value_type(imageID, image));
     }
-    image->ImageFile = generateImageFileName(imageID);
 }
 
 const ImagePtr Resource::ImplCls::GetImage(uint64_t imageID) const{
@@ -336,11 +345,16 @@ bool Resource::ImplCls::LoadImages(){
         auto image = imageIter.second;
 
         if ( !image->Load(m_package.lock()) ){
-            LOG(ERROR) << "Load image " << image->ImageFile << " failed.";
+            LOG(ERROR) << "Load image " << image->GetImageFilePath() << " failed.";
         }
     }
 
     return ok;
+}
+
+std::string Resource::ImplCls::GenerateResourceFilePath(const std::string resourceFile){
+    std::string resourceFilePath = GetEntryRoot() + "/" + m_baseLoc + "/" + resourceFile;
+    return resourceFilePath;
 }
 
 bool Resource::ImplCls::FromFontsXML(utils::XMLElementPtr fontsElement){
@@ -351,12 +365,9 @@ bool Resource::ImplCls::FromFontsXML(utils::XMLElementPtr fontsElement){
 
         FontPtr font = std::make_shared<Font>();
         if ( font->FromXML(childElement) ){
-            std::string fontFilePath = GetEntryRoot() + "/" + m_baseLoc + "/" + font->FontFile;
-            font->SetFontFilePath(fontFilePath);
             AddFont(font);
             ok = true;
         }
-
         childElement = childElement->GetNextSiblingElement();
     }
 
@@ -371,8 +382,6 @@ bool Resource::ImplCls::FromImagesXML(utils::XMLElementPtr imagesElement){
 
         ImagePtr image = std::make_shared<Image>();
         if ( image->FromXML(childElement) ){
-            std::string imageFilePath = GetEntryRoot() + "/" + m_baseLoc + "/" + image->ImageFile;
-            image->SetImageFilePath(imageFilePath);
             AddImage(image);
             ok = true;
         }
@@ -590,5 +599,9 @@ ResourcePtr Resource::CreateNewResource(PagePtr page, const std::string &resDesc
     ResourcePtr resource = std::shared_ptr<Resource>(new Resource(page, resDescFile));
     resource->m_impl->Init_After_Construct();
     return resource;
+}
+
+std::string Resource::GenerateResourceFilePath(const std::string resourceFile){
+    return m_impl->GenerateResourceFilePath(resourceFile);
 }
 

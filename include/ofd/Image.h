@@ -37,7 +37,7 @@ namespace ofd{
         int Components;
         int Bits;
 
-        ImageDataHead(int width, int height, int comps, int bits) :
+        ImageDataHead(int width = 0, int height = 0, int comps = 0, int bits = 0) :
             Width(width), Height(height), Components(comps), Bits(bits)
         {
         }
@@ -70,7 +70,7 @@ namespace ofd{
             uint8_t *imgLine;   // line buffer
             int imgIdx;	        // current index in imgLine
 
-            std::string ImageFile;
+            //std::string ImageFile;
             // =============== Public Methods ================
         public:
             bool Load(PackagePtr package, bool reload = false);
@@ -94,6 +94,7 @@ namespace ofd{
 
             void GenerateXML(utils::XMLWriter &writer) const;
             bool FromXML(utils::XMLElementPtr imageElement);
+            std::string GenerateImageFileName();
 
             // ---------------- Private Attributes ----------------
         public:

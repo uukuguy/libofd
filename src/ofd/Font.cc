@@ -156,6 +156,10 @@ bool Font::CreateFromData(char *fontData, size_t fontDataSize){
     return ok;
 }
 
+std::string Font::GenerateFontFileName(){
+    return generateFontFileName(ID);
+}
+
 // ======== Font::GenerateXML() ========
 void Font::GenerateXML(XMLWriter &writer) const{
 
@@ -205,7 +209,8 @@ void Font::GenerateXML(XMLWriter &writer) const{
 
         // -------- <FontFile>
         // Optional
-        writer.WriteElement("FontFile", FontFile);
+        std::string fontFilePath = GetFontFilePath();
+        writer.WriteElement("FontFile", fontFilePath);
 
     } writer.EndElement();
 
@@ -270,7 +275,9 @@ bool Font::FromXML(XMLElementPtr fontElement){
 
             XMLElementPtr fontFileElement = fontElement->GetFirstChildElement();
             if ( fontFileElement != nullptr && fontFileElement->GetName() == "FontFile" ){
-                std::tie(FontFile, std::ignore) = fontFileElement->GetStringValue();
+                std::string fontFilePath;
+                std::tie(fontFilePath, std::ignore) = fontFileElement->GetStringValue();
+                SetFontFilePath(fontFilePath);
             }
 
             ok = true;

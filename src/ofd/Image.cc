@@ -67,7 +67,8 @@ void PNGStream::Reset(){
 void PNGStream::Close(){
 }
 
-std::tuple<char*, size_t> LoadPNGData(char* data, size_t dataSize){
+std::tuple<ImageDataHead, char*, size_t> LoadPNGData(char* data, size_t dataSize){
+    ImageDataHead imageDataHead;
     char *imageData = nullptr;
     size_t imageDataSize = 0; 
 
@@ -85,6 +86,11 @@ std::tuple<char*, size_t> LoadPNGData(char* data, size_t dataSize){
                 // 图像的宽高
                 int w = png_get_image_width(png_ptr, info_ptr);
                 int h = png_get_image_height(png_ptr, info_ptr);
+                imageDataHead.Width = w;
+                imageDataHead.Height = h;
+                imageDataHead.Components = 4;
+                imageDataHead.Bits = 8;
+
                 imageDataSize = (size_t)w * (size_t)h * 4;
                 imageData = (char*)new char[imageDataSize];
                 size_t idx = 0;
@@ -137,7 +143,7 @@ std::tuple<char*, size_t> LoadPNGData(char* data, size_t dataSize){
         }
     }
 
-    return std::make_tuple(imageData, imageDataSize);
+    return std::make_tuple(imageDataHead, imageData, imageDataSize);
 }
 
 int PNGStream::DoGetChars(int nChars, uint8_t *buffer){
@@ -202,6 +208,10 @@ Image::~Image(){
     }
 }
 
+std::string Image::GenerateImageFileName(){
+    return generateImageFileName(ID);
+}
+
 bool Image::Load(PackagePtr package, bool reload){
     if ( m_bLoaded && !reload ) return true;
 
@@ -219,8 +229,13 @@ bool Image::Load(PackagePtr package, bool reload){
     size_t pngDataSize = 0;
     std::tie(pngData, pngDataSize, readOK) = package->ReadZipFileRaw(imageFilePath);
     if ( pngDataSize > 0 ){
-        std::tie(imageData, imageDataSize) = LoadPNGData(pngData, pngDataSize);
+        ImageDataHead imageDataHead;
+        std::tie(imageDataHead, imageData, imageDataSize) = LoadPNGData(pngData, pngDataSize);
         if ( imageDataSize > 0 ){
+            width = imageDataHead.Width;
+            height = imageDataHead.Height;
+            nComps = imageDataHead.Components;
+            nBits = imageDataHead.Bits;
             readOK = true;
         } else {
             readOK = false;
