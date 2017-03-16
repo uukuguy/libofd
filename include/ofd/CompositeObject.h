@@ -15,6 +15,10 @@ namespace ofd{
         CompositeObject(LayerPtr layer);
         virtual ~CompositeObject();
 
+        // =============== Public Methods ================
+    public:
+        virtual std::string to_string() const override;
+
     protected:
         virtual void GenerateAttributesXML(utils::XMLWriter &writer) const override;
         virtual void GenerateElementsXML(utils::XMLWriter &writer) const override;

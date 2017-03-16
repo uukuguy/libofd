@@ -573,7 +573,7 @@ std::tuple<std::string, bool> XMLElement::GetStringValue() const{
 }
 
 std::tuple<uint64_t, bool> XMLElement::GetIntValue() const{
-    uint64_t value;
+    uint64_t value = 0;
     bool exist = false;
 
     std::string content;
@@ -584,7 +584,7 @@ std::tuple<uint64_t, bool> XMLElement::GetIntValue() const{
 }
 
 std::tuple<double, bool> XMLElement::GetFloatValue() const{
-    double value;
+    double value = 0.0;
     bool exist = false;
 
     std::string content;

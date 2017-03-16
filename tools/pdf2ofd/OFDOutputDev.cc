@@ -32,6 +32,7 @@ extern "C"{
 #include "utils/ffw.h"
 }
 
+std::ofstream cairoLogFile;
 
 class MyTextPage : public TextPage {
 public:
@@ -86,6 +87,7 @@ OFDOutputDev::OFDOutputDev(ofd::PackagePtr package) :
     m_cairoRender(nullptr),
     m_package(package), m_document(nullptr), m_currentOFDPage(nullptr),
     m_currentFont(nullptr), m_currentFontSize(14.0), m_currentCTM(nullptr) {
+
 
     utils::ffw_init(false);
     cur_mapping.resize(0x10000);
@@ -328,7 +330,12 @@ void OFDOutputDev::ProcessDoc(PDFDocPtr pdfDoc){
     // FIXME
     for ( auto pg = firstPage ; pg <= numPages; pg++ ){
         //// FIXME debug 涠变色缺陷调试
-        //if ( pg != 6 ) continue;
+        if ( pg != 2 ) continue;
+
+
+        // Cairo log file
+        std::string cairoLogFileName = "/tmp/Page_" + std::to_string(pg) + ".cairo";
+        cairoLogFile.open(cairoLogFileName.c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
 
         // -------- Page widht and height.
         double pg_w, pg_h;
@@ -357,9 +364,16 @@ void OFDOutputDev::ProcessDoc(PDFDocPtr pdfDoc){
         renderPage(pg, pg_w, pg_h, output_w, output_h);
 
         // -------- afterPage()
-        std::string imageFileName = std::string("output/pdf2ofd/Page_") + std::to_string(pg) + ".jpeg";
+        utils::MkdirIfNotExist("output");
+        std::string strOutputImagePath = "output/pdf2ofd";
+        utils::MkdirIfNotExist(strOutputImagePath);
+
+        std::string imageFileName = strOutputImagePath + "/Page_" + std::to_string(pg) + ".jpeg";
         afterPage(imageFileName);
 
+
+        cairoLogFile.write("Cairo", 5);
+        cairoLogFile.close();
     }
 
     // -------- afterDocumnet()

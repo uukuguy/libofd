@@ -8,6 +8,7 @@
 #include <PDFDoc.h>
 #include <GfxState.h>
 #include "ofd/Common.h"
+#include "ofd/Color.h"
 #include "ofd/CairoRender.h"
 #include "ofd/PathObject.h"
 #include "FontOutputDev.h"
@@ -376,6 +377,7 @@ private:
     std::vector<int32_t> cur_mapping; 
     std::vector<char*> cur_mapping2;
     std::vector<int> width_list; // width of each char
+    ofd::ColorStopArray m_colorStops; // Color stops for shading
 
 
 }; // class OFDOutputDev

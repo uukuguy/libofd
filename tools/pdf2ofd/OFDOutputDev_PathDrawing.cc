@@ -10,6 +10,8 @@
 
 using namespace ofd;
 
+extern std::ofstream cairoLogFile;
+
 void showCairoMatrix(cairo_t *cr, const std::string &title, const std::string &msg);
 
 /* Tolerance in pixels for checking if strokes are horizontal or vertical
@@ -198,7 +200,13 @@ PathObjectPtr OFDOutputDev::createPathObject(GfxState *state){
         fillColor->Alpha = m_fillOpacity * 255.0;
         pathObject->SetFillColor(fillColor);
         pathObject->LineWidth = m_lineWidth;
-        pathObject->FillShading = m_shading;
+
+        if ( m_shading != nullptr ){
+            m_shading->SetColorStops(m_colorStops);
+            m_colorStops.clear();
+
+            pathObject->FillShading = m_shading;
+        }
         m_shading = nullptr;
 
         LOG(INFO) << "[imageSurface] DrawPathObject m_matrix=(" << m_matrix.xx << "," << m_matrix.yx << "," << m_matrix.xy << "," << m_matrix.yy << "," << m_matrix.x0 << "," << m_matrix.y0 << ")";
@@ -253,7 +261,11 @@ void OFDOutputDev::fill(GfxState *state) {
 
     //showCairoMatrix(m_cairo, "imageSurface", "DrawPathObject cairo_matrix");
 
+    std::stringstream ssCairoLog;
+
     // Add PathObject
+
+    ssCairoLog << "- Draw PathObject - ";
     PathObjectPtr pathObject = createPathObject(state);
     if ( pathObject != nullptr ){
         m_currentOFDPage->AddObject(pathObject);
@@ -261,8 +273,14 @@ void OFDOutputDev::fill(GfxState *state) {
         if ( m_cairoRender != nullptr ){
             ObjectPtr object = std::shared_ptr<ofd::Object>(pathObject);
             m_cairoRender->DrawObject(object);
+
+            std::string objectString = pathObject->to_string();
+            ssCairoLog << objectString;
         }
     }
+
+    std::string cairoLog = ssCairoLog.str() + "\n";
+    cairoLogFile.write(cairoLog.c_str(), cairoLog.length());
 
     // FIXME 渐变色缺陷调试
     //PathPtr path = pathObject->GetPath();
@@ -666,7 +684,9 @@ GBool OFDOutputDev::axialShadedFill(GfxState *state, GfxAxialShading *shading, d
 
     //axialShading->ColorSegments.push_back();
 
+
     m_shading = std::shared_ptr<ofd::Shading>(axialShading);
+
 
     // TODO: use the actual stops in the shading in the case
     // of linear interpolation (Type 2 Exponential functions with N=1)
@@ -732,6 +752,7 @@ GBool OFDOutputDev::radialShadedFill(GfxState *state, GfxRadialShading *shading,
             radialShading->Extend = 0;
         }
     }
+
 
     //radialShading->ColorSegments.push_back();
 

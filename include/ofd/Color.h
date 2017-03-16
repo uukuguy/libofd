@@ -223,10 +223,10 @@ namespace ofd{
     typedef struct _ColorStop {
 
         ColorPtr Color;
-        double Position;
+        double Offset;
 
-        _ColorStop(ColorPtr color, double pos) : 
-            Color(color), Position(pos){
+        _ColorStop(ColorPtr color, double offset) : 
+            Color(color), Offset(offset){
             }
 
     } ColorStop_t;

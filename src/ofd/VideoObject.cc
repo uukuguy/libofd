@@ -17,6 +17,10 @@ VideoObject::VideoObject(LayerPtr layer) :
 VideoObject::~VideoObject(){
 }
 
+std::string VideoObject::to_string() const{
+    return Object::to_string();
+}
+
 void VideoObject::GenerateAttributesXML(XMLWriter &writer) const{
     Object::GenerateAttributesXML(writer);
 }

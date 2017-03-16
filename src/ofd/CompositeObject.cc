@@ -17,6 +17,10 @@ CompositeObject::CompositeObject(LayerPtr layer) :
 CompositeObject::~CompositeObject(){
 }
 
+std::string CompositeObject::to_string() const{
+    return Object::to_string();
+}
+
 void CompositeObject::GenerateAttributesXML(XMLWriter &writer) const{
     Object::GenerateAttributesXML(writer);
 }

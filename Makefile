@@ -54,7 +54,7 @@ samples: ${PDF2OFD}
 	rm -f ./output/fontforge_cn.ofd
 	rm -f ./output/sample0.ofd
 	rm -f ./output/sample2.ofd
-	${PDF2OFD} ./data/pdf/bibble.pdf ./output/bible.ofd && \
+	${PDF2OFD} ./data/pdf/bibble.pdf ./output/bibble.ofd && \
 	${PDF2OFD} ./data/pdf/cheat.pdf ./output/cheat.ofd && \
 	${PDF2OFD} ./data/pdf/git.pdf ./output/git.ofd && \
 	${PDF2OFD} ./data/pdf/magazine.pdf ./output/magazine.ofd && \

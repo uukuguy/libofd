@@ -27,6 +27,10 @@ PathObject::PathObject(LayerPtr layer) :
 PathObject::~PathObject(){
 }
 
+std::string PathObject::to_string() const{
+    return Object::to_string();
+}
+
 void PathObject::SetFillColor(ColorPtr fillColor){
     if ( !fillColor->Equal(DefaultFillColor) ){
         FillColor = fillColor;

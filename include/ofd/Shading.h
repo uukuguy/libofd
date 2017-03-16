@@ -37,6 +37,7 @@ namespace ofd{
             virtual cairo_pattern_t *CreateFillPattern(cairo_t *cr){return nullptr;};
             virtual void WriteShadingXML(utils::XMLWriter &writer) const;
             virtual bool ReadShadingXML(utils::XMLElementPtr shadingElement);
+            virtual void SetColorStops(const ColorStopArray &colorStops){};
 
     }; // Shading
 
@@ -65,7 +66,7 @@ namespace ofd{
             virtual cairo_pattern_t *CreateFillPattern(cairo_t *cr) override;
             virtual void WriteShadingXML(utils::XMLWriter &writer) const override;
             virtual bool ReadShadingXML(utils::XMLElementPtr shadingElement) override;
-
+            virtual void SetColorStops(const ColorStopArray &colorStops) override {ColorSegments = colorStops;};
     }; // class AxialShading
 
     // ======== class RadialShading ========

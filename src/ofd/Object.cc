@@ -113,6 +113,21 @@ ResourcePtr Object::GetPublicRes(){
     return nullptr;
 }
 
+std::string Object::to_string() const {
+    std::stringstream ss;
+    ss << "[" << ObjectLabel << "] " 
+        << "ID:" << ID << " | "
+        << "Type: " << (int)Type << " | "
+        << "CTM:(" << CTM[0] << "," << CTM[1] << "," << CTM[2] << "," << CTM[3] << "," << CTM[4] << "," << CTM[5] << ") | "
+        << "Boundary:(" << Boundary.Left << "," << Boundary.Top << "," << Boundary.Width << "," << Boundary.Height << ") | "
+        << "Alpha:" << Alpha << " | "
+        << "Visible:" << Visible << " | "
+        << "LineWidth:" << LineWidth << " | "
+        ;
+
+    return ss.str();
+}
+
 // Called by OFDPage::ImplCls::generateContentXML()
 void Object::GenerateXML(XMLWriter &writer) const{
     writer.StartElement(ObjectLabel);{

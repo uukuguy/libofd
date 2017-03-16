@@ -83,6 +83,8 @@ namespace ofd{
 
             // =============== Public Methods ================
         public:
+            virtual std::string to_string() const override;
+
             // 引用资源文件中定义的字型的标识。
             const FontPtr GetFont() const {return Font;};
             void SetFont(const FontPtr font){Font = font;};

@@ -1,3 +1,5 @@
+#include <sys/stat.h> /* mkdir() */
+#include <unistd.h> /* write(), close(), access() */
 #include <sstream>
 #include <iterator>
 #include <iostream>
@@ -54,6 +56,22 @@ namespace utils{
 
         return ok;
     }
+
+    bool FileExist(const std::string &fileName) {
+        if ( access(fileName.c_str(), F_OK) == 0 ){
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    bool MkdirIfNotExist(const std::string &dirName) {
+        if ( !FileExist(dirName) ) {
+            return mkdir(dirName.c_str(), 0750);
+        } 
+        return true;
+    }
+
 }
 
 

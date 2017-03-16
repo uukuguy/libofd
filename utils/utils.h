@@ -39,6 +39,12 @@ namespace utils{
     bool WriteFileData(const std::string &filename, const char *data, size_t dataSize); 
 
     static inline bool equal(double x, double y) { return fabs(x-y) <= EPS; }
+
+    // IO
+
+    bool FileExist(const std::string &fileName); 
+    bool MkdirIfNotExist(const std::string &dirName); 
+
 }
 
 #ifndef likely

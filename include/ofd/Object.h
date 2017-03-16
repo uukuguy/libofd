@@ -38,6 +38,7 @@ namespace ofd{
 
             // =============== Public Methods ================
         public:
+            virtual std::string to_string() const;
             void GenerateXML(utils::XMLWriter &writer) const;
             bool FromXML(utils::XMLElementPtr objectElement);
 

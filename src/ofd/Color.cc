@@ -137,8 +137,11 @@ void Color::WriteColorXML(XMLWriter &writer) const{
         }
 
         std::stringstream ss;
-        for ( size_t k = 0 ; k < numChannels ; k++ ){
+        for ( size_t k = 0 ; k < numChannels - 1 ; k++ ){
             ss << Value.Values[k] << " ";
+        }
+        if ( numChannels > 0 ){
+            ss << Value.Values[numChannels - 1];
         }
 
         //LOG(DEBUG) << "Color::WriteColorXML() " << ss.str();
@@ -162,7 +165,9 @@ void Color::WriteColorXML(XMLWriter &writer) const{
 
     // -------- <Color Alpha="">
     // Optional
-    writer.WriteAttribute("Alpha", (uint64_t)Alpha);
+    if ( Alpha != 255 ){
+        writer.WriteAttribute("Alpha", (uint64_t)Alpha);
+    }
 }
 
 // ================ static Color::ReadColorXML() ================
@@ -187,7 +192,8 @@ std::tuple<ColorPtr, bool> Color::ReadColorXML(XMLElementPtr colorElement){
     }
 
     uint32_t alpha = 255;
-    std::tie(alpha, std::ignore) = colorElement->GetIntAttribute("Alpha");
+    std::tie(alpha, exist) = colorElement->GetIntAttribute("Alpha");
+    if ( !exist ) alpha = 255;
 
     std::string valueData;
     std::tie(valueData, exist) = colorElement->GetStringAttribute("Value");

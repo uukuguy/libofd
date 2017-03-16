@@ -368,6 +368,28 @@ void CairoRender::ImplCls::DrawPage(PagePtr page, VisibleParams visibleParams){
         const ObjectPtr object = bodyLayer->GetObject(i);
         assert(object != nullptr);
 
+        // FIXME
+        //uint64_t id = object->ID;
+        //if ( id <= 5 ){
+            ////if ( id == 0 ){
+                ////continue;
+            ////} else if (id == 1 ){
+                ////continue;
+            ////} else if (id == 2 ){
+                ////continue;
+            ////} else if (id == 3 ){
+                ////continue;
+            ////} else if (id == 4 ){
+                ////continue;
+            ////} else { 
+                ////continue;
+            ////}
+
+        //} else if (id >= 38 && id <= 42 ){
+            //continue;
+        //} else {
+        //}
+
         DrawObject(object);
     }
 
@@ -611,8 +633,15 @@ void CairoRender::ImplCls::DrawPathObject(cairo_t *cr, PathObject *pathObject){
 
     cairo_matrix_t matrix;
     matrix.xx = pathObject->CTM[0];
+
     matrix.yx = pathObject->CTM[1];
     matrix.xy = pathObject->CTM[2];
+
+    //// FIXME
+    //matrix.yx = 0;//pathObject->CTM[2];
+    //matrix.xy = 0;//pathObject->CTM[1];
+
+
     matrix.yy = pathObject->CTM[3];
     matrix.x0 = pathObject->CTM[4];
     matrix.y0 = pathObject->CTM[5];

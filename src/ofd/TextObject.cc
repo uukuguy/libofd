@@ -37,6 +37,10 @@ void TextObject::SetStrokeColor(ColorPtr strokeColor){
     }
 }
 
+std::string TextObject::to_string() const{
+    return Object::to_string();
+}
+
 // -------- <TextObject>
 // OFD (section 11.2) P63. Page.xsd.
 void TextObject::GenerateAttributesXML(utils::XMLWriter &writer) const{

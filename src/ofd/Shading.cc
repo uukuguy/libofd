@@ -58,18 +58,18 @@ cairo_pattern_t *RadialShading::CreateFillPattern(cairo_t *cr){
             (y0 + sMax * dy) * scale,
             (r0 + sMax * dr) * scale);
 
-    //for ( size_t i = 0 ; i < ColorSegments.size() ; i++ ){
+    for ( size_t i = 0 ; i < ColorSegments.size() ; i++ ){
 
-        //const ColorStop_t &cs = ColorSegments[i];
-        //const ColorPtr color = cs.Color;
-        //double pos = cs.Position;
+        const ColorStop_t &cs = ColorSegments[i];
+        const ColorPtr color = cs.Color;
+        double pos = cs.Offset;
 
-        //double r = color->Value.RGB.Red / 255.0;
-        //double g = color->Value.RGB.Green / 255.0;
-        //double b = color->Value.RGB.Blue / 255.0;
-        //double a = color->Alpha / 255.0;
-        //cairo_pattern_add_color_stop_rgba(fillPattern, pos, r, g, b, a);
-    //} 
+        double r = color->Value.RGB.Red / 255.0;
+        double g = color->Value.RGB.Green / 255.0;
+        double b = color->Value.RGB.Blue / 255.0;
+        double a = color->Alpha / 255.0;
+        cairo_pattern_add_color_stop_rgba(fillPattern, pos, r, g, b, a);
+    } 
 
     cairo_pattern_set_matrix(fillPattern, &matrix);
 
@@ -114,14 +114,16 @@ void RadialShading::WriteShadingXML(utils::XMLWriter &writer) const{
 
         for ( auto cs : ColorSegments ){
             writer.StartElement("Segment");{
-                writer.WriteAttribute("Position", cs.Position);
+                writer.WriteAttribute("Position", cs.Offset);
+
 
                 writer.StartElement("Color");{
-                    std::stringstream ssValue;
-                    ssValue << cs.Color->Value.RGB.Red << " " 
-                            << cs.Color->Value.RGB.Green << " "
-                            << cs.Color->Value.RGB.Blue;
-                    writer.WriteAttribute("Value", ssValue.str());
+                    cs.Color->WriteColorXML(writer);                
+                    //std::stringstream ssValue;
+                    //ssValue << cs.Color->Value.RGB.Red << " " 
+                            //<< cs.Color->Value.RGB.Green << " "
+                            //<< cs.Color->Value.RGB.Blue;
+                    //writer.WriteAttribute("Value", ssValue.str());
 
                 } writer.EndElement();
 
@@ -155,6 +157,28 @@ bool RadialShading::ReadShadingXML(utils::XMLElementPtr shadingElement){
     double startRadius = 0.0, endRadius = 0.0;
     std::tie(startRadius, exist) = shadingElement->GetFloatAttribute("StartRadius");
     std::tie(endRadius, exist) = shadingElement->GetFloatAttribute("EndRadius");
+
+
+    // <Segment>
+    utils::XMLElementPtr segmentElement = shadingElement->GetFirstChildElement();
+    while ( segmentElement != nullptr ){
+
+        std::string childName = segmentElement->GetName();
+        if ( childName == "Segment" ){
+            double offset = 0.0;
+            std::tie(offset, std::ignore) = segmentElement->GetFloatAttribute("Position");
+
+            utils::XMLElementPtr colorElement = segmentElement->GetFirstChildElement();
+            if ( colorElement != nullptr && colorElement->GetName() == "Color" ){
+                ColorPtr color;
+                std::tie(color, std::ignore) = Color::ReadColorXML(colorElement);
+
+                ColorSegments.push_back(ColorStopArray::value_type(color, offset));
+            }
+        }
+
+        segmentElement = segmentElement->GetNextSiblingElement();
+    }
 
     StartPoint = startPoint;
     EndPoint = endPoint;
@@ -214,14 +238,15 @@ void AxialShading::WriteShadingXML(utils::XMLWriter &writer) const{
 
         for ( auto cs : ColorSegments ){
             writer.StartElement("Segment");{
-                writer.WriteAttribute("Position", cs.Position);
+                writer.WriteAttribute("Position", cs.Offset);
 
                 writer.StartElement("Color");{
-                    std::stringstream ssValue;
-                    ssValue << cs.Color->Value.RGB.Red << " " 
-                            << cs.Color->Value.RGB.Green << " "
-                            << cs.Color->Value.RGB.Blue;
-                    writer.WriteAttribute("Value", ssValue.str());
+                    cs.Color->WriteColorXML(writer);                
+                    //std::stringstream ssValue;
+                    //ssValue << cs.Color->Value.RGB.Red << " " 
+                            //<< cs.Color->Value.RGB.Green << " "
+                            //<< cs.Color->Value.RGB.Blue;
+                    //writer.WriteAttribute("Value", ssValue.str());
 
                 } writer.EndElement();
 
@@ -251,6 +276,27 @@ bool AxialShading::ReadShadingXML(utils::XMLElementPtr shadingElement){
     if ( tokens1.size() == 2 ){
         endPoint.x = atof(tokens1[0].c_str());
         endPoint.y = atof(tokens1[1].c_str());
+    }
+
+    // <Segment>
+    utils::XMLElementPtr segmentElement = shadingElement->GetFirstChildElement();
+    while ( segmentElement != nullptr ){
+
+        std::string childName = segmentElement->GetName();
+        if ( childName == "Segment" ){
+            double offset = 0.0;
+            std::tie(offset, std::ignore) = segmentElement->GetFloatAttribute("Position");
+
+            utils::XMLElementPtr colorElement = segmentElement->GetFirstChildElement();
+            if ( colorElement != nullptr && colorElement->GetName() == "Color" ){
+                ColorPtr color;
+                std::tie(color, std::ignore) = Color::ReadColorXML(colorElement);
+
+                ColorSegments.push_back(ColorStopArray::value_type(color, offset));
+            }
+        }
+
+        segmentElement = segmentElement->GetNextSiblingElement();
     }
 
     StartPoint = startPoint;

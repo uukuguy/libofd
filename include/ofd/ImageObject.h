@@ -38,6 +38,7 @@ namespace ofd{
 
             // =============== Public Methods ================
         public:
+            virtual std::string to_string() const override;
 
         protected:
             virtual void GenerateAttributesXML(utils::XMLWriter &writer) const override;

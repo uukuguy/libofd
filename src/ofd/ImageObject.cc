@@ -34,6 +34,10 @@ ImageObject::ImageObject(LayerPtr layer) :
 ImageObject::~ImageObject(){
 }
 
+std::string ImageObject::to_string() const{
+    return Object::to_string();
+}
+
 void ImageObject::SetImage(ImagePtr image){
     ResourceID = image->ID;
     m_image = image;
