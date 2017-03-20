@@ -330,7 +330,7 @@ void OFDOutputDev::ProcessDoc(PDFDocPtr pdfDoc){
     // FIXME
     for ( auto pg = firstPage ; pg <= numPages; pg++ ){
         //// FIXME debug 涠变色缺陷调试
-        if ( pg != 2 ) continue;
+        //if ( pg != 2 ) continue;
 
 
         // Cairo log file
