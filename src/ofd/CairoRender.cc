@@ -82,6 +82,9 @@ public:
     //ofd::OfdRGB m_strokeColor;
     //ofd::OfdRGB m_fillColor;
 
+    void DrawRadialPathObject(cairo_t *cr, PathObject *pathObject);
+    void doRadialShFill(cairo_t *cr, PathObject *pathObject);
+
 }; // class CairoRender::ImplCls
 
 //CairoRender::ImplCls::ImplCls(CairoRender *cairoRender, cairo_surface_t *surface) : 
@@ -576,22 +579,22 @@ void DoCairoPath(cairo_t *cr, PathPtr path){
         if ( numPoints < 2 ) continue;
 
         const Point_t &p0 = subpath->GetPoint(0);
-        cairo_move_to(cr, p0.x, p0.y);
+        cairo_move_to(cr, p0.X, p0.Y);
 
         for ( size_t n = 1 ; n < numPoints ; n++ ){
             char flag = subpath->GetFlag(n);
             if ( flag == 'L' ){
                 const Point_t &p = subpath->GetPoint(n);
-                cairo_line_to(cr, p.x, p.y);
+                cairo_line_to(cr, p.X, p.Y);
             } else if ( flag == 'B' ){
                 // 三次贝塞尔曲线
                 const Point_t &p1 = subpath->GetPoint(n);
                 const Point_t &p2 = subpath->GetPoint(n+1);
                 const Point_t &p3 = subpath->GetPoint(n+2);
-                cairo_curve_to(cr, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
-                //cairo_line_to(cr, p1.x, p1.y);
-                //cairo_line_to(cr, p2.x, p2.y);
-                //cairo_line_to(cr, p3.x, p3.y);
+                cairo_curve_to(cr, p1.X, p1.Y, p2.X, p2.Y, p3.X, p3.Y);
+                //cairo_line_to(cr, p1.X, p1.Y);
+                //cairo_line_to(cr, p2.X, p2.Y);
+                //cairo_line_to(cr, p3.X, p3.Y);
                 n += 2;
             } else if ( flag == 'Q' ){
                 // 二次贝塞尔曲线
@@ -605,16 +608,16 @@ void DoCairoPath(cairo_t *cr, PathPtr path){
                 n += 1;
 
                 p_3[0] = p_2[0];
-                p_3[1].x = (1.0/(2+1)) * p_2[0].x  + ((2+1-1)/(2+1)) * p_2[1].x;
-                p_3[1].y = (1.0/(2+1)) * p_2[0].y  + ((2+1-1)/(2+1)) * p_2[1].y;
-                p_3[2].x = (2.0/(2+1)) * p_2[1].x  + ((2+1-2)/(2+1)) * p_2[2].x;
-                p_3[2].y = (2.0/(2+1)) * p_2[1].y  + ((2+1-2)/(2+1)) * p_2[2].y;
+                p_3[1].X = (1.0/(2+1)) * p_2[0].X  + ((2+1-1)/(2+1)) * p_2[1].X;
+                p_3[1].Y = (1.0/(2+1)) * p_2[0].Y  + ((2+1-1)/(2+1)) * p_2[1].Y;
+                p_3[2].X = (2.0/(2+1)) * p_2[1].X  + ((2+1-2)/(2+1)) * p_2[2].X;
+                p_3[2].Y = (2.0/(2+1)) * p_2[1].Y  + ((2+1-2)/(2+1)) * p_2[2].Y;
 
-                cairo_curve_to(cr, p_3[0].x, p_3[0].y, p_3[1].x, p_3[1].y, p_3[2].x, p_3[2].y);
+                cairo_curve_to(cr, p_3[0].X, p_3[0].Y, p_3[1].X, p_3[1].Y, p_3[2].X, p_3[2].Y);
             }
         }
         if ( subpath->IsClosed() ){
-            cairo_line_to(cr, p0.x, p0.y);
+            cairo_line_to(cr, p0.X, p0.Y);
             //cairo_close_path(cr);
         }
     }
@@ -629,6 +632,12 @@ void CairoRender::ImplCls::DrawPathObject(cairo_t *cr, PathObject *pathObject){
         //LOG(DEBUG) << "Debug missing path image.";
     }
     LOG(ERROR) << pathObject->to_string();
+
+    //if ( pathObject->FillShading != nullptr ){
+        //doRadialShFill(cr, pathObject);
+        //return;
+    //}
+
 
     //setDefaultCTM(cr);
     //clearCTM(cr);
@@ -1059,8 +1068,530 @@ void CairoRender::EoClip(PathPtr clipPath){
     m_impl->EoClip(clipPath);
 }
 
+static inline ofd::ColorPtr getShadingColorRadialHelper(double t0, double t1, double t, ofd::AxialShading*shading) {
+    ofd::ColorPtr color = nullptr;
+    if (t0 < t1) {
+        if (t < t0) {
+            color = shading->GetColor(t0);
+        } else if (t > t1) {
+            color = shading->GetColor(t1);
+        } else {
+            color = shading->GetColor(t);
+        }
+    } else {
+        if (t > t0) {
+            color = shading->GetColor(t0);
+        } else if (t < t1) {
+            color = shading->GetColor(t1);
+        } else {
+            color = shading->GetColor(t);
+        }
+    }
+    return color;
+}
+
 void CairoRender::Rebuild(double pixelWidth, double pixelHeight, double resolutionX, double resolutionY){
     m_impl->Rebuild(pixelWidth, pixelHeight, resolutionX, resolutionY);
 }
 
+// Max number of splits along the t axis for an axial shading fill.
+#define axialMaxSplits 256
 
+// Max delta allowed in any color component for an axial shading fill.
+#define axialColorDelta (1 / 256.0)
+
+// Max number of splits along the t axis for a radial shading fill.
+#define radialMaxSplits 256
+
+// Max delta allowed in any color component for a radial shading fill.
+#define radialColorDelta (1 / 256.0)
+
+//GfxRadialShading *shading
+
+void CairoRender::ImplCls::DrawRadialPathObject(cairo_t *cr, PathObject *pathObject){
+        //if ( pathObject->FillShading != nullptr )
+    cairo_matrix_t matrix;
+    matrix.xx = pathObject->CTM[0];
+
+    matrix.yx = pathObject->CTM[1];
+    matrix.xy = pathObject->CTM[2];
+
+    //// FIXME
+    //matrix.yx = 0;//pathObject->CTM[2];
+    //matrix.xy = 0;//pathObject->CTM[1];
+
+
+    matrix.yy = pathObject->CTM[3];
+    matrix.x0 = pathObject->CTM[4];
+    matrix.y0 = pathObject->CTM[5];
+    cairo_transform(cr, &matrix);
+
+    showCairoMatrix(cr, "CairoRender", "DrawPathObject");
+
+
+    PathPtr path = pathObject->GetPath();
+    DoCairoPath(cr, path);
+
+    cairo_set_line_width(cr, pathObject->LineWidth);
+
+            UpdateFillPattern(pathObject->FillShading);
+        cairo_set_source(cr, m_fillPattern);
+
+        if ( pathObject->Rule == ofd::PathRule::EvenOdd ){
+            cairo_set_fill_rule(cr, CAIRO_FILL_RULE_EVEN_ODD);
+        } else {
+            cairo_set_fill_rule(cr, CAIRO_FILL_RULE_WINDING);
+        }
+
+        cairo_fill(cr);
+
+        if ( pathObject->Rule == ofd::PathRule::EvenOdd ){
+            EoClip(path);
+        } else {
+            Clip(path);
+        }
+}
+
+    //ofd::RadialShading *shading = (ofd::RadialShading*)m_shading.get();
+void CairoRender::ImplCls::doRadialShFill(cairo_t *cr, PathObject *pathObject){
+    if (pathObject == nullptr) return;
+
+    assert(pathObject->FillShading != nullptr);
+    ofd::RadialShading *shading  = (ofd::RadialShading*)pathObject->FillShading.get();
+
+    double *ctm = &pathObject->CTM[0];
+    double xMin = pathObject->Boundary.XMin;
+    double yMin = pathObject->Boundary.YMin;
+    double xMax = pathObject->Boundary.XMax;
+    double yMax = pathObject->Boundary.YMax;
+
+    double x0, y0, r0, x1, y1, r1, t0, t1;
+    //int nComps;
+    ofd::ColorPtr colorA, colorB;
+    double xa, ya, xb, yb, ra, rb;
+    double ta, tb, sa, sb;
+    double sz, xz, yz, sMin, sMax;
+    GBool enclosed;
+    int ia, ib, k, n;
+    //double *ctm;
+    double theta, alpha, angle, t;
+    GBool needExtend = gTrue;
+
+
+    // get the shading info
+    //shading->getCoords(&x0, &y0, &r0, &x1, &y1, &r1);
+    x0 = shading->StartPoint.X;
+    y0 = shading->StartPoint.Y;
+    x1 = shading->EndPoint.X;
+    y1 = shading->EndPoint.Y;
+    r0 = shading->StartRadius;
+    r1 = shading->EndRadius;
+
+    // TODO ???
+    //t0 = shading->getDomain0();
+    //t1 = shading->getDomain1();
+    t0 = 0;
+    t1 = 1;
+
+    //nComps = shading->getColorSpace()->getNComps();
+    //nComps = 4;
+
+    // Compute the point at which r(s) = 0; check for the enclosed
+    // circles case; and compute the angles for the tangent lines.
+    if (x0 == x1 && y0 == y1) {
+        enclosed = gTrue;
+        theta = 0; // make gcc happy
+        sz = 0; // make gcc happy
+    } else if (r0 == r1) {
+        enclosed = gFalse;
+        theta = 0;
+        sz = 0; // make gcc happy
+    } else {
+        sz = (r1 > r0) ? -r0 / (r1 - r0) : -r1 / (r0 - r1);
+        xz = x0 + sz * (x1 - x0);
+        yz = y0 + sz * (y1 - y0);
+        enclosed = (xz - x0) * (xz - x0) + (yz - y0) * (yz - y0) <= r0 * r0;
+        theta = asin(r0 / sqrt((x0 - xz) * (x0 - xz) + (y0 - yz) * (y0 - yz)));
+        if (r0 > r1) {
+            theta = -theta;
+        }
+    }
+    if (enclosed) {
+        alpha = 0;
+    } else {
+        alpha = atan2(y1 - y0, x1 - x0);
+    }
+
+    // compute the (possibly extended) s range
+    // FIXME
+    sMin = 0;
+    sMax = 1;
+    //state->getUserClipBBox(&xMin, &yMin, &xMax, &yMax);
+    //if (enclosed) {
+        //sMin = 0;
+        //sMax = 1;
+    //} else {
+        //sMin = 1;
+        //sMax = 0;
+        //// solve for x(s) + r(s) = xMin
+        //if ((x1 + r1) - (x0 + r0) != 0) {
+            //sa = (xMin - (x0 + r0)) / ((x1 + r1) - (x0 + r0));
+            //if (sa < sMin) {
+                //sMin = sa;
+            //} else if (sa > sMax) {
+                //sMax = sa;
+            //}
+        //}
+        //// solve for x(s) - r(s) = xMax
+        //if ((x1 - r1) - (x0 - r0) != 0) {
+            //sa = (xMax - (x0 - r0)) / ((x1 - r1) - (x0 - r0));
+            //if (sa < sMin) {
+                //sMin = sa;
+            //} else if (sa > sMax) {
+                //sMax = sa;
+            //}
+        //}
+        //// solve for y(s) + r(s) = yMin
+        //if ((y1 + r1) - (y0 + r0) != 0) {
+            //sa = (yMin - (y0 + r0)) / ((y1 + r1) - (y0 + r0));
+            //if (sa < sMin) {
+                //sMin = sa;
+            //} else if (sa > sMax) {
+                //sMax = sa;
+            //}
+        //}
+        //// solve for y(s) - r(s) = yMax
+        //if ((y1 - r1) - (y0 - r0) != 0) {
+            //sa = (yMax - (y0 - r0)) / ((y1 - r1) - (y0 - r0));
+            //if (sa < sMin) {
+                //sMin = sa;
+            //} else if (sa > sMax) {
+                //sMax = sa;
+            //}
+        //}
+        //// check against sz
+        //if (r0 < r1) {
+            //if (sMin < sz) {
+                //sMin = sz;
+            //}
+        //} else if (r0 > r1) {
+            //if (sMax > sz) {
+                //sMax = sz;
+            //}
+        //}
+        //// check the 'extend' flags
+        //// FIXME
+        ////if (!shading->getExtend0() && sMin < 0) {
+            ////sMin = 0;
+        ////}
+        ////if (!shading->getExtend1() && sMax > 1) {
+            ////sMax = 1;
+        ////}
+    //}
+
+    // FIXME
+    //if (out->useShadedFills( shading->getType() ) &&
+            //out->radialShadedFill(state, shading, sMin, sMax)) {
+        //return;
+    //}
+
+    // compute the number of steps into which circles must be divided to
+    // achieve a curve flatness of 0.1 pixel in device space for the
+    // largest circle (note that "device space" is 72 dpi when generating
+    // PostScript, hence the relatively small 0.1 pixel accuracy)
+    // FIXME
+    //ctm = state->getCTM();
+    t = fabs(ctm[0]);
+    if (fabs(ctm[1]) > t) {
+        t = fabs(ctm[1]);
+    }
+    if (fabs(ctm[2]) > t) {
+        t = fabs(ctm[2]);
+    }
+    if (fabs(ctm[3]) > t) {
+        t = fabs(ctm[3]);
+    }
+    if (r0 > r1) {
+        t *= r0;
+    } else {
+        t *= r1;
+    }
+    if (t < 1) {
+        n = 3;
+    } else {
+        n = (int)(M_PI / acos(1 - 0.1 / t));
+        if (n < 3) {
+            n = 3;
+        } else if (n > 200) {
+            n = 200;
+        }
+    }
+
+    // setup for the start circle
+    ia = 0;
+    sa = sMin;
+    ta = t0 + sa * (t1 - t0);
+    xa = x0 + sa * (x1 - x0);
+    ya = y0 + sa * (y1 - y0);
+    ra = r0 + sa * (r1 - r0);
+    colorA = getShadingColorRadialHelper(t0, t1, ta, shading);
+
+    //needExtend = !out->radialShadedSupportExtend(state, shading);
+
+    // fill the circles
+    while (ia < radialMaxSplits) {
+
+        // go as far along the t axis (toward t1) as we can, such that the
+        // color difference is within the tolerance (radialColorDelta) --
+        // this uses bisection (between the current value, t, and t1),
+        // limited to radialMaxSplits points along the t axis; require at
+        // least one split to avoid problems when the innermost and
+        // outermost colors are the same
+        ib = radialMaxSplits;
+        sb = sMax;
+        tb = t0 + sb * (t1 - t0);
+        colorB = getShadingColorRadialHelper(t0, t1, tb, shading);
+        while (ib - ia > 1) {
+            //if (isSameGfxColor(colorB, colorA, nComps, radialColorDelta)) {
+            if ( colorB->IsSameColor(colorA, radialColorDelta) ){
+                // The shading is not necessarily lineal so having two points with the
+                // same color does not mean all the areas in between have the same color too
+                int ic = ia + 1;
+                for (; ic <= ib; ic++) {
+                    ofd::ColorPtr colorC;
+                    const double sc = sMin + ((double)ic / (double)radialMaxSplits) * (sMax - sMin);
+                    const double tc = t0 + sc * (t1 - t0);
+                    colorC = getShadingColorRadialHelper(t0, t1, tc, shading);
+                    //if (!isSameGfxColor(colorC, colorA, nComps, radialColorDelta)) {
+                    if ( !colorC->IsSameColor(colorA, radialColorDelta) ){
+                        break;
+                    }
+                }
+                ib = (ic > ia + 1) ? ic - 1 : ia + 1;
+                sb = sMin + ((double)ib / (double)radialMaxSplits) * (sMax - sMin);
+                tb = t0 + sb * (t1 - t0);
+                colorB = getShadingColorRadialHelper(t0, t1, tb, shading);
+                break;
+            }
+            ib = (ia + ib) / 2;
+            sb = sMin + ((double)ib / (double)radialMaxSplits) * (sMax - sMin);
+            tb = t0 + sb * (t1 - t0);
+            colorB = getShadingColorRadialHelper(t0, t1, tb, shading);
+        }
+
+        // compute center and radius of the circle
+        xb = x0 + sb * (x1 - x0);
+        yb = y0 + sb * (y1 - y0);
+        rb = r0 + sb * (r1 - r0);
+
+        // use the average of the colors at the two circles
+
+        //for (k = 0; k < nComps; ++k) {
+            //colorA.c[k] = (colorA.c[k] + colorB.c[k]) / 2;
+        //}
+        colorA->AverageColor(colorB);
+        //state->setFillColor(&colorA);
+        //m_fillColor = colorA
+
+        // FIXME
+        //if (out->useFillColorStop())
+            //out->updateFillColorStop(state, (sa - sMin)/(sMax - sMin));
+        //else
+            //out->updateFillColor(state);
+
+        if (needExtend) {
+            if (enclosed) {
+                // construct path for first circle (counterclockwise)
+                //state->moveTo(xa + ra, ya);
+                cairo_move_to(cr, xa + ra, ya);
+                for (k = 1; k < n; ++k) {
+                    angle = ((double)k / (double)n) * 2 * M_PI;
+                    //state->lineTo(xa + ra * cos(angle), ya + ra * sin(angle));
+                    cairo_line_to(cr, xa + ra * cos(angle), ya + ra * sin(angle));
+                }
+                //state->closePath();
+                cairo_close_path(cr);
+
+                // construct and append path for second circle (clockwise)
+                //state->moveTo(xb + rb, yb);
+                cairo_move_to(cr, xb + rb, yb);
+                for (k = 1; k < n; ++k) {
+                    angle = -((double)k / (double)n) * 2 * M_PI;
+                    //state->lineTo(xb + rb * cos(angle), yb + rb * sin(angle));
+                    cairo_line_to(cr, xb + rb * cos(angle), yb + rb * sin(angle));
+                }
+                //state->closePath();
+                cairo_close_path(cr);
+            } else {
+                // construct the first subpath (clockwise)
+                //state->moveTo(xa + ra * cos(alpha + theta + 0.5 * M_PI),
+                        //ya + ra * sin(alpha + theta + 0.5 * M_PI));
+                cairo_move_to(cr, xa + ra * cos(alpha + theta + 0.5 * M_PI),
+                        ya + ra * sin(alpha + theta + 0.5 * M_PI));
+                for (k = 0; k < n; ++k) {
+                    angle = alpha + theta + 0.5 * M_PI
+                        - ((double)k / (double)n) * (2 * theta + M_PI);
+                    //state->lineTo(xb + rb * cos(angle), yb + rb * sin(angle));
+                    cairo_line_to(cr, xb + rb * cos(angle), yb + rb * sin(angle));
+                }
+                for (k = 0; k < n; ++k) {
+                    angle = alpha - theta - 0.5 * M_PI
+                        + ((double)k / (double)n) * (2 * theta - M_PI);
+                    //state->lineTo(xa + ra * cos(angle), ya + ra * sin(angle));
+                    cairo_line_to(cr, xa + ra * cos(angle), ya + ra * sin(angle));
+                }
+                //state->closePath();
+                cairo_close_path(cr);
+
+                // construct the second subpath (counterclockwise)
+                //state->moveTo(xa + ra * cos(alpha + theta + 0.5 * M_PI),
+                        //ya + ra * sin(alpha + theta + 0.5 * M_PI));
+                cairo_move_to(cr, xa + ra * cos(alpha + theta + 0.5 * M_PI),
+                        ya + ra * sin(alpha + theta + 0.5 * M_PI));
+                for (k = 0; k < n; ++k) {
+                    angle = alpha + theta + 0.5 * M_PI
+                        + ((double)k / (double)n) * (-2 * theta + M_PI);
+                    //state->lineTo(xb + rb * cos(angle), yb + rb * sin(angle));
+                    cairo_line_to(cr, xb + rb * cos(angle), yb + rb * sin(angle));
+                }
+                for (k = 0; k < n; ++k) {
+                    angle = alpha - theta - 0.5 * M_PI
+                        + ((double)k / (double)n) * (2 * theta + M_PI);
+                    //state->lineTo(xa + ra * cos(angle), ya + ra * sin(angle));
+                    cairo_line_to(cr, xa + ra * cos(angle), ya + ra * sin(angle));
+                }
+                //state->closePath();
+                cairo_close_path(cr);
+            }
+        }
+
+        //if (!out->useFillColorStop()) {
+            // fill the path
+            //out->fill(state);
+            //state->clearPath();
+        //}
+        DrawRadialPathObject(cr, pathObject);
+
+        // step to the next value of t
+        ia = ib;
+        sa = sb;
+        ta = tb;
+        xa = xb;
+        ya = yb;
+        ra = rb;
+        colorA = colorB;
+    }
+
+    // FIXME
+    //if (out->useFillColorStop()) {
+        // make sure we add stop color when sb = sMax
+        // FIXME
+        //state->setFillColor(&colorA);
+        //out->updateFillColorStop(state, (sb - sMin)/(sMax - sMin));
+
+        // fill the path
+        //state->moveTo(xMin, yMin);
+        //state->lineTo(xMin, yMax);
+        //state->lineTo(xMax, yMax);
+        //state->lineTo(xMax, yMin);
+        //state->closePath();
+        cairo_move_to(cr, xMin, yMin);
+        cairo_line_to(cr, xMin, yMax);
+        cairo_line_to(cr, xMax, yMax);
+        cairo_line_to(cr, xMax, yMin);
+        cairo_close_path(cr);
+
+        //out->fill(state);
+        //state->clearPath();
+        //cairo_clear_path(cr);
+        DrawRadialPathObject(cr, pathObject);
+    //}
+
+    if (!needExtend)
+        return;
+
+    if (enclosed) {
+        // extend the smaller circle
+        //if ((shading->getExtend0() && r0 <= r1) ||
+                //(shading->getExtend1() && r1 < r0)) {
+        if ( shading->Extend ){
+            if (r0 <= r1) {
+                ta = t0;
+                ra = r0;
+                xa = x0;
+                ya = y0;
+            } else {
+                ta = t1;
+                ra = r1;
+                xa = x1;
+                ya = y1;
+            }
+            colorA = shading->GetColor(ta);
+            // FIXME
+            //state->setFillColor(&colorA);
+            //out->updateFillColor(state);
+            //state->moveTo(xa + ra, ya);
+            cairo_move_to(cr, xa + ra, ya);
+            for (k = 1; k < n; ++k) {
+                angle = ((double)k / (double)n) * 2 * M_PI;
+                //state->lineTo(xa + ra * cos(angle), ya + ra * sin(angle));
+                cairo_line_to(cr, xa + ra * cos(angle), ya + ra * sin(angle));
+            }
+            //state->closePath();
+            cairo_close_path(cr);
+            //out->fill(state);
+            //state->clearPath();
+            //cairo_clear_path(cr);
+
+            DrawRadialPathObject(cr, pathObject);
+
+        }
+
+        // extend the larger circle
+        // FIXME
+        //if ((shading->getExtend0() && r0 > r1) ||
+                //(shading->getExtend1() && r1 >= r0)) {
+            if (r0 > r1) {
+                ta = t0;
+                ra = r0;
+                xa = x0;
+                ya = y0;
+            } else {
+                ta = t1;
+                ra = r1;
+                xa = x1;
+                ya = y1;
+            }
+            colorA = shading->GetColor(ta);
+            // FIXME
+            //state->setFillColor(&colorA);
+            //out->updateFillColor(state);
+
+            //state->moveTo(xMin, yMin);
+            //state->lineTo(xMin, yMax);
+            //state->lineTo(xMax, yMax);
+            //state->lineTo(xMax, yMin);
+            //state->closePath();
+            cairo_move_to(cr, xMin, yMin);
+            cairo_line_to(cr, xMin, yMax);
+            cairo_line_to(cr, xMax, yMax);
+            cairo_line_to(cr, xMax, yMin);
+            cairo_close_path(cr);
+
+            //state->moveTo(xa + ra, ya);
+            cairo_move_to(cr, xa + ra, ya);
+            for (k = 1; k < n; ++k) {
+                angle = ((double)k / (double)n) * 2 * M_PI;
+                //state->lineTo(xa + ra * cos(angle), ya + ra * sin(angle));
+                cairo_line_to(cr, xa + ra * cos(angle), ya + ra * sin(angle));
+            }
+            //state->closePath();
+            cairo_close_path(cr);
+            //out->fill(state);
+            //state->clearPath();
+            //cairo_clear_path();
+
+            DrawRadialPathObject(cr, pathObject);
+        //}
+    }
+}

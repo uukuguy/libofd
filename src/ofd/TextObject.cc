@@ -236,3 +236,6 @@ bool TextObject::IterateElementsXML(utils::XMLElementPtr childElement){
 
     return ok;
 }
+
+void TextObject::RecalculateBoundary(){
+}

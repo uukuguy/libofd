@@ -75,7 +75,7 @@ void OFDOutputDev::doPath(cairo_t *cairo, GfxState *state, GfxPath *path){
             }
             cairo_move_to(cairo, x, y);
             j = 1;
-            while (j < subpath->getNumPoints() - 2) {
+            while (j < subpath->getNumPoints()) {
                 if (subpath->getCurve(j)) {
                     if (m_alignStrokeCoords) {
                         alignStrokeCoords(subpath, j + 2, &x, &y);
@@ -912,3 +912,4 @@ GBool OFDOutputDev::patchMeshShadedFill(GfxState *state, GfxPatchMeshShading *sh
 
     return gTrue;
 }
+

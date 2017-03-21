@@ -38,6 +38,7 @@ namespace ofd{
             virtual void WriteShadingXML(utils::XMLWriter &writer) const;
             virtual bool ReadShadingXML(utils::XMLElementPtr shadingElement);
             virtual void SetColorStops(const ColorStopArray &colorStops){};
+            virtual ColorPtr GetColor(double offset) const {return nullptr;};
 
     }; // Shading
 
@@ -67,6 +68,7 @@ namespace ofd{
             virtual void WriteShadingXML(utils::XMLWriter &writer) const override;
             virtual bool ReadShadingXML(utils::XMLElementPtr shadingElement) override;
             virtual void SetColorStops(const ColorStopArray &colorStops) override {ColorSegments = colorStops;};
+            virtual ColorPtr GetColor(double offset) const override;
     }; // class AxialShading
 
     // ======== class RadialShading ========

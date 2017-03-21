@@ -24,9 +24,27 @@ std::string Subpath::to_string() const{
     size_t numPoints = GetNumPoints();
     ss << " numPoints:" << numPoints << " ";
     for ( size_t i = 0 ; i < numPoints ; i++){
-        ss << "(" << m_points[i].x << "," << m_points[i].y << ") ";
+        ss << "(" << m_points[i].X << "," << m_points[i].Y << ") ";
     }
     return ss.str();
+}
+
+Boundary Subpath::CalculateBoundary() const{
+    Boundary boundary;
+    size_t numPoints = m_points.size();
+    if ( numPoints > 0 ){
+        boundary.XMin = m_points[0].X;
+        boundary.XMax = m_points[0].X;
+        boundary.YMin = m_points[0].Y;
+        boundary.YMax = m_points[0].Y;
+        for ( size_t i = 1 ; i < numPoints ; i++ ){
+            boundary.XMin = std::min(boundary.XMin, m_points[i].X);
+            boundary.XMax = std::max(boundary.XMax, m_points[i].X);
+            boundary.YMin = std::min(boundary.YMin, m_points[i].Y);
+            boundary.YMax = std::max(boundary.YMax, m_points[i].Y);
+        }
+    }
+    return boundary;
 }
 
 SubpathPtr Subpath::Clone() const{
@@ -112,6 +130,21 @@ std::string Path::to_string() const {
         ss << "\n";
     }
     return ss.str();
+}
+
+Boundary Path::CalculateBoundary() const{
+    Boundary boundary;
+
+    size_t numSubpaths = m_subpaths.size();
+    for ( size_t i = 0 ; i < numSubpaths ; i++ ){
+        SubpathPtr subpath = GetSubpath(i);
+        Boundary box = subpath->CalculateBoundary();
+        if ( !box.IsEmpty() ){
+            boundary.Union(box);
+        }
+    }
+
+    return boundary;
 }
 
 // ======== Path::GetLastSubpath() ========
@@ -221,27 +254,27 @@ std::string Path::ToPathData() const{
 
             const Point_t &startPoint = subpath->GetFirstPoint();
             if ( idx == 0 ){
-                ss << "S " << startPoint.x << " " << startPoint.y << " ";
+                ss << "S " << startPoint.X << " " << startPoint.Y << " ";
             } else {
-                ss << "M " << startPoint.x << " " << startPoint.y << " ";
+                ss << "M " << startPoint.X << " " << startPoint.Y << " ";
             }
             for ( size_t n = 1 ; n < numPoints ; n++ ){
                 char flag = subpath->GetFlag(n);
                 if ( flag == 'L' ){
                     const Point_t &p = subpath->GetPoint(n);
-                    ss << "L " << p.x << " " << p.y << " ";
+                    ss << "L " << p.X << " " << p.Y << " ";
                 } else if ( flag == 'Q' ){
                     const Point_t &p1 = subpath->GetPoint(n);
                     const Point_t &p2 = subpath->GetPoint(n+1);
-                    ss << "Q " << p1.x << " " << p1.y << " " << p2.x << " " << p2.y << " ";
+                    ss << "Q " << p1.X << " " << p1.Y << " " << p2.X << " " << p2.Y << " ";
                     n += 1;
                 } else if ( flag == 'B' ) {
                     const Point_t &p1 = subpath->GetPoint(n);
                     const Point_t &p2 = subpath->GetPoint(n+1);
                     const Point_t &p3 = subpath->GetPoint(n+2);
-                    ss << "B " << p1.x << " " << p1.y << " " 
-                               << p2.x << " " << p2.y << " "
-                               << p3.x << " " << p3.y << " ";
+                    ss << "B " << p1.X << " " << p1.Y << " " 
+                               << p2.X << " " << p2.Y << " "
+                               << p3.X << " " << p3.Y << " ";
                     n += 2;
                 }
             }

@@ -79,22 +79,22 @@ namespace ofd{
 
     // **************** struct Point ****************
     typedef struct _Point{
-        double x;
-        double y;
+        double X;
+        double Y;
 
-        _Point() : x(0.0), y(0.0){};
-        _Point(double _x, double _y): x(_x), y(_y){};
+        _Point() : X(0.0), Y(0.0){};
+        _Point(double _x, double _y): X(_x), Y(_y){};
 
         void Clear(){
-            x = y = 0.0;
+            X = Y = 0.0;
         }
 
         void Offset(double dx, double dy){
-            x += dx; y += dy;
+            X += dx; Y += dy;
         }
 
         bool operator ==(const _Point& other) const {
-            return x == other.x && y == other.y;
+            return X == other.X && Y == other.Y;
         }
 
         bool operator !=(const _Point& other) const {
@@ -129,6 +129,93 @@ namespace ofd{
         double y;
         ST_Pos() : x(0.0), y(0.0){};
     } ST_Pos_t;
+
+
+    typedef struct Boundary{
+        public:
+            double XMin;
+            double YMin;
+            double XMax;
+            double YMax;
+
+            Boundary():
+                XMin(0.0), YMin(0.0), XMax(0.0), YMax(0.0){
+            }
+
+            Boundary(double xMin, double yMin, double xMax, double yMax){
+                XMin = std::min(xMin, xMax);
+                XMax = std::max(xMin, xMax);
+                YMin = std::min(yMin, yMax);
+                YMax = std::max(yMin, yMax);
+            }
+
+            double Width() const{
+                return fabs(XMax - XMin);
+            }
+
+            double Height() const{
+                return fabs(YMax - YMin);
+            }
+
+            std::string to_string() const {
+                std::stringstream ss;
+                utils::SetStringStreamPrecision(ss, 3);
+                ss << "(" << XMin << "," << YMin << "," << XMax << "," << YMax << ")"; 
+                return ss.str();
+            }
+
+            std::string to_xmlstring() const {
+                std::stringstream ss;
+                utils::SetStringStreamPrecision(ss, 3);
+                ss << XMin << " " << YMin << " " << XMax << " " << YMax; 
+                return ss.str();
+            }
+
+            void clear(){
+                XMin = YMin = XMax = YMax = 0.0;
+            }
+
+            bool IsEmpty() const{
+                if ( XMin == 0.0 && XMax == 0.0 &&
+                        YMin == 0.0 && YMax == 0.0 ){
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+
+            void Union(const Boundary& other){
+                if ( IsEmpty() ){
+                    XMin = other.XMin;
+                    XMax = other.XMax;
+                    YMin = other.YMin;
+                    YMax = other.YMax;
+                } else {
+                    if ( !other.IsEmpty() ){
+                        XMin = std::min(XMin, other.XMin);
+                        XMax = std::max(XMax, other.XMax);
+                        YMin = std::min(YMin, other.YMin);
+                        YMax = std::max(YMax, other.YMax);
+                    }
+                }
+            }
+
+            void Intersect(const Boundary& other){
+                if ( IsEmpty() || other.IsEmpty() ){
+                    return;
+                } 
+                if ( XMin > other.XMax || XMax < other.XMin ||
+                        YMin > other.YMax || YMax < other.YMin ){
+                    clear();
+                } else {
+                    XMin = std::max(XMin, other.XMin);
+                    XMax = std::min(XMax, other.XMax);
+                    YMin = std::max(YMin, other.YMin);
+                    YMax = std::min(YMax, other.YMax);
+                }
+            }
+
+    } Boundary_t; // Boundary;
 
     // ST_Box: 矩形区域，以空格分割，前两个值代表了该矩形的左上角坐标，
     // 后两个值依次表示该矩形的宽和高，可以是整数或者浮点数，后两个值应大于0.

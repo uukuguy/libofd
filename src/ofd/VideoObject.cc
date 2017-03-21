@@ -43,4 +43,5 @@ bool VideoObject::IterateElementsXML(XMLElementPtr childElement){
     return false;
 }
 
-
+void VideoObject::RecalculateBoundary(){
+}

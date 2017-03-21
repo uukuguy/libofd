@@ -122,12 +122,16 @@ namespace ofd{
 
         ColorValue(uint32_t gray) {
             Gray = gray;
+            Values[1] = 0;
+            Values[2] = 0;
+            Values[3] = 0;
         }
 
         ColorValue(uint32_t r, uint32_t g, uint32_t b){
             RGB.Red = r;
             RGB.Green = g;
             RGB.Blue = b;
+            Values[3] = 0;
         }
 
         ColorValue(uint32_t c, uint32_t m, uint32_t y, uint32_t k){
@@ -142,6 +146,31 @@ namespace ofd{
                     Values[1] == colorValue.Values[1] &&
                     Values[2] == colorValue.Values[2] &&
                     Values[3] == colorValue.Values[3];
+        }
+
+        bool IsSameColor(const ColorValue& cv, double delta)const{
+            double v0 = (double)Values[0] / 255.0;
+            double v1 = (double)Values[1] / 255.0;
+            double v2 = (double)Values[2] / 255.0;
+            double v3 = (double)Values[3] / 255.0;
+
+            double y0 = (double)cv.Values[0] / 255.0;
+            double y1 = (double)cv.Values[1] / 255.0;
+            double y2 = (double)cv.Values[2] / 255.0;
+            double y3 = (double)cv.Values[3] / 255.0;
+
+            if ( fabs(v0 - y0) > delta ) return false;
+            if ( fabs(v1 - y1) > delta ) return false;
+            if ( fabs(v2 - y2) > delta ) return false;
+            if ( fabs(v3 - y3) > delta ) return false;
+            return true;
+        }
+
+        void AverageColor(const ColorValue& cv){
+            Values[0] = (Values[0] + cv.Values[0]) / 2;
+            Values[1] = (Values[1] + cv.Values[1]) / 2;
+            Values[2] = (Values[2] + cv.Values[2]) / 2;
+            Values[3] = (Values[3] + cv.Values[3]) / 2;
         }
 
     } ColorValue_t;
@@ -173,6 +202,8 @@ namespace ofd{
             Color(uint32_t c, uint32_t m, uint32_t y, uint32_t k, ColorSpacePtr colorSpace = ColorSpace::DefaultInstance, uint32_t alpha = 255);
             Color(const ColorValue &colorValue, ColorSpacePtr colorSpace = ColorSpace::DefaultInstance, uint32_t alpha = 255);
             Color(ColorSpacePtr colorSpace, uint32_t index, uint32_t alpha = 255);
+            bool IsSameColor(ColorPtr color, double delta) const {return Value.IsSameColor(color->Value, delta);};
+            void AverageColor(ColorPtr color){Value.AverageColor(color->Value);};
 
             // =============== Public Attributes ================
         public:

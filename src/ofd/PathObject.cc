@@ -214,3 +214,6 @@ bool PathObject::IterateElementsXML(XMLElementPtr childElement){
     return false;
 }
 
+void PathObject::RecalculateBoundary(){
+    Boundary = m_path->CalculateBoundary();
+}

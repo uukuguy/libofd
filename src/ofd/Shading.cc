@@ -25,10 +25,10 @@ cairo_pattern_t *RadialShading::CreateFillPattern(cairo_t *cr){
     cairo_pattern_t *fillPattern = nullptr;
 
     double x0, y0, r0, x1, y1, r1;
-    x0 = StartPoint.x;
-    y0 = StartPoint.y;
-    x1 = EndPoint.x;
-    y1 = EndPoint.y;
+    x0 = StartPoint.X;
+    y0 = StartPoint.Y;
+    x1 = EndPoint.X;
+    y1 = EndPoint.Y;
     r0 = StartRadius;
     r1 = EndRadius;
 
@@ -91,12 +91,12 @@ void RadialShading::WriteShadingXML(utils::XMLWriter &writer) const{
 
         // -------- <ofd::RadialShd StartPoint="">
         std::stringstream ss;
-        ss << StartPoint.x << " " << StartPoint.y;
+        ss << StartPoint.X << " " << StartPoint.Y;
         writer.WriteAttribute("StartPoint", ss.str());
         ss.str("");
 
         // -------- <ofd::RadialShd EndPoint="">
-        ss << EndPoint.x << " " << EndPoint.y;
+        ss << EndPoint.X << " " << EndPoint.Y;
         writer.WriteAttribute("EndPoint", ss.str());
         ss.str("");
 
@@ -145,13 +145,13 @@ bool RadialShading::ReadShadingXML(utils::XMLElementPtr shadingElement){
     Point_t startPoint, endPoint;
     std::vector<std::string> tokens0 = utils::SplitString(strStartPoint);
     if ( tokens0.size() == 2 ){
-        startPoint.x = atof(tokens0[0].c_str());
-        startPoint.y = atof(tokens0[1].c_str());
+        startPoint.X = atof(tokens0[0].c_str());
+        startPoint.Y = atof(tokens0[1].c_str());
     }
     std::vector<std::string> tokens1 = utils::SplitString(strEndPoint);
     if ( tokens1.size() == 2 ){
-        endPoint.x = atof(tokens1[0].c_str());
-        endPoint.y = atof(tokens1[1].c_str());
+        endPoint.X = atof(tokens1[0].c_str());
+        endPoint.Y = atof(tokens1[1].c_str());
     }
 
     double startRadius = 0.0, endRadius = 0.0;
@@ -194,10 +194,10 @@ cairo_pattern_t *AxialShading::CreateFillPattern(cairo_t *cr){
     cairo_pattern_t *fillPattern = nullptr;
 
     double x0, y0, x1, y1;
-    x0 = StartPoint.x;
-    y0 = StartPoint.y;
-    x1 = EndPoint.x;
-    y1 = EndPoint.y;
+    x0 = StartPoint.X;
+    y0 = StartPoint.Y;
+    x1 = EndPoint.X;
+    y1 = EndPoint.Y;
 
     double dx, dy;
     dx = x1 - x0;
@@ -227,12 +227,12 @@ void AxialShading::WriteShadingXML(utils::XMLWriter &writer) const{
 
         // -------- <ofd::AxialShd StartPoint="">
         std::stringstream ss;
-        ss << StartPoint.x << " " << StartPoint.y;
+        ss << StartPoint.X << " " << StartPoint.Y;
         writer.WriteAttribute("StartPoint", ss.str());
         ss.str("");
 
         // -------- <ofd::AxialShd EndPoint="">
-        ss << EndPoint.x << " " << EndPoint.y;
+        ss << EndPoint.X << " " << EndPoint.Y;
         writer.WriteAttribute("EndPoint", ss.str());
         ss.str("");
 
@@ -269,13 +269,13 @@ bool AxialShading::ReadShadingXML(utils::XMLElementPtr shadingElement){
     Point_t startPoint, endPoint;
     std::vector<std::string> tokens0 = utils::SplitString(strStartPoint);
     if ( tokens0.size() == 2 ){
-        startPoint.x = atof(tokens0[0].c_str());
-        startPoint.y = atof(tokens0[1].c_str());
+        startPoint.X = atof(tokens0[0].c_str());
+        startPoint.Y = atof(tokens0[1].c_str());
     }
     std::vector<std::string> tokens1 = utils::SplitString(strEndPoint);
     if ( tokens1.size() == 2 ){
-        endPoint.x = atof(tokens1[0].c_str());
-        endPoint.y = atof(tokens1[1].c_str());
+        endPoint.X = atof(tokens1[0].c_str());
+        endPoint.Y = atof(tokens1[1].c_str());
     }
 
     // <Segment>
@@ -305,6 +305,16 @@ bool AxialShading::ReadShadingXML(utils::XMLElementPtr shadingElement){
     return true;
 }
 
+ColorPtr AxialShading::GetColor(double offset) const{
+    ColorPtr color = nullptr;
+    for ( auto cs : ColorSegments){
+        if ( cs.Offset >= offset ){
+            color = cs.Color;
+            break;
+        }
+    }
+    return color;
+}
 
 // ======== Shading::WriteShadingXML() ========
 void Shading::WriteShadingXML(utils::XMLWriter &writer) const{

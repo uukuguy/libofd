@@ -36,6 +36,7 @@ namespace ofd{
             void LineTo(const Point_t& point);
             void CurveTo(const Point_t& p0, const Point_t& p1, const Point_t& p2);
             char GetFlag(size_t idx) const;
+            Boundary CalculateBoundary() const;
 
         private:
             std::vector<Point_t> m_points;
@@ -74,6 +75,8 @@ namespace ofd{
             SubpathPtr GetLastSubpath() const;
 
             const Point_t& GetStartPoint() const {return m_startPoint;};
+            Boundary CalculateBoundary() const;
+
         private:
             bool m_bJustMoved;
             Point_t m_startPoint;

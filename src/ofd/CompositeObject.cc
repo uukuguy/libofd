@@ -43,3 +43,18 @@ bool CompositeObject::IterateElementsXML(XMLElementPtr childElement){
     return false;
 }
 
+void CompositeObject::RecalculateBoundary(){
+    Boundary.clear();
+
+    //size_t numObjects = m_objects.size();
+    //if ( numObjects == 0 ) return;
+
+    //m_objects[0]->RecalculateBoundary();
+    //Boundary = m_objects[0].Boundary;
+    //for ( size_t i = 1 ; i < numObjects ; i++ ){
+        //obj->RecalculateBoundary();
+        //if ( obj->Boundary.XMin < Boundary.XMin ){
+            //Boundary.XMin = obj->Boundary.XMin;
+        //}
+    //}
+}

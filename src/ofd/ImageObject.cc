@@ -147,3 +147,5 @@ bool ImageObject::IterateElementsXML(XMLElementPtr childElement){
     return false;
 }
 
+void ImageObject::RecalculateBoundary(){
+}

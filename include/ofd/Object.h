@@ -17,6 +17,7 @@ namespace ofd{
 
     class Object : public std::enable_shared_from_this<Object>{
         public:
+        public:
             Object(LayerPtr layer, ObjectType objectType, const std::string& objectLabel);
             virtual ~Object();
             ObjectPtr GetSelf(){return shared_from_this();};
@@ -29,7 +30,8 @@ namespace ofd{
 
             // -------- GraphUnit attributes --------
             // OFD P50. Page.xsd.
-            ST_Box       Boundary; 
+            //ST_Box       Boundary; 
+            ofd::Boundary       Boundary; 
             std::string  Name;
             bool         Visible;
             double       CTM[6];
@@ -41,6 +43,7 @@ namespace ofd{
             virtual std::string to_string() const;
             void GenerateXML(utils::XMLWriter &writer) const;
             bool FromXML(utils::XMLElementPtr objectElement);
+            virtual void RecalculateBoundary(){};
 
         protected:
             virtual void GenerateAttributesXML(utils::XMLWriter &writer) const;

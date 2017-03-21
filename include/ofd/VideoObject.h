@@ -25,7 +25,7 @@ namespace ofd{
 
         virtual bool FromAttributesXML(utils::XMLElementPtr objectElement) override;
         virtual bool IterateElementsXML(utils::XMLElementPtr childElement) override;
-
+        virtual void RecalculateBoundary() override;
     }; // class OFDVideoObject
     typedef std::shared_ptr<VideoObject> VideoObjectPtr;
 

@@ -19,6 +19,7 @@ Layer::~Layer(){
 void Layer::AddObject(ObjectPtr object) {
     if ( object != nullptr ){
         object->ID = numObjects++;
+        object->RecalculateBoundary();
         m_objects.push_back(object);
     }
 }

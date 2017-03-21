@@ -380,6 +380,8 @@ private:
     ofd::ColorStopArray m_colorStops; // Color stops for shading
 
 
+    void doRadialShFill(GfxState *state);
+
 }; // class OFDOutputDev
 
 #endif // __OFDOUTPUTDEV_H__

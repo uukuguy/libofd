@@ -352,9 +352,6 @@ void OFDOutputDev::drawImage(GfxState *state, Object *ref, Stream *str,
 			       int *maskColors, GBool inlineImg) {
 
 
-    // FIXME
-    return;
-
     //// -------- Write image stream to zip file. --------
     ofd::ImagePtr image = std::make_shared<ofd::Image>();
     uint64_t imageID = image->ID;

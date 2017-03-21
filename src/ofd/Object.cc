@@ -119,7 +119,7 @@ std::string Object::to_string() const {
         << "ID:" << ID << " | "
         << "Type: " << (int)Type << " | "
         << "CTM:(" << CTM[0] << "," << CTM[1] << "," << CTM[2] << "," << CTM[3] << "," << CTM[4] << "," << CTM[5] << ") | "
-        << "Boundary:(" << Boundary.Left << "," << Boundary.Top << "," << Boundary.Width << "," << Boundary.Height << ") | "
+        << "Boundary:" << Boundary.to_string() << " | "
         << "Alpha:" << Alpha << " | "
         << "Visible:" << Visible << " | "
         << "LineWidth:" << LineWidth << " | "
@@ -238,10 +238,22 @@ bool Object::FromAttributesXML(utils::XMLElementPtr objectElement){
     }
     std::vector<std::string> tokens = utils::SplitString(strBoundary);
     if ( tokens.size() >= 4 ){
-        Boundary.Left = atof(tokens[0].c_str());
-        Boundary.Top = atof(tokens[1].c_str());
-        Boundary.Width = atof(tokens[2].c_str());
-        Boundary.Height = atof(tokens[3].c_str());
+        double left = atof(tokens[0].c_str());
+        double top = atof(tokens[1].c_str());
+        double width = atof(tokens[2].c_str());
+        double height = atof(tokens[3].c_str());
+        if ( width < 0 ){
+            left -= width;
+            width = fabs(width);
+        }
+        if ( height < 0 ){
+            top -= height;
+            height = fabs(height);
+        }
+        Boundary.XMin = left;
+        Boundary.YMin = top;
+        Boundary.XMax = left + width;
+        Boundary.YMax = top + height;
         ok = true;
     } else {
         LOG(ERROR) << "Box String tokens size >= 4 failed. boxString:" << strBoundary << " element name: " << objectElement->GetName();
