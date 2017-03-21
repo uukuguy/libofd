@@ -19,6 +19,16 @@ Subpath::Subpath(const Subpath *other) :
     std::copy(other->m_points.begin(), other->m_points.end(), m_points.begin());
 }
 
+std::string Subpath::to_string() const{
+    std::stringstream ss;
+    size_t numPoints = GetNumPoints();
+    ss << " numPoints:" << numPoints << " ";
+    for ( size_t i = 0 ; i < numPoints ; i++){
+        ss << "(" << m_points[i].x << "," << m_points[i].y << ") ";
+    }
+    return ss.str();
+}
+
 SubpathPtr Subpath::Clone() const{
     return std::make_shared<Subpath>(this);
 }
@@ -87,6 +97,21 @@ Path::Path() :
 }
 
 Path::~Path(){
+}
+
+std::string Path::to_string() const {
+    std::stringstream ss;
+    size_t numSubpaths = GetNumSubpaths();
+    ss << " Path: " << "numSubpaths:" << numSubpaths << " \n";
+    for ( size_t idx = 0 ; idx < numSubpaths ; idx++){
+        ss << "  subpath-" << idx << ": ";
+        SubpathPtr subpath = GetSubpath(idx);
+        if ( subpath != nullptr ){
+            ss << subpath->to_string();
+        }
+        ss << "\n";
+    }
+    return ss.str();
 }
 
 // ======== Path::GetLastSubpath() ========

@@ -624,9 +624,11 @@ void CairoRender::ImplCls::DrawPathObject(cairo_t *cr, PathObject *pathObject){
     if ( pathObject == nullptr ) return;
 
     // FIXME 渐变色缺陷调试
-    //if ( pathObject->ID == 71 ){
+    if ( pathObject->ID != 71 ){
+        return;
         //LOG(DEBUG) << "Debug missing path image.";
-    //}
+    }
+    LOG(ERROR) << pathObject->to_string();
 
     //setDefaultCTM(cr);
     //clearCTM(cr);

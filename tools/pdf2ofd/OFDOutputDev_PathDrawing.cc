@@ -75,7 +75,7 @@ void OFDOutputDev::doPath(cairo_t *cairo, GfxState *state, GfxPath *path){
             }
             cairo_move_to(cairo, x, y);
             j = 1;
-            while (j < subpath->getNumPoints()) {
+            while (j < subpath->getNumPoints() - 2) {
                 if (subpath->getCurve(j)) {
                     if (m_alignStrokeCoords) {
                         alignStrokeCoords(subpath, j + 2, &x, &y);
@@ -299,7 +299,8 @@ void OFDOutputDev::fill(GfxState *state) {
             //}
         //}
     //}
-    //if ( pathObject->ID == 71 ) return;
+    if ( pathObject->ID != 71 ) return;
+    LOG(ERROR) << pathObject->to_string();
 
     doPath(m_cairo, state, state->getPath());
     cairo_set_fill_rule(m_cairo, CAIRO_FILL_RULE_WINDING);

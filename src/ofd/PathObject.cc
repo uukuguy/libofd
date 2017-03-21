@@ -28,7 +28,9 @@ PathObject::~PathObject(){
 }
 
 std::string PathObject::to_string() const{
-    return Object::to_string();
+    std::string baseInfo = Object::to_string();
+    std::string pathInfo = m_path->to_string();
+    return baseInfo + "\n" + pathInfo;
 }
 
 void PathObject::SetFillColor(ColorPtr fillColor){

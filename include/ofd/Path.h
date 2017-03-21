@@ -17,6 +17,7 @@ namespace ofd{
         public:
             Subpath(const Point_t &startPoint);
             Subpath(const Subpath* other);
+            std::string to_string() const;
 
             // ================ Public Methods ================
         public:
@@ -53,6 +54,7 @@ namespace ofd{
         public:
             Path();
             ~Path();
+            std::string to_string() const;
 
             // ================ Public Methods ================
         public:
