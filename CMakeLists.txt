@@ -5,10 +5,13 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
 INCLUDE_DIRECTORIES(
     ./
     ./include
+    ./tools/poppler/poppler
+    ./tools/poppler
 )
 
 LINK_DIRECTORIES(
     /usr/local/lib
+    ./tools/poppler/poppler/.libs
 )
 
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
@@ -29,7 +32,7 @@ INCLUDE_DIRECTORIES(${HARFBUZZ_INCLUDE_DIRS})
 
 # -------- CXX Compile Options --------
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -Wall -Werror -Wno-c++11-extensions")
-SET(LIBOFD_DEPENDICES ${FREETYPE_LIBRARIES} ${HARFBUZZ_LIBRARIES} ${CAIRO_LIBRARIES} harfbuzz-icu stdc++)
+SET(LIBOFD_DEPENDICES ${FREETYPE_LIBRARIES} ${HARFBUZZ_LIBRARIES} ${CAIRO_LIBRARIES} harfbuzz-icu poppler poppler-cairo stdc++)
 
 # -std=c++11
 SET(CMAKE_CXX_STANDARD 11)

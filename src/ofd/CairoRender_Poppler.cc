@@ -1,4 +1,5 @@
 
+#include <stdint.h>
 #include "CairoRescaleBox.h"
 #include <GfxState.h>
 #include <OutputDev.h>

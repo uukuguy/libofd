@@ -631,7 +631,7 @@ void CairoRender::ImplCls::DrawPathObject(cairo_t *cr, PathObject *pathObject){
         return;
         //LOG(DEBUG) << "Debug missing path image.";
     }
-    LOG(ERROR) << pathObject->to_string();
+    //LOG(ERROR) << pathObject->to_string();
 
     //if ( pathObject->FillShading != nullptr ){
         //doRadialShFill(cr, pathObject);

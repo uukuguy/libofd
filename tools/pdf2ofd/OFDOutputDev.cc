@@ -34,31 +34,31 @@ extern "C"{
 
 std::ofstream cairoLogFile;
 
-class MyTextPage : public TextPage {
-public:
-  MyTextPage(OFDOutputDev * outputDev, GBool rawOrderA) : 
-      TextPage(rawOrderA), m_outputDev(outputDev){
-  }
+//class MyTextPage : public TextPage {
+//public:
+  //MyTextPage(OFDOutputDev * outputDev, GBool rawOrderA) : 
+      //TextPage(rawOrderA), m_outputDev(outputDev){
+  //}
 
-  OFDOutputDev *GetOutputDev() const {return m_outputDev;};
+  //OFDOutputDev *GetOutputDev() const {return m_outputDev;};
 
-  virtual void beginWord(GfxState *state);
-  virtual void endWord();
+  //virtual void beginWord(GfxState *state);
+  //virtual void endWord();
 
-private:
-  OFDOutputDev *m_outputDev;
-  GfxState *m_state;
-}; // class MyTextPage
+//private:
+  //OFDOutputDev *m_outputDev;
+  //GfxState *m_state;
+//}; // class MyTextPage
 
-void MyTextPage::beginWord(GfxState *state){
-    m_state = state;
-    TextPage::beginWord(state);
-}
+//void MyTextPage::beginWord(GfxState *state){
+    //m_state = state;
+    //TextPage::beginWord(state);
+//}
 
-void MyTextPage::endWord(){
-    m_outputDev->OnWord(curWord, m_state);
-    TextPage::endWord();
-}
+//void MyTextPage::endWord(){
+    //m_outputDev->OnWord(curWord, m_state);
+    //TextPage::endWord();
+//}
 
 using namespace ofd;
 
@@ -95,8 +95,8 @@ OFDOutputDev::OFDOutputDev(ofd::PackagePtr package) :
     width_list.resize(0x10000);
 
     // FIXME
-    //m_textPage = new TextPage(rawOrder);
-    m_textPage = new MyTextPage(this, rawOrder);
+    m_textPage = new TextPage(rawOrder);
+    //m_textPage = new MyTextPage(this, rawOrder);
 
     m_actualText = new ActualText(m_textPage);
     m_textClipPath = nullptr;
