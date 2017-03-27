@@ -82,8 +82,9 @@ public:
     //ofd::OfdRGB m_strokeColor;
     //ofd::OfdRGB m_fillColor;
 
-    void DrawRadialPathObject(cairo_t *cr, PathObject *pathObject);
     void doRadialShFill(cairo_t *cr, PathObject *pathObject);
+private:
+    void doDrawPathObject(cairo_t *cr, PathObject *pathObject);
 
 }; // class CairoRender::ImplCls
 
@@ -627,10 +628,10 @@ void CairoRender::ImplCls::DrawPathObject(cairo_t *cr, PathObject *pathObject){
     if ( pathObject == nullptr ) return;
 
     // FIXME 渐变色缺陷调试
-    if ( pathObject->ID != 71 ){
-        return;
-        //LOG(DEBUG) << "Debug missing path image.";
-    }
+    //if ( pathObject->ID != 71 ){
+        //return;
+        ////LOG(DEBUG) << "Debug missing path image.";
+    //}
     //LOG(ERROR) << pathObject->to_string();
 
     //if ( pathObject->FillShading != nullptr ){
@@ -641,6 +642,9 @@ void CairoRender::ImplCls::DrawPathObject(cairo_t *cr, PathObject *pathObject){
 
     //setDefaultCTM(cr);
     //clearCTM(cr);
+
+    doDrawPathObject(cr, pathObject);
+    return;
 
     cairo_matrix_t matrix;
     matrix.xx = pathObject->CTM[0];
@@ -1108,7 +1112,7 @@ void CairoRender::Rebuild(double pixelWidth, double pixelHeight, double resoluti
 
 //GfxRadialShading *shading
 
-void CairoRender::ImplCls::DrawRadialPathObject(cairo_t *cr, PathObject *pathObject){
+void CairoRender::ImplCls::doDrawPathObject(cairo_t *cr, PathObject *pathObject){
         //if ( pathObject->FillShading != nullptr )
     cairo_matrix_t matrix;
     matrix.xx = pathObject->CTM[0];
@@ -1134,22 +1138,44 @@ void CairoRender::ImplCls::DrawRadialPathObject(cairo_t *cr, PathObject *pathObj
 
     cairo_set_line_width(cr, pathObject->LineWidth);
 
+    ColorPtr strokeColor = pathObject->GetStrokeColor();
+    if ( strokeColor != nullptr ){
+        double r, g, b, a;
+        std::tie(r, g, b, a) = strokeColor->GetRGBA();
+        UpdateStrokePattern(r, g, b, a);
+        //LOG(DEBUG) << "DrawPathObject() rgb = (" << r << "," << g << "," << b << ")";
+
+        cairo_set_source(cr, m_strokePattern);
+        cairo_stroke(cr);
+    } else {
+        if ( pathObject->FillShading != nullptr ){
             UpdateFillPattern(pathObject->FillShading);
-        cairo_set_source(cr, m_fillPattern);
-
-        if ( pathObject->Rule == ofd::PathRule::EvenOdd ){
-            cairo_set_fill_rule(cr, CAIRO_FILL_RULE_EVEN_ODD);
         } else {
-            cairo_set_fill_rule(cr, CAIRO_FILL_RULE_WINDING);
+            ColorPtr fillColor = pathObject->GetFillColor();
+            if ( fillColor != nullptr ){
+                double r, g, b, a;
+                std::tie(r, g, b, a) = fillColor->GetRGBA();
+                UpdateFillPattern(r, g, b, a);
+                //LOG(DEBUG) << "DrawPathObject() rgb = (" << r << "," << g << "," << b << ")";
+            }
         }
+    }
 
-        cairo_fill(cr);
+    cairo_set_source(cr, m_fillPattern);
 
-        if ( pathObject->Rule == ofd::PathRule::EvenOdd ){
-            EoClip(path);
-        } else {
-            Clip(path);
-        }
+    if ( pathObject->Rule == ofd::PathRule::EvenOdd ){
+        cairo_set_fill_rule(cr, CAIRO_FILL_RULE_EVEN_ODD);
+    } else {
+        cairo_set_fill_rule(cr, CAIRO_FILL_RULE_WINDING);
+    }
+
+    cairo_fill(cr);
+
+    if ( pathObject->Rule == ofd::PathRule::EvenOdd ){
+        EoClip(path);
+    } else {
+        Clip(path);
+    }
 }
 
     //ofd::RadialShading *shading = (ofd::RadialShading*)m_shading.get();
@@ -1470,7 +1496,7 @@ void CairoRender::ImplCls::doRadialShFill(cairo_t *cr, PathObject *pathObject){
             //out->fill(state);
             //state->clearPath();
         //}
-        DrawRadialPathObject(cr, pathObject);
+        doDrawPathObject(cr, pathObject);
 
         // step to the next value of t
         ia = ib;
@@ -1504,7 +1530,7 @@ void CairoRender::ImplCls::doRadialShFill(cairo_t *cr, PathObject *pathObject){
         //out->fill(state);
         //state->clearPath();
         //cairo_clear_path(cr);
-        DrawRadialPathObject(cr, pathObject);
+        doDrawPathObject(cr, pathObject);
     //}
 
     if (!needExtend)
@@ -1543,7 +1569,7 @@ void CairoRender::ImplCls::doRadialShFill(cairo_t *cr, PathObject *pathObject){
             //state->clearPath();
             //cairo_clear_path(cr);
 
-            DrawRadialPathObject(cr, pathObject);
+            doDrawPathObject(cr, pathObject);
 
         }
 
@@ -1591,7 +1617,7 @@ void CairoRender::ImplCls::doRadialShFill(cairo_t *cr, PathObject *pathObject){
             //state->clearPath();
             //cairo_clear_path();
 
-            DrawRadialPathObject(cr, pathObject);
+            doDrawPathObject(cr, pathObject);
         //}
     }
 }

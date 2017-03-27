@@ -299,8 +299,8 @@ void OFDOutputDev::fill(GfxState *state) {
             //}
         //}
     //}
-    if ( pathObject->ID != 71 ) return;
-    LOG(ERROR) << pathObject->to_string();
+    //if ( pathObject->ID != 71 ) return;
+    //LOG(ERROR) << pathObject->to_string();
 
     doPath(m_cairo, state, state->getPath());
     cairo_set_fill_rule(m_cairo, CAIRO_FILL_RULE_WINDING);
