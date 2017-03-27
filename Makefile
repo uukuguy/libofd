@@ -74,6 +74,9 @@ view1: ${OFDVIEWER}
 view2: ${OFDVIEWER} 
 	${OFDVIEWER} --v=1 ./output/sample2.ofd
 
+poppler:
+	cd tools/poppler && make && sudo make install && cd ../.. && rm -f build/bin/*
+
 check:
 	cat sample0/OFD.xml | xmllint --format -
 	cat sample0/Doc_0/Document.xml | xmllint --format -

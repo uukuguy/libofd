@@ -44,6 +44,8 @@ struct FontInfo
 };
 
 class OFDOutputDev : public OutputDev {
+    private:
+
 public:
     void OnWord(TextWord *word, GfxState *state);
     //void ExportWord(TextWord *word);

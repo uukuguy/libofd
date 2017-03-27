@@ -10,6 +10,7 @@
 #include "ofd/Document.h"
 #include "ofd/Page.h"
 #include "ofd/Font.h"
+#include "ofd/DrawState.h"
 #include "utils/logger.h"
 
 
@@ -87,7 +88,6 @@ OFDOutputDev::OFDOutputDev(ofd::PackagePtr package) :
     m_cairoRender(nullptr),
     m_package(package), m_document(nullptr), m_currentOFDPage(nullptr),
     m_currentFont(nullptr), m_currentFontSize(14.0), m_currentCTM(nullptr) {
-
 
     utils::ffw_init(false);
     cur_mapping.resize(0x10000);
@@ -310,6 +310,7 @@ void OFDOutputDev::preProcess(PDFDocPtr pdfDoc){
     //commonData.DocumentRes->AddFont(ofdFont);
 }
 
+
 // ======== OFDOutputDev::ProcessDoc() ========
 void OFDOutputDev::ProcessDoc(PDFDocPtr pdfDoc){
     if ( pdfDoc == nullptr ) return;
@@ -329,9 +330,6 @@ void OFDOutputDev::ProcessDoc(PDFDocPtr pdfDoc){
     int firstPage = 1;
     // FIXME
     for ( auto pg = firstPage ; pg <= numPages; pg++ ){
-        //// FIXME debug 涠变色缺陷调试
-        //if ( pg != 6 ) continue;
-
 
         // Cairo log file
         std::string cairoLogFileName = "/tmp/Page_" + std::to_string(pg) + ".cairo";
@@ -344,6 +342,11 @@ void OFDOutputDev::ProcessDoc(PDFDocPtr pdfDoc){
         // -------- Output widht and height.
         double output_w, output_h;
         getOutputSize(pg_w, pg_h, &output_w, &output_h);
+
+        m_cairoRender = std::make_shared<ofd::CairoRender>(output_w, output_h, m_resolutionX, m_resolutionY);
+        const DrawState &drawState = m_cairoRender->GetDrawState();
+        //// FIXME debug 涠变色缺陷调试
+        if ( drawState.Debug.Enabled && drawState.Debug.PageDrawing != (size_t)pg ) continue;
 
         // -------- beforeDocument()
         if ( pg == firstPage ){
@@ -488,7 +491,7 @@ void OFDOutputDev::beforePage(double w, double h) {
             //return;
         //}
         //m_cairoRender = std::make_shared<OFDCairoRender>(m_imageSurface);
-        m_cairoRender = std::make_shared<ofd::CairoRender>(w, h, m_resolutionX, m_resolutionY);
+        //m_cairoRender = std::make_shared<ofd::CairoRender>(w, h, m_resolutionX, m_resolutionY);
     }
 }
 

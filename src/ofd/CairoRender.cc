@@ -22,6 +22,7 @@
 #include "ofd/CompositeObject.h"
 #include "ofd/Path.h"
 #include "ofd/Image.h"
+#include "ofd/DrawState.h"
 #include "utils/logger.h"
 #include "utils/unicode.h"
 
@@ -627,87 +628,79 @@ void DoCairoPath(cairo_t *cr, PathPtr path){
 void CairoRender::ImplCls::DrawPathObject(cairo_t *cr, PathObject *pathObject){
     if ( pathObject == nullptr ) return;
 
-    // FIXME 渐变色缺陷调试
-    //if ( pathObject->ID != 71 ){
-        //return;
-        ////LOG(DEBUG) << "Debug missing path image.";
-    //}
-    //LOG(ERROR) << pathObject->to_string();
-
-    //if ( pathObject->FillShading != nullptr ){
-        //doRadialShFill(cr, pathObject);
-        //return;
-    //}
-
-
-    //setDefaultCTM(cr);
-    //clearCTM(cr);
+    // TODO 调试绘制某个特定的PathObject。
+    const DrawState &drawState = m_cairoRender->GetDrawState();
+    if ( drawState.Debug.Enabled && drawState.Debug.PathObjectID != pathObject->ID){
+        //LOG(DEBUG) << "Debug missing path object. ID=" < drawState.Debug.PathObjectID;
+        return;
+    }
+    //LOG(DEBUG) << pathObject->to_string();
 
     doDrawPathObject(cr, pathObject);
     return;
 
-    cairo_matrix_t matrix;
-    matrix.xx = pathObject->CTM[0];
+    //cairo_matrix_t matrix;
+    //matrix.xx = pathObject->CTM[0];
 
-    matrix.yx = pathObject->CTM[1];
-    matrix.xy = pathObject->CTM[2];
+    //matrix.yx = pathObject->CTM[1];
+    //matrix.xy = pathObject->CTM[2];
 
-    //// FIXME
-    //matrix.yx = 0;//pathObject->CTM[2];
-    //matrix.xy = 0;//pathObject->CTM[1];
-
-
-    matrix.yy = pathObject->CTM[3];
-    matrix.x0 = pathObject->CTM[4];
-    matrix.y0 = pathObject->CTM[5];
-    cairo_transform(cr, &matrix);
-
-    showCairoMatrix(cr, "CairoRender", "DrawPathObject");
+    ////// FIXME
+    ////matrix.yx = 0;//pathObject->CTM[2];
+    ////matrix.xy = 0;//pathObject->CTM[1];
 
 
-    PathPtr path = pathObject->GetPath();
-    DoCairoPath(cr, path);
+    //matrix.yy = pathObject->CTM[3];
+    //matrix.x0 = pathObject->CTM[4];
+    //matrix.y0 = pathObject->CTM[5];
+    //cairo_transform(cr, &matrix);
 
-    cairo_set_line_width(cr, pathObject->LineWidth);
+    //showCairoMatrix(cr, "CairoRender", "DrawPathObject");
 
-    ColorPtr strokeColor = pathObject->GetStrokeColor();
-    if ( strokeColor != nullptr ){
-        double r, g, b, a;
-        std::tie(r, g, b, a) = strokeColor->GetRGBA();
-        UpdateStrokePattern(r, g, b, a);
-        //LOG(DEBUG) << "DrawPathObject() rgb = (" << r << "," << g << "," << b << ")";
 
-        cairo_set_source(cr, m_strokePattern);
-        cairo_stroke(cr);
-    } else {
-        // FIXME 渐变色缺陷
-        if ( pathObject->FillShading != nullptr ){
-            UpdateFillPattern(pathObject->FillShading);
-        } else {
-            ColorPtr fillColor = pathObject->GetFillColor();
-            if ( fillColor != nullptr ){
-                double r, g, b, a;
-                std::tie(r, g, b, a) = fillColor->GetRGBA();
-                UpdateFillPattern(r, g, b, a);
-                //LOG(DEBUG) << "DrawPathObject() rgb = (" << r << "," << g << "," << b << ")";
-            }
-        }
-        cairo_set_source(cr, m_fillPattern);
+    //PathPtr path = pathObject->GetPath();
+    //DoCairoPath(cr, path);
 
-        if ( pathObject->Rule == ofd::PathRule::EvenOdd ){
-            cairo_set_fill_rule(cr, CAIRO_FILL_RULE_EVEN_ODD);
-        } else {
-            cairo_set_fill_rule(cr, CAIRO_FILL_RULE_WINDING);
-        }
+    //cairo_set_line_width(cr, pathObject->LineWidth);
 
-        cairo_fill(cr);
+    //ColorPtr strokeColor = pathObject->GetStrokeColor();
+    //if ( strokeColor != nullptr ){
+        //double r, g, b, a;
+        //std::tie(r, g, b, a) = strokeColor->GetRGBA();
+        //UpdateStrokePattern(r, g, b, a);
+        ////LOG(DEBUG) << "DrawPathObject() rgb = (" << r << "," << g << "," << b << ")";
 
-        if ( pathObject->Rule == ofd::PathRule::EvenOdd ){
-            EoClip(path);
-        } else {
-            Clip(path);
-        }
-    }
+        //cairo_set_source(cr, m_strokePattern);
+        //cairo_stroke(cr);
+    //} else {
+        //// FIXME 渐变色缺陷
+        //if ( pathObject->FillShading != nullptr ){
+            //UpdateFillPattern(pathObject->FillShading);
+        //} else {
+            //ColorPtr fillColor = pathObject->GetFillColor();
+            //if ( fillColor != nullptr ){
+                //double r, g, b, a;
+                //std::tie(r, g, b, a) = fillColor->GetRGBA();
+                //UpdateFillPattern(r, g, b, a);
+                ////LOG(DEBUG) << "DrawPathObject() rgb = (" << r << "," << g << "," << b << ")";
+            //}
+        //}
+        //cairo_set_source(cr, m_fillPattern);
+
+        //if ( pathObject->Rule == ofd::PathRule::EvenOdd ){
+            //cairo_set_fill_rule(cr, CAIRO_FILL_RULE_EVEN_ODD);
+        //} else {
+            //cairo_set_fill_rule(cr, CAIRO_FILL_RULE_WINDING);
+        //}
+
+        //cairo_fill(cr);
+
+        //if ( pathObject->Rule == ofd::PathRule::EvenOdd ){
+            //EoClip(path);
+        //} else {
+            //Clip(path);
+        //}
+    //}
 
 }
 

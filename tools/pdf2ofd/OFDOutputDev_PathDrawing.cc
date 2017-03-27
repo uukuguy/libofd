@@ -4,6 +4,7 @@
 #include "ofd/PathObject.h"
 #include "ofd/Color.h"
 #include "ofd/Shading.h"
+#include "ofd/DrawState.h"
 #include "utils/logger.h"
 #include "OFDOutputDev.h"
 #include "Gfx2Ofd.h"
@@ -247,7 +248,7 @@ PathObjectPtr OFDOutputDev::createPathObject(GfxState *state){
 //static int xxo = 0;
 
 void OFDOutputDev::fill(GfxState *state) {
-
+    assert(m_cairoRender != nullptr);
     //if (inType3Char) {
     //GfxGray gray;
     //state->getFillGray(&gray);
@@ -300,6 +301,12 @@ void OFDOutputDev::fill(GfxState *state) {
         //}
     //}
     //if ( pathObject->ID != 71 ) return;
+
+    // TODO 调试绘制某个特定的PathObject。
+    const DrawState &drawState = m_cairoRender->GetDrawState();
+    if ( drawState.Debug.Enabled && drawState.Debug.PathObjectID != pathObject->ID ){
+        return;
+    }
     //LOG(ERROR) << pathObject->to_string();
 
     doPath(m_cairo, state, state->getPath());

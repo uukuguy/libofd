@@ -4,6 +4,7 @@
 #include <memory>
 #include <tuple>
 #include "ofd/Common.h"
+#include "ofd/DrawState.h"
 
 namespace ofd{
 
@@ -19,8 +20,13 @@ namespace ofd{
         VisibleParams GetVisibleParams() const;
         void SetVisibleParams(VisibleParams visibleParams);
 
+        const DrawState& GetDrawState() const {return m_drawState;};
+        DrawState& GetDrawState() {return m_drawState;};
+        void SetDrawState(const DrawState &drawState){m_drawState = drawState;};
+
     private:
         VisibleParams m_visibleParams;
+        DrawState m_drawState;
 
     }; // class Render
 
