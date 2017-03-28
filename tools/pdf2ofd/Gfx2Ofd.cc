@@ -6,7 +6,9 @@
 
 using namespace ofd;
 
-PathPtr GfxPath_to_OfdPath(GfxPath *gfxPath){
+PathPtr GfxPath_to_OfdPath(GfxState *state){
+    if (state == nullptr) return nullptr;
+    GfxPath *gfxPath = state->getPath();
     if ( gfxPath == nullptr ) return nullptr;
 
     PathPtr ofdPath = nullptr;
@@ -21,23 +23,32 @@ PathPtr GfxPath_to_OfdPath(GfxPath *gfxPath){
         if ( subpath->getNumPoints() > 0 ){
             x = subpath->getX(0);
             y = subpath->getY(0);
-            ofdPath->MoveTo(Point_t(x,y));
+
+            double _x, _y;
+            state->transform(x, y, &_x, &_y);
+            ofdPath->MoveTo(Point_t(_x,_y));
             j = 1;
             while ( j < subpath->getNumPoints()) {
                 if ( subpath->getCurve(j) ){
                     x = subpath->getX(j+2);
                     y = subpath->getY(j+2);
+                    state->transform(x, y, &_x, &_y);
                     double x0 = subpath->getX(j);
                     double y0 = subpath->getY(j);
                     double x1 = subpath->getX(j+1);
                     double y1 = subpath->getY(j+1);
-                    ofdPath->CurveTo(Point_t(x0, y0), Point_t(x1, y1), Point_t(x, y));
+                    double _x0, _y0;
+                    state->transform(x0, y0, &_x0, &_y0);
+                    double _x1, _y1;
+                    state->transform(x1, y1, &_x1, &_y1);
+                    ofdPath->CurveTo(Point_t(_x0, _y0), Point_t(_x1, _y1), Point_t(_x, _y));
 
                     j += 3;
                 } else {
                     x = subpath->getX(j);
                     y = subpath->getY(j);
-                    ofdPath->LineTo(Point_t(x, y));
+                    state->transform(x, y, &_x, &_y);
+                    ofdPath->LineTo(Point_t(_x, _y));
                     ++j;
                 }
             }

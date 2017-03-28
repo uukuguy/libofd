@@ -380,6 +380,7 @@ private:
     std::vector<char*> cur_mapping2;
     std::vector<int> width_list; // width of each char
     ofd::ColorStopArray m_colorStops; // Color stops for shading
+    ofd::PathPtr m_clipPath;
 
 
     void doRadialShFill(GfxState *state);

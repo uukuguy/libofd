@@ -572,9 +572,10 @@ void DoCairoPath(cairo_t *cr, PathPtr path){
     size_t numSubpaths = path->GetNumSubpaths();
     if ( numSubpaths == 0 ) return;
 
-    cairo_new_path(cr);
 
+    cairo_new_path(cr);
     for ( size_t idx = 0 ; idx < numSubpaths ; idx++){
+
         SubpathPtr subpath = path->GetSubpath(idx);
         if ( subpath == nullptr ) continue;
         size_t numPoints = subpath->GetNumPoints();
@@ -619,11 +620,15 @@ void DoCairoPath(cairo_t *cr, PathPtr path){
             }
         }
         if ( subpath->IsClosed() ){
-            cairo_line_to(cr, p0.X, p0.Y);
-            //cairo_close_path(cr);
+            cairo_close_path(cr);
         }
+        //if ( idx < numSubpaths - 1 ){
+            //cairo_set_fill_rule(cr, CAIRO_FILL_RULE_WINDING);
+            //cairo_clip(cr);
+        //}
     }
 }
+
 
 void CairoRender::ImplCls::DrawPathObject(cairo_t *cr, PathObject *pathObject){
     if ( pathObject == nullptr ) return;
@@ -635,8 +640,10 @@ void CairoRender::ImplCls::DrawPathObject(cairo_t *cr, PathObject *pathObject){
         return;
     }
     //LOG(DEBUG) << pathObject->to_string();
+    //directDoPath(cr);
+    //doDrawPathObject(cr, pathObject);
+    doRadialShFill(cr, pathObject);
 
-    doDrawPathObject(cr, pathObject);
     return;
 
     //cairo_matrix_t matrix;
@@ -1105,6 +1112,27 @@ void CairoRender::Rebuild(double pixelWidth, double pixelHeight, double resoluti
 
 //GfxRadialShading *shading
 
+void directDoPath(cairo_t *cairo){
+    cairo_new_path(cairo);
+
+    std::vector<ofd::_Point> points;
+    points.push_back(ofd::_Point(-0.379, -1.202));
+    points.push_back(ofd::_Point(-0.379, 0.467));
+    points.push_back(ofd::_Point(1.206, 0.467));
+    points.push_back(ofd::_Point(1.206, -1.202));
+    points.push_back(ofd::_Point(-0.379, -1.202));
+
+    double x, y;
+    x = points[0].X;
+    y = points[0].Y;
+    cairo_move_to(cairo, x, y);
+    for (size_t i = 1 ; i < points.size() ; i++){
+        x = points[i].X;
+        y = points[i].Y;
+        cairo_line_to(cairo, x, y);
+    }
+    cairo_close_path(cairo);
+}
 void CairoRender::ImplCls::doDrawPathObject(cairo_t *cr, PathObject *pathObject){
         //if ( pathObject->FillShading != nullptr )
     cairo_matrix_t matrix;
@@ -1128,6 +1156,7 @@ void CairoRender::ImplCls::doDrawPathObject(cairo_t *cr, PathObject *pathObject)
 
     PathPtr path = pathObject->GetPath();
     DoCairoPath(cr, path);
+    //directDoPath(cr);
 
     cairo_set_line_width(cr, pathObject->LineWidth);
 

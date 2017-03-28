@@ -64,7 +64,7 @@ namespace ofd{
             void CurveTo(const Point_t& p0, const Point_t& p1, const Point_t& p2);
             void ClosePath();
             void Offset(double dx, double dy);
-            void Append(const Path& otherPath);
+            void Append(const PathPtr otherPath);
 
 
             static PathPtr FromPathData(const std::string &pathData);

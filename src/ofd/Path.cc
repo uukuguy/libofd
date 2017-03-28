@@ -15,8 +15,11 @@ Subpath::Subpath(const Point_t &startPoint) :
 }
 
 Subpath::Subpath(const Subpath *other) :
-    m_bClosed(false){
+    m_bClosed(other->m_bClosed){
+    m_points.resize(other->m_points.size());
     std::copy(other->m_points.begin(), other->m_points.end(), m_points.begin());
+    m_flags.resize(other->m_flags.size());
+    std::copy(other->m_flags.begin(), other->m_flags.end(), m_flags.begin());
 }
 
 std::string Subpath::to_string() const{
@@ -230,8 +233,8 @@ void Path::Offset(double dx, double dy){
 }
 
 // ======== Path::Append() ========
-void Path::Append(const Path& otherPath){
-    std::for_each(otherPath.m_subpaths.begin(), otherPath.m_subpaths.end(),
+void Path::Append(const PathPtr otherPath){
+    std::for_each(otherPath->m_subpaths.begin(), otherPath->m_subpaths.end(),
             [=](SubpathPtr subPath){
                 m_subpaths.push_back(subPath->Clone());
             });
@@ -348,6 +351,7 @@ PathPtr Path::FromPathData(const std::string &pathData){
             if ( numTokens >= 6 ){
                 __attribute__((unused)) double x1 = std::atof(tokens[idx].c_str());
                 __attribute__((unused)) double y1 = std::atof(tokens[idx+1].c_str());
+
                 __attribute__((unused)) double x2 = std::atof(tokens[idx+2].c_str());
                 __attribute__((unused)) double y2 = std::atof(tokens[idx+3].c_str());
                 __attribute__((unused)) double x3 = std::atof(tokens[idx+4].c_str());
