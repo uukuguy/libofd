@@ -304,6 +304,9 @@ namespace ofd{
 
     } CT_PageArea_t; 
 
+    void ConcatCTM(double *ctm, double a, double b, double c,
+			 double d, double e, double f); 
+
 }; // namespace ofd
 
 #endif // __OFD_COMMON_H__

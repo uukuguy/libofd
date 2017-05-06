@@ -9,6 +9,13 @@ The libofd is the first open-source C++ development library for OFD. It was esta
 
 ## Release Notes
 
+### v0.7
+2017.05.06
+
+- libofd: C++ library with standard ofd format for reading, writing and cross platform rendering.
+- pdf2ofd: Convert PDF format file into OFD format file.
+- ofdviewer: A simple tool for viewing OFD files.
+
 ### v0.6
 2017.01.09
 
@@ -47,6 +54,13 @@ pdf2ofd is a tool translating a PDF file to a OFD file.
 
 ## Dependencies
 
+```
+$ cd tools && ./build-poppler.sh
+$ sudo apt-get install libfontforge-dev libspiro-dev
+$ sudo apt-get install libtinyxml2-dev libsodium-dev libzip-dev
+
+```
+
 ### fontforge
 
 ```
@@ -54,6 +68,13 @@ $ sudo add-apt-repository ppa:fontforge/fontforge
 $ sudo apt-get update
 $ sudo apt-get insatll fontforge libfontforge-dev libspiro-dev
 ```
+
+### libsodium
+
+```
+$ sudo apt-get install libsodium
+```
+
 ### libsdl
 
 - libsdl2-dev
@@ -78,6 +99,11 @@ $ sudo apt-get insatll fontforge libfontforge-dev libspiro-dev
 
 ```
 $ sudo apt-get install libpoppler-private-dev
+```
+
+### XML
+```
+$ sudo apt-get install libtinyxml2-dev
 ```
 
 ## Build
@@ -108,7 +134,7 @@ $ make ofdviewer
 or 
 
 ```
-$ build/bin/pdf2ofd data/sample0.pdf
+$ build/bin/pdf2ofd data/sample0.pdf output/sample0.ofd
 
 $ build/bin/ofdviewer --v=1 sample0.ofd
 ```

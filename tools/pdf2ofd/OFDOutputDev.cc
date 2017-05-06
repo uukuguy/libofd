@@ -169,7 +169,7 @@ OFDOutputDev::OFDOutputDev(ofd::PackagePtr package) :
     m_strokePathClip = nullptr;
     m_groupColorSpaceStack = nullptr;
     m_maskStack = nullptr;
-    m_clipPath = nullptr;
+    //m_clipPath = nullptr;
 
     if ( package != nullptr ){
         m_document = package->AddNewDocument();

@@ -206,13 +206,14 @@ PathObjectPtr OFDOutputDev::createPathObject(GfxState *state){
 
     PathPtr ofdPath = GfxPath_to_OfdPath(state);
     if ( ofdPath != nullptr ){
-        if ( m_clipPath == nullptr ){
-            m_clipPath = std::make_shared<ofd::Path>();
-        }
-        m_clipPath->Append(ofdPath);
+        //if ( m_clipPath == nullptr ){
+            //m_clipPath = std::make_shared<ofd::Path>();
+        //}
+        //m_clipPath->Append(ofdPath);
 
         pathObject = std::make_shared<PathObject>(m_currentOFDPage->GetBodyLayer());
-        pathObject->SetPath(m_clipPath);
+        //pathObject->SetPath(m_clipPath);
+        pathObject->SetPath(ofdPath);
 
         LOG(DEBUG) <<  "fill color in fill(): " << m_fillColor.r << ", " << m_fillColor.g << ", " <<  m_fillColor.b;
         ColorPtr fillColor = GfxColor_to_OfdColor(&m_fillColor);
@@ -260,7 +261,7 @@ PathObjectPtr OFDOutputDev::createPathObject(GfxState *state){
 
     }
 
-    m_clipPath = nullptr;
+    //m_clipPath = nullptr;
     return pathObject;
 }
 
@@ -616,7 +617,6 @@ void OFDOutputDev::clip(GfxState *state) {
     doPath(m_cairo, state, state->getPath());
     cairo_set_fill_rule(m_cairo, CAIRO_FILL_RULE_WINDING);
     cairo_clip(m_cairo);
-
     if ( m_cairoShape != nullptr ) {
         doPath(m_cairoShape, state, state->getPath());
         cairo_set_fill_rule(m_cairoShape, CAIRO_FILL_RULE_WINDING);
@@ -624,10 +624,10 @@ void OFDOutputDev::clip(GfxState *state) {
     }
 
     PathPtr clipPath = GfxPath_to_OfdPath(state);
-    if ( m_clipPath == nullptr ){
-        m_clipPath = std::make_shared<ofd::Path>();
-    }
-    m_clipPath->Append(clipPath);
+    //if ( m_clipPath == nullptr ){
+        //m_clipPath = std::make_shared<ofd::Path>();
+    //}
+    //m_clipPath->Append(clipPath);
 
     if ( m_cairoRender != nullptr ){
         m_cairoRender->Clip(clipPath);

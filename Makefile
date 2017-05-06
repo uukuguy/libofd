@@ -88,5 +88,11 @@ check:
 cscope:
 	cscope -Rbq
 
+push:
+	rsync -auvz --progress --delete --exclude-from rsync.exclude . lastzorg@lastz.org:./uucloud/syncRepo/libofd
+
+pull:
+	rsync --auvz --progress --exclude-from rsync.exclude lastzorg@lastz.org:./uucloud/syncRepo/libofd/ .
+
 clean:
 	cd build && make clean

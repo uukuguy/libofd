@@ -94,7 +94,24 @@ void OFDOutputDev::updateCTM(GfxState *state, double m11, double m12, double m21
     if ( m_cairoRender != nullptr ){
         m_cairoRender->Transform(&matrix);
     }
+
+    // FIXME - clipPath
     m_matrix = matrix;
+    //double ctm[6];
+    //ctm[0] = m_matrix.xx;
+    //ctm[1] = m_matrix.yx;
+    //ctm[2] = m_matrix.xy;
+    //ctm[3] = m_matrix.yy;
+    //ctm[4] = m_matrix.x0;
+    //ctm[5] = m_matrix.y0;
+    //ofd::ConcatCTM(ctm, m11, m12, m21, m22, m31, m32); 
+    //m_matrix.xx = ctm[0];
+    //m_matrix.yx = ctm[1];
+    //m_matrix.xy = ctm[2];
+    //m_matrix.yy = ctm[3];
+    //m_matrix.x0 = ctm[4];
+    //m_matrix.y0 = ctm[5];
+
     updateLineDash(state);
     updateLineJoin(state);
     updateLineCap(state);

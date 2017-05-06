@@ -572,10 +572,9 @@ void DoCairoPath(cairo_t *cr, PathPtr path){
     size_t numSubpaths = path->GetNumSubpaths();
     if ( numSubpaths == 0 ) return;
 
-
     cairo_new_path(cr);
-    for ( size_t idx = 0 ; idx < numSubpaths ; idx++){
 
+    for ( size_t idx = 0 ; idx < numSubpaths ; idx++){
         SubpathPtr subpath = path->GetSubpath(idx);
         if ( subpath == nullptr ) continue;
         size_t numPoints = subpath->GetNumPoints();
@@ -629,7 +628,6 @@ void DoCairoPath(cairo_t *cr, PathPtr path){
     }
 }
 
-
 void CairoRender::ImplCls::DrawPathObject(cairo_t *cr, PathObject *pathObject){
     if ( pathObject == nullptr ) return;
 
@@ -641,9 +639,8 @@ void CairoRender::ImplCls::DrawPathObject(cairo_t *cr, PathObject *pathObject){
     }
     //LOG(DEBUG) << pathObject->to_string();
     //directDoPath(cr);
-    //doDrawPathObject(cr, pathObject);
-    doRadialShFill(cr, pathObject);
-
+    //doRadialShFill(cr, pathObject);
+    doDrawPathObject(cr, pathObject);
     return;
 
     //cairo_matrix_t matrix;
@@ -1171,7 +1168,8 @@ void CairoRender::ImplCls::doDrawPathObject(cairo_t *cr, PathObject *pathObject)
         cairo_stroke(cr);
     } else {
         if ( pathObject->FillShading != nullptr ){
-            UpdateFillPattern(pathObject->FillShading);
+            //UpdateFillPattern(pathObject->FillShading);
+            return;
         } else {
             ColorPtr fillColor = pathObject->GetFillColor();
             if ( fillColor != nullptr ){
@@ -1204,8 +1202,9 @@ void CairoRender::ImplCls::doDrawPathObject(cairo_t *cr, PathObject *pathObject)
 void CairoRender::ImplCls::doRadialShFill(cairo_t *cr, PathObject *pathObject){
     if (pathObject == nullptr) return;
 
-    assert(pathObject->FillShading != nullptr);
+    //assert(pathObject->FillShading != nullptr);
     ofd::RadialShading *shading  = (ofd::RadialShading*)pathObject->FillShading.get();
+    if ( shading == nullptr ) return;
 
     double *ctm = &pathObject->CTM[0];
     double xMin = pathObject->Boundary.XMin;
