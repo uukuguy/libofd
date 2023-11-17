@@ -1,0 +1,5 @@
+PROJECT(libofd)
+
+ADD_SUBDIRECTORY(ofdviewer)
+ADD_SUBDIRECTORY(pdf2ofd)
+
